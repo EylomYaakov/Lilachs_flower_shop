@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="426.0" prefWidth="615.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="il.cshaifasweng.OCSFMediatorExample.client.ItemController">
+   <children>
+      <TextArea fx:id="description" layoutX="14.0" layoutY="14.0" prefHeight="258.0" prefWidth="352.0" />
+      <TextField fx:id="price" layoutX="14.0" layoutY="281.0" prefHeight="26.0" prefWidth="239.0" />
+      <Button fx:id="updatePriceBtn" layoutX="262.0" layoutY="281.0" mnemonicParsing="false" onAction="#updatePrice" prefHeight="26.0" prefWidth="103.0" text="update price" />
+      <Button fx:id="catalogBtn" layoutX="14.0" layoutY="366.0" mnemonicParsing="false" onAction="#backToCatalog" prefHeight="26.0" prefWidth="184.0" text="get back to catalog" />
+      <Label fx:id="statusLabel" layoutX="14.0" layoutY="318.0" prefHeight="26.0" prefWidth="198.0" />
+   </children>
+</AnchorPane>
