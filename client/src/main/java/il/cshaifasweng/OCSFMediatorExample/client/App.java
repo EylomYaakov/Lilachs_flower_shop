@@ -29,68 +29,13 @@ public class App extends Application {
 
     @Override
     public void start(Stage stage) throws IOException {
-        EventBus.getDefault().register(this);
         client = SimpleClient.getClient();
         client.openConnection();
         scene = new Scene(loadFXML("catalog"), 640, 480);
         stage.setScene(scene);
         stage.show();
 
-        System.out.println("✅ Connected to server");
-
-//        try {
-//            client = SimpleClient.getClient();
-//            client.openConnection();
-//            System.out.println("✅ Connected to server");
-//
-//            // Send static test requests
-//            client.sendToServer("GET_CATALOG");
-//            Thread.sleep(500);  // wait for the response
-//
-//            client.sendToServer("GET_ITEM:1");
-//            Thread.sleep(500);  // wait for the response
-//
-//            // Optional: close connection right after testing
-//            client.closeConnection();
-//            System.out.println("❌ Disconnected");
-//
-//            // Exit JavaFX platform cleanly
-//            Platform.exit();
-//
-//        } catch (IOException | InterruptedException e) {
-//            e.printStackTrace();
-//        }
-
-
-//        catalogList = new ListView<>();
-//        itemDetails = new Label("Select an item to view details.");
-//
-//        catalogList.setOnMouseClicked(event -> {
-//            String selected = catalogList.getSelectionModel().getSelectedItem();
-//            if (selected != null) {
-//                String id = selected.split(",")[0];
-//                try {
-//                    client.sendToServer("GET_ITEM:" + id);
-//                } catch (IOException e) {
-//                    throw new RuntimeException(e);
-//                }
-//            }
-//        });
-
-//        Button refreshButton = new Button("Refresh Catalog");
-//        refreshButton.setOnAction(e -> {
-//            try {
-//                client.sendToServer("GET_CATALOG");
-//            } catch (IOException ex) {
-//                throw new RuntimeException(ex);
-//            }
-//        });
-//
-//        VBox layout = new VBox(10, refreshButton, catalogList, itemDetails);
-//        Scene scene = new Scene(layout, 400, 400);
-//        stage.setScene(scene);
-//        stage.setTitle("🌱 Plant Shop Client");
-//        stage.show();
+        System.out.println(" Connected to server");
     }
 
     static void setRoot(String fxml) throws IOException {
@@ -109,20 +54,6 @@ public class App extends Application {
         SimpleClient.getClient().sendToServer("remove client");
         SimpleClient.getClient().closeConnection();
         super.stop();
-    }
-
-
-    @Subscribe
-    public void onWarningEvent(WarningEvent event) {
-        Platform.runLater(() -> {
-            Alert alert = new Alert(AlertType.WARNING,
-                    String.format("Message: %s\nTimestamp: %s\n",
-                            event.getWarning().getMessage(),
-                            event.getWarning().getTime().toString())
-            );
-            alert.show();
-        });
-
     }
 
     public static void main(String[] args) {
