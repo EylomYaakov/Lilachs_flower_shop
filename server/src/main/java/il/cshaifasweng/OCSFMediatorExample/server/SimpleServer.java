@@ -9,6 +9,7 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import il.cshaifasweng.OCSFMediatorExample.entities.Product;
 
 public class SimpleServer extends AbstractServer {
 
@@ -190,10 +191,7 @@ private void sendItem(ConnectionToClient client, int id) {
 		ResultSet rs = stmt.executeQuery();
 
 		if (rs.next()) {
-			String item = rs.getInt("id") + "," +
-					rs.getString("name") + "," +
-					rs.getString("type") + "," +
-					rs.getDouble("price");
+			Product item = new Product(rs.getInt("id"),rs.getString("name"),rs.getString("type") ,rs.getString("description"),rs.getDouble("price"));
 			client.sendToClient(item);
 		}
 	} catch (Exception e) {

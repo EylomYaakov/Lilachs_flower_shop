@@ -6,10 +6,12 @@ import java.io.IOException;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.TextArea;
 import javafx.scene.layout.GridPane;
 import javafx.scene.control.Label;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
+import il.cshaifasweng.OCSFMediatorExample.entities.Product;
 
 public class CatalogController{
 
@@ -77,25 +79,25 @@ public class CatalogController{
     }
 
     private String getDetails(Product product){
-        return "type: " + products[i].type + "\n" + "price: " + products[i].price;
+        return "type: " + product.type + "\n" + "price: " + product.price;
     }
 
-    @subscribe
+    @Subscribe
     public void initCatalog(Product[] products){
         for(int i=0; i<products.length; i++){
             int finalI = i;
             Platform.runLater(()->buttons[finalI].setText(products[finalI].name));
             Platform.runLater(()->texts[finalI].setText(getDetails(products[finalI])));
-            Platform.runLater(()->ids[finalI] = product.id);
+            Platform.runLater(()->ids[finalI] = products[finalI].id);
         }
     }
 
-    @subscribe
+    @Subscribe
     public void updateDetails(Product product){
         for(int i=0; i<ids.length; i++){
             if(ids[i] == product.id){
                 int finalI = i;
-                Platform.runLater(()->texts[finalI].setText(getDetails(products[finalI])));
+                Platform.runLater(()->texts[finalI].setText(getDetails(product)));
             }
         }
     }

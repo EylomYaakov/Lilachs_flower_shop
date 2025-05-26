@@ -1,5 +1,6 @@
 package il.cshaifasweng.OCSFMediatorExample.client;
 
+import il.cshaifasweng.OCSFMediatorExample.entities.Product;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -8,6 +9,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
 
 import java.io.IOException;
 
@@ -35,7 +37,7 @@ public class ItemController {
         EventBus.getDefault().register(this);
         try {
             id = SimpleClient.getClient().getLastItemId();
-            SimpleClient.getClient().sendToServer("getProduct " + id);
+            SimpleClient.getClient().sendToServer("GET_PRODUCT:" + id);
         }
         catch (IOException e) {
             e.printStackTrace();
@@ -56,16 +58,16 @@ public class ItemController {
     @FXML
     void updatePrice(ActionEvent event) {
         String priceString = price.getText();
-        int newPrice = 0;
+        double newPrice = 0;
         try {
-            newPrice = Integer.parseInt(priceString);
+            newPrice = Double.parseDouble(priceString);
             if(newPrice < 0) {
                 statusLabel.setText("Invalid price");
             }
             else{
                 statusLabel.setText("Price updated");
                 try {
-                    SimpleClient.getClient().sendToServer("changePrice " + id + " "+ newPrice);
+                    SimpleClient.getClient().sendToServer("UPDATE_PRICE:" + id + ":"+ newPrice);
                 }
                 catch (IOException e) {
                     e.printStackTrace();
@@ -76,10 +78,10 @@ public class ItemController {
         }
     }
 
-    @subscribe
+    @Subscribe
     public void initDescription(Product product){
         Platform.runLater(() -> description.setText(product.description));
-        Platform.runLater(()->price.setText(product.price));
+        Platform.runLater(()->price.setText(String.valueOf(product.price)));
 
     }
 
