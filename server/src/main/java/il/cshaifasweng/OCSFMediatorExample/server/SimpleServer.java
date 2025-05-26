@@ -170,13 +170,10 @@ private void sendCatalog(ConnectionToClient client) {
 		Statement stmt = dbConnection.createStatement();
 		ResultSet rs = stmt.executeQuery("SELECT * FROM catalog");
 
-		List<String> items = new ArrayList<>();
+		List<Product> items = new ArrayList<>();
 		while (rs.next()) {
-			String line = rs.getInt("id") + "," +
-					rs.getString("name") + "," +
-					rs.getString("type") + "," +
-					rs.getDouble("price");
-			items.add(line);
+			Product item = new Product(rs.getInt("id"),rs.getString("name"),rs.getString("type") ,rs.getString("description"),rs.getDouble("price"));
+			items.add(item);
 		}
 		client.sendToClient(items);
 	} catch (Exception e) {

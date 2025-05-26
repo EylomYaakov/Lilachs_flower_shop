@@ -3,6 +3,8 @@ package il.cshaifasweng.OCSFMediatorExample.client;
 import javafx.event.ActionEvent;
 import javafx.application.Platform;
 import java.io.IOException;
+import java.util.List;
+
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
@@ -76,6 +78,12 @@ public class CatalogController{
         texts = new TextArea[]{txt1, txt2, txt3, txt4, txt5, txt6};
         ids = new int[buttons.length];
         EventBus.getDefault().register(this);
+        try{
+            SimpleClient.getClient().sendToServer("GET_CATALOG");
+        }
+        catch(IOException e){
+            e.printStackTrace();
+        }
     }
 
     private String getDetails(Product product){
@@ -83,12 +91,12 @@ public class CatalogController{
     }
 
     @Subscribe
-    public void initCatalog(Product[] products){
-        for(int i=0; i<products.length; i++){
+    public void initCatalog(List<Product> products){
+        for(int i=0; i<products.size(); i++){
             int finalI = i;
-            Platform.runLater(()->buttons[finalI].setText(products[finalI].name));
-            Platform.runLater(()->texts[finalI].setText(getDetails(products[finalI])));
-            Platform.runLater(()->ids[finalI] = products[finalI].id);
+            Platform.runLater(()->buttons[finalI].setText(products.get(finalI).name));
+            Platform.runLater(()->texts[finalI].setText(getDetails(products.get(finalI))));
+            Platform.runLater(()->ids[finalI] = products.get(finalI).id);
         }
     }
 
