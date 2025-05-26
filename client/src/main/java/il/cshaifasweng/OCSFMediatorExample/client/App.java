@@ -62,39 +62,40 @@ public class App extends Application {
 //        }
 
 
-        catalogList = new ListView<>();
-        itemDetails = new Label("Select an item to view details.");
+//        catalogList = new ListView<>();
+//        itemDetails = new Label("Select an item to view details.");
+//
+//        catalogList.setOnMouseClicked(event -> {
+//            String selected = catalogList.getSelectionModel().getSelectedItem();
+//            if (selected != null) {
+//                String id = selected.split(",")[0];
+//                try {
+//                    client.sendToServer("GET_ITEM:" + id);
+//                } catch (IOException e) {
+//                    throw new RuntimeException(e);
+//                }
+//            }
+//        });
 
-        catalogList.setOnMouseClicked(event -> {
-            String selected = catalogList.getSelectionModel().getSelectedItem();
-            if (selected != null) {
-                String id = selected.split(",")[0];
-                try {
-                    client.sendToServer("GET_ITEM:" + id);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        });
-
-        Button refreshButton = new Button("Refresh Catalog");
-        refreshButton.setOnAction(e -> {
-            try {
-                client.sendToServer("GET_CATALOG");
-            } catch (IOException ex) {
-                throw new RuntimeException(ex);
-            }
-        });
-
-        VBox layout = new VBox(10, refreshButton, catalogList, itemDetails);
-        Scene scene = new Scene(layout, 400, 400);
-        stage.setScene(scene);
-        stage.setTitle("🌱 Plant Shop Client");
-        stage.show();
+//        Button refreshButton = new Button("Refresh Catalog");
+//        refreshButton.setOnAction(e -> {
+//            try {
+//                client.sendToServer("GET_CATALOG");
+//            } catch (IOException ex) {
+//                throw new RuntimeException(ex);
+//            }
+//        });
+//
+//        VBox layout = new VBox(10, refreshButton, catalogList, itemDetails);
+//        Scene scene = new Scene(layout, 400, 400);
+//        stage.setScene(scene);
+//        stage.setTitle("🌱 Plant Shop Client");
+//        stage.show();
     }
 
     static void setRoot(String fxml) throws IOException {
         scene.setRoot(loadFXML(fxml));
+
     }
 
     private static Parent loadFXML(String fxml) throws IOException {
@@ -102,16 +103,14 @@ public class App extends Application {
         return fxmlLoader.load();
     }
 
-
-
     @Override
     public void stop() throws Exception {
-        // TODO Auto-generated method stub
         EventBus.getDefault().unregister(this);
-        //client.sendToServer("remove client");
-        client.closeConnection();
+        SimpleClient.getClient().sendToServer("remove client");
+        SimpleClient.getClient().closeConnection();
         super.stop();
     }
+
 
     @Subscribe
     public void onWarningEvent(WarningEvent event) {

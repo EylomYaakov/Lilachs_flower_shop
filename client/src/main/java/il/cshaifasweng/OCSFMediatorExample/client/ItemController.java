@@ -1,5 +1,6 @@
 package il.cshaifasweng.OCSFMediatorExample.client;
 
+import il.cshaifasweng.OCSFMediatorExample.entities.InitDescriptionEvent;
 import il.cshaifasweng.OCSFMediatorExample.entities.Product;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
@@ -33,11 +34,13 @@ public class ItemController {
     int id;
 
 
+
     public void initialize() {
         EventBus.getDefault().register(this);
+        description.setEditable(false);
         try {
             id = SimpleClient.getClient().getLastItemId();
-            SimpleClient.getClient().sendToServer("GET_PRODUCT:" + id);
+            SimpleClient.getClient().sendToServer("GET_ITEM:" + id);
         }
         catch (IOException e) {
             e.printStackTrace();
@@ -79,7 +82,8 @@ public class ItemController {
     }
 
     @Subscribe
-    public void initDescription(Product product){
+    public void initDescription(InitDescriptionEvent event){
+        Product product = event.getProduct();
         Platform.runLater(() -> description.setText(product.description));
         Platform.runLater(()->price.setText(String.valueOf(product.price)));
 

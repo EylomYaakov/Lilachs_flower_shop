@@ -1,5 +1,7 @@
 package il.cshaifasweng.OCSFMediatorExample.server;
 
+import il.cshaifasweng.OCSFMediatorExample.entities.ChangePriceEvent;
+import il.cshaifasweng.OCSFMediatorExample.entities.InitDescriptionEvent;
 import il.cshaifasweng.OCSFMediatorExample.entities.Warning;
 import il.cshaifasweng.OCSFMediatorExample.server.ocsf.AbstractServer;
 import il.cshaifasweng.OCSFMediatorExample.server.ocsf.ConnectionToClient;
@@ -15,6 +17,7 @@ public class SimpleServer extends AbstractServer {
 
 
 	private Connection dbConnection;
+	private static ArrayList<SubscribedClient> SubscribersList = new ArrayList<>();
 
 	public SimpleServer(int port) {
 		super(port);
@@ -51,6 +54,8 @@ public class SimpleServer extends AbstractServer {
 
 		if (text.startsWith("GET_CATALOG")) {
 			// Client requested the full catalog
+			SubscribedClient connection = new SubscribedClient(client);
+			SubscribersList.add(connection);
 			sendCatalog(client);
 
 		} else if (text.startsWith("GET_ITEM")) {
@@ -74,6 +79,7 @@ public class SimpleServer extends AbstractServer {
 			// Unknown message received
 			System.out.println("!! Unknown message format received: " + text);
 		}
+
 	}
 
 /*
@@ -151,63 +157,88 @@ public class SimpleServer extends AbstractServer {
 	}
 
 
+*/
+//	private void broadcastMessage(String msg) {
+//		for (SubscribedClient client : connectedClients) {
+//			try {
+//				client.getClient().sendToClient(msg);
+//			} catch (IOException e) {
+//				System.err.println("!! Failed to deliver message to a client.");
+//				e.printStackTrace();
+//			}
+//		}
+//	}
+//}
 
-	private void broadcastMessage(String msg) {
-		for (SubscribedClient client : connectedClients) {
-			try {
-				client.getClient().sendToClient(msg);
-			} catch (IOException e) {
-				System.err.println("!! Failed to deliver message to a client.");
-				e.printStackTrace();
+	public void sendToAllClients(Object message) {
+		try {
+			for (SubscribedClient subscribedClient : SubscribersList) {
+				subscribedClient.getClient().sendToClient(message);
+			}
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		}
+	}
+
+	private void sendCatalog(ConnectionToClient client) {
+		try {
+			Statement stmt = dbConnection.createStatement();
+			ResultSet rs = stmt.executeQuery("SELECT * FROM catalog");
+
+			List<Product> items = new ArrayList<>();
+			while (rs.next()) {
+				Product item = new Product(rs.getInt("id"),rs.getString("name"),rs.getString("type") ,rs.getString("description"),rs.getDouble("price"));
+				items.add(item);
+			}
+			client.sendToClient(items);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	private Product getItem(ConnectionToClient client, int id) {
+		try {
+			PreparedStatement stmt = dbConnection.prepareStatement("SELECT * FROM catalog WHERE id = ?");
+			stmt.setInt(1, id);
+			ResultSet rs = stmt.executeQuery();
+			if (rs.next()) {
+				Product item = new Product(rs.getInt("id"),rs.getString("name"),rs.getString("type") ,rs.getString("description"),rs.getDouble("price"));
+				return item;
 			}
 		}
-	}
-}
-*/
-
-private void sendCatalog(ConnectionToClient client) {
-	try {
-		Statement stmt = dbConnection.createStatement();
-		ResultSet rs = stmt.executeQuery("SELECT * FROM catalog");
-
-		List<Product> items = new ArrayList<>();
-		while (rs.next()) {
-			Product item = new Product(rs.getInt("id"),rs.getString("name"),rs.getString("type") ,rs.getString("description"),rs.getDouble("price"));
-			items.add(item);
+		catch (Exception e)
+		{
+			e.printStackTrace();
 		}
-		client.sendToClient(items);
-	} catch (Exception e) {
-		e.printStackTrace();
+		return null;
 	}
-}
 
-private void sendItem(ConnectionToClient client, int id) {
-	try {
-		PreparedStatement stmt = dbConnection.prepareStatement("SELECT * FROM catalog WHERE id = ?");
-		stmt.setInt(1, id);
-		ResultSet rs = stmt.executeQuery();
-
-		if (rs.next()) {
-			Product item = new Product(rs.getInt("id"),rs.getString("name"),rs.getString("type") ,rs.getString("description"),rs.getDouble("price"));
-			client.sendToClient(item);
+	private void sendItem(ConnectionToClient client, int id) {
+		Product product = getItem(client, id);
+		InitDescriptionEvent event = new InitDescriptionEvent(product);
+		try {
+			client.sendToClient(event);
 		}
-	} catch (Exception e) {
-		e.printStackTrace();
+		catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
-}
 
-private void updatePrice(ConnectionToClient client, int id, double price) {
-	try {
-		PreparedStatement stmt = dbConnection.prepareStatement("UPDATE catalog SET price = ? WHERE id = ?");
-		stmt.setDouble(1, price);
-		stmt.setInt(2, id);
-		stmt.executeUpdate();
-		client.sendToClient("PRICE_UPDATED");
+	private void updatePrice(ConnectionToClient client, int id, double price) {
+		try {
+			PreparedStatement stmt = dbConnection.prepareStatement("UPDATE catalog SET price = ? WHERE id = ?");
+			stmt.setDouble(1, price);
+			stmt.setInt(2, id);
+			stmt.executeUpdate();
+			Product updatedProduct = getItem(client, id);
+			ChangePriceEvent event = new ChangePriceEvent(updatedProduct);
+			sendToAllClients(event);
 
-		// Send updated catalog
-		sendCatalog(client);
-	} catch (Exception e) {
-		e.printStackTrace();
+			// Send updated catalog
+			sendCatalog(client);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
 	}
-}
 }

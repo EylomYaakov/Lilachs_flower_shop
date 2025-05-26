@@ -1,5 +1,7 @@
 package il.cshaifasweng.OCSFMediatorExample.client;
 
+import il.cshaifasweng.OCSFMediatorExample.entities.ChangePriceEvent;
+import il.cshaifasweng.OCSFMediatorExample.entities.InitDescriptionEvent;
 import il.cshaifasweng.OCSFMediatorExample.entities.Product;
 import javafx.application.Platform;
 import org.greenrobot.eventbus.EventBus;
@@ -41,9 +43,13 @@ public class SimpleClient extends AbstractClient {
 
     @Override
     protected void handleMessageFromServer(Object msg){
-        if (msg instanceof Product){
-            Product item = (Product) msg;
-            EventBus.getDefault().post(item);
+        if (msg instanceof InitDescriptionEvent){
+            InitDescriptionEvent event = (InitDescriptionEvent) msg;
+            EventBus.getDefault().post(event);
+        }
+        else if (msg instanceof ChangePriceEvent){
+            ChangePriceEvent event = (ChangePriceEvent) msg;
+            EventBus.getDefault().post(event);
         }
         else if (msg instanceof List<?>){
             List<Product> items = (List<Product>) msg;

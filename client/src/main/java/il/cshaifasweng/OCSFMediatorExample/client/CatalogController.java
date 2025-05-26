@@ -1,16 +1,14 @@
 package il.cshaifasweng.OCSFMediatorExample.client;
 
+import il.cshaifasweng.OCSFMediatorExample.entities.ChangePriceEvent;
 import javafx.event.ActionEvent;
 import javafx.application.Platform;
 import java.io.IOException;
 import java.util.List;
 
 import javafx.fxml.FXML;
-import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextArea;
-import javafx.scene.layout.GridPane;
-import javafx.scene.control.Label;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import il.cshaifasweng.OCSFMediatorExample.entities.Product;
@@ -53,6 +51,7 @@ public class CatalogController{
     @FXML
     private TextArea txt6;
 
+
     private Button[] buttons;
     private TextArea[] texts;
     private int[] ids;
@@ -65,7 +64,7 @@ public class CatalogController{
             if(buttons[i] == clicked){
                 try {
                     SimpleClient.getClient().setLastItemId(ids[i]);
-                    App.setRoot("catalog");
+                    App.setRoot("item");
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -94,15 +93,16 @@ public class CatalogController{
     public void initCatalog(List<Product> products){
         for(int i=0; i<products.size(); i++){
             int finalI = i;
-            System.out.println("i = " + finalI);
             Platform.runLater(()->buttons[finalI].setText(products.get(finalI).name));
             Platform.runLater(()->texts[finalI].setText(getDetails(products.get(finalI))));
             Platform.runLater(()->ids[finalI] = products.get(finalI).id);
+            Platform.runLater(()->texts[finalI].setEditable(false));
         }
     }
 
     @Subscribe
-    public void updateDetails(Product product){
+    public void updateDetails(ChangePriceEvent event){
+        Product product = event.getProduct();
         for(int i=0; i<ids.length; i++){
             if(ids[i] == product.id){
                 int finalI = i;
