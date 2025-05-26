@@ -94,6 +94,7 @@ public class CatalogController{
     public void initCatalog(List<Product> products){
         for(int i=0; i<products.size(); i++){
             int finalI = i;
+            System.out.println("i = " + finalI);
             Platform.runLater(()->buttons[finalI].setText(products.get(finalI).name));
             Platform.runLater(()->texts[finalI].setText(getDetails(products.get(finalI))));
             Platform.runLater(()->ids[finalI] = products.get(finalI).id);

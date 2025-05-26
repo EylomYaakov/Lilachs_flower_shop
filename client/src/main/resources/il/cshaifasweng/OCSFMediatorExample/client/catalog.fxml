@@ -6,7 +6,7 @@
 <?import javafx.scene.layout.AnchorPane?>
 
 
-<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="561.0" prefWidth="671.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1">
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="561.0" prefWidth="671.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="il.cshaifasweng.OCSFMediatorExample.client.CatalogController">
    <children>
       <Label alignment="CENTER" layoutX="247.0" layoutY="16.0" prefHeight="66.0" prefWidth="137.0" text="Lilach's catalog" />
       <Button fx:id="btn2" layoutX="225.0" layoutY="81.0" mnemonicParsing="false" onAction="#buttonPressed" prefHeight="91.0" prefWidth="171.0" />

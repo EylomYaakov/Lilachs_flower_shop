@@ -32,33 +32,34 @@ public class App extends Application {
         EventBus.getDefault().register(this);
         client = SimpleClient.getClient();
         client.openConnection();
-        scene = new Scene(loadFXML("catalogController"), 640, 480);
+        scene = new Scene(loadFXML("catalog"), 640, 480);
         stage.setScene(scene);
         stage.show();
 
+        System.out.println("✅ Connected to server");
 
-        try {
-            client = SimpleClient.getClient();
-            client.openConnection();
-            System.out.println("✅ Connected to server");
-
-            // Send static test requests
-            client.sendToServer("GET_CATALOG");
-            Thread.sleep(500);  // wait for the response
-
-            client.sendToServer("GET_ITEM:1");
-            Thread.sleep(500);  // wait for the response
-
-            // Optional: close connection right after testing
-            client.closeConnection();
-            System.out.println("❌ Disconnected");
-
-            // Exit JavaFX platform cleanly
-            Platform.exit();
-
-        } catch (IOException | InterruptedException e) {
-            e.printStackTrace();
-        }
+//        try {
+//            client = SimpleClient.getClient();
+//            client.openConnection();
+//            System.out.println("✅ Connected to server");
+//
+//            // Send static test requests
+//            client.sendToServer("GET_CATALOG");
+//            Thread.sleep(500);  // wait for the response
+//
+//            client.sendToServer("GET_ITEM:1");
+//            Thread.sleep(500);  // wait for the response
+//
+//            // Optional: close connection right after testing
+//            client.closeConnection();
+//            System.out.println("❌ Disconnected");
+//
+//            // Exit JavaFX platform cleanly
+//            Platform.exit();
+//
+//        } catch (IOException | InterruptedException e) {
+//            e.printStackTrace();
+//        }
 
 
         catalogList = new ListView<>();

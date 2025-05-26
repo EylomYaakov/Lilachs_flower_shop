@@ -31,11 +31,7 @@ public class DatabaseInitializer {
                     ('Flower', 'Lily', 'Elegant white flower, often symbolic.',10),
                     ('Flower', 'Sunflower', 'Tall yellow flower that follows the sun.',30),
                     ('Flower', 'Orchid', 'Delicate exotic flower with many varieties.',45),
-                    ('Plant', 'Aloe Vera', 'Succulent with healing properties.',30),
-                    ('Plant', 'Basil', 'Fragrant herb used in cooking.',20),
-                    ('Plant', 'Fern', 'Lush green plant ideal for indoors.',40),
-                    ('Plant', 'Cactus', 'Spiky desert plant that needs little water.',9),
-                    ('Plant', 'Lavender', 'Aromatic plant with purple flowers.',20);
+                    ('Plant', 'Aloe Vera', 'Succulent with healing properties.',30);
                 """);
                 System.out.println("🌱 Catalog initialized with demo data.");
             } else {
