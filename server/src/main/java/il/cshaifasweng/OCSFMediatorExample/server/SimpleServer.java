@@ -53,8 +53,11 @@ public class SimpleServer extends AbstractServer {
 
 		if (text.startsWith("GET_CATALOG")) {
 			// Client requested the full catalog
-			SubscribedClient connection = new SubscribedClient(client);
-			SubscribersList.add(connection);
+			SubscribedClient exists = findClient(client);
+			if(exists == null){
+				SubscribedClient connection = new SubscribedClient(client);
+				SubscribersList.add(connection);
+			}
 			sendCatalog(client);
 
 		} else if (text.startsWith("GET_ITEM")) {
@@ -74,13 +77,32 @@ public class SimpleServer extends AbstractServer {
 				updatePrice(client, id, newPrice);
 			}
 
-		} else {
+		}
+		else if (text.startsWith("remove client")) {
+			SubscribedClient toRemove = findClient(client);
+			if (toRemove != null) {
+				SubscribersList.remove(toRemove);
+			}
+
+		}
+		else {
 			// Unknown message received
 			System.out.println("!! Unknown message format received: " + text);
 		}
 
 	}
 
+	public SubscribedClient findClient(ConnectionToClient client) {
+		if(!SubscribersList.isEmpty()){
+			for(SubscribedClient subscribedClient: SubscribersList){
+				if(subscribedClient.getClient().equals(client)){
+					SubscribersList.remove(subscribedClient);
+					return subscribedClient;
+				}
+			}
+		}
+		return null;
+	}
 	public void sendToAllClients(Object message) {
 		try {
 			for (SubscribedClient subscribedClient : SubscribersList) {
