@@ -12,7 +12,18 @@ public class SimpleClient extends AbstractClient {
 
     public static String sign;
     public static PrimaryController primaryController;
+    public static CatalogController catalogController;
+    public static ItemController itemController;
     private static SimpleClient client = null;
+    private int lastItemId;
+
+    public void setLastItemId(int lastItemId) {
+        this.lastItemId = lastItemId;
+    }
+
+    public int getLastItemId() {
+        return lastItemId;
+    }
 
     private SimpleClient(String host, int port) throws IOException {
         super(host, port);
@@ -26,30 +37,8 @@ public class SimpleClient extends AbstractClient {
     }
 
     @Override
-    protected void handleMessageFromServer(Object msg) {
-        String message = msg.toString();
-        System.out.println(">> Received from server: " + message);
-
-        if (msg instanceof Warning) {
-            EventBus.getDefault().post(new WarningEvent((Warning) msg));
-            return;
-        }
-
-        if (message.contains("client added successfully with sign ")) {
-            handleSignAssignment(message);
-        } else if (message.equals("all clients are connected")) {
-            handleStartPermission();
-        } else if (message.equals("0move")) {
-            Platform.runLater(() -> primaryController.writingSign(sign));
-        } else if (message.equals("new game")) {
-            Platform.runLater(primaryController::resetBoard);
-        } else if (message.matches("\\d,\\d[XO]\\d")) {
-            parseCompactMove(message);
-        } else if (message.contains("there is")) {
-            parseVerboseMove(message);
-        } else {
-            System.err.println("!! Unknown message format: " + message);
-        }
+    protected void handleMessageFromServer(Object msg){
+        EventBus.getDefault().post(msg);
     }
 
     private void handleSignAssignment(String message) {
