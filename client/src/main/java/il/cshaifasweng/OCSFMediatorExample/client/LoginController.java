@@ -32,7 +32,7 @@ public class LoginController {
     private TextField username;
 
     public void initialize() {
-        statusLabel.setText("");
+        Platform.runLater(()->statusLabel.setText(""));
         EventBus.getDefault().register(this);
     }
 
@@ -60,11 +60,12 @@ public class LoginController {
     @Subscribe
     public void loginAttempt(LoginEvent event){
         if(event.getStatus().equals("SUCCESS")){
-            username.setText("");
-            password.setText("");
+            Platform.runLater(()->username.setText(""));
+            Platform.runLater(()->password.setText(""));
         }
         else{
-            statusLabel.setText("invalid username or password");
+            Platform.runLater(()->statusLabel.setText("invalid username or password"));
+            Platform.runLater(()-> statusLabel.setStyle("-fx-text-fill: red;"));
         }
     }
 
