@@ -93,6 +93,7 @@ public class SignUpController {
             String signupAttempt = "SIGNUP:" + username.getText() + ":" + password.getText() + ":" + idField.getText() + ":" + creditCard.getText() + ":" + accountType.getText();
             try {
                 SimpleClient.getClient().sendToServer(signupAttempt);
+                SimpleClient.getClient().setLoggedIn(true);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -109,6 +110,16 @@ public class SignUpController {
     void loginPressed(ActionEvent event) {
         try {
             App.setRoot("login");
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @FXML
+    void backToCatalog(ActionEvent event) {
+        try {
+            App.setRoot("catalog");
         }
         catch (IOException e) {
             e.printStackTrace();

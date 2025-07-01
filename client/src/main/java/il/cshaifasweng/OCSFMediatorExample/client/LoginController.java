@@ -62,6 +62,12 @@ public class LoginController {
         if(event.getStatus().equals("SUCCESS")){
             Platform.runLater(()->username.setText(""));
             Platform.runLater(()->password.setText(""));
+            try {
+                SimpleClient.getClient().setLoggedIn(true);
+            }
+            catch (IOException e) {
+                e.printStackTrace();
+            }
         }
         else{
             Platform.runLater(()->statusLabel.setText("invalid username or password"));
@@ -69,5 +75,15 @@ public class LoginController {
         }
     }
 
+
+    @FXML
+    void backToCatalog(ActionEvent event) {
+        try {
+            App.setRoot("catalog");
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
 }

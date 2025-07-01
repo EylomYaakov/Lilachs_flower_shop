@@ -34,5 +34,6 @@
         </items>
       </MenuButton>
       <Button layoutX="324.0" layoutY="416.0" mnemonicParsing="false" onAction="#loginPressed" prefHeight="26.0" prefWidth="55.0" text="log in" />
+      <Button layoutX="14.0" layoutY="16.0" mnemonicParsing="false" onAction="#backToCatalog" prefHeight="26.0" prefWidth="150.0" text="get back to catalog" />
    </children>
 </AnchorPane>

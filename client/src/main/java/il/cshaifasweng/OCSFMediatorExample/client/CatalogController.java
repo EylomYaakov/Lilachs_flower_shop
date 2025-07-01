@@ -78,7 +78,13 @@ public class CatalogController{
     @FXML
     void loginPressed(ActionEvent event) {
         try {
-            App.setRoot("login");
+            if(loginButton.getText().equals("log in")){
+                App.setRoot("login");
+            }
+            else{
+                Platform.runLater(()->loginButton.setText("log in"));
+                SimpleClient.getClient().setLoggedIn(false);
+            }
         }
         catch (IOException e) {
             e.printStackTrace();
@@ -93,6 +99,13 @@ public class CatalogController{
         EventBus.getDefault().register(this);
         try{
             SimpleClient.getClient().sendToServer("GET_CATALOG");
+            if (SimpleClient.getClient().getLoggedIn()) {
+                Platform.runLater(()->loginButton.setText("log out"));
+            }
+            else{
+                Platform.runLater(()->loginButton.setText("log in"));
+            }
+
         }
         catch(IOException e){
             e.printStackTrace();
