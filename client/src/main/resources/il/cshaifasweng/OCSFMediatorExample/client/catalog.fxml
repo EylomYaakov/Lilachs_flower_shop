@@ -20,5 +20,6 @@
       <TextArea fx:id="txt4" layoutX="42.0" layoutY="406.0" prefHeight="84.0" prefWidth="162.0" text="&#10;&#10;&#10;" />
       <TextArea fx:id="txt5" layoutX="235.0" layoutY="405.0" prefHeight="84.0" prefWidth="162.0" text="&#10;&#10;&#10;" />
       <TextArea fx:id="txt6" layoutX="435.0" layoutY="405.0" prefHeight="84.0" prefWidth="162.0" text="&#10;&#10;&#10;" />
+      <Button fx:id="loginButton" layoutX="511.0" layoutY="16.0" mnemonicParsing="false" onAction="#loginPressed" prefHeight="28.0" prefWidth="91.0" text="log in" />
    </children>
 </AnchorPane>

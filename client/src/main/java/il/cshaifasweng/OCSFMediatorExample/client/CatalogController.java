@@ -34,6 +34,9 @@ public class CatalogController{
     private Button btn6;
 
     @FXML
+    private Button loginButton;
+
+    @FXML
     private TextArea txt1;
 
     @FXML
@@ -71,6 +74,17 @@ public class CatalogController{
             }
         }
     }
+
+    @FXML
+    void loginPressed(ActionEvent event) {
+        try {
+            App.setRoot("login");
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
 
     public void initialize() {
         buttons = new Button[]{btn1, btn2, btn3, btn4, btn5, btn6};

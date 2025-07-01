@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.text.Font?>
+
+
+<AnchorPane prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="il.cshaifasweng.OCSFMediatorExample.client.LoginController">
+   <children>
+      <Label layoutX="213.0" layoutY="170.0" />
+      <TextField fx:id="username" layoutX="202.0" layoutY="121.0" prefHeight="36.0" prefWidth="183.0" />
+      <Label layoutX="202.0" layoutY="97.0" prefHeight="17.0" prefWidth="74.0" text="username:" />
+      <Label layoutX="202.0" layoutY="170.0" prefHeight="17.0" prefWidth="74.0" text="password:" />
+      <TextField fx:id="password" layoutX="202.0" layoutY="194.0" prefHeight="36.0" prefWidth="183.0" />
+      <Button fx:id="loginButton" layoutX="245.0" layoutY="262.0" mnemonicParsing="false" onAction="#loginPressed" prefHeight="27.0" prefWidth="87.0" text="login" />
+      <Label layoutX="193.0" layoutY="299.0" text="Don't have an account?" />
+      <Button fx:id="signUpButton" layoutX="337.0" layoutY="295.0" mnemonicParsing="false" onAction="#signUpPressed" text="sign up" />
+      <Label alignment="CENTER" layoutX="224.0" layoutY="36.0" prefHeight="42.0" prefWidth="129.0" text="Login">
+         <font>
+            <Font size="24.0" />
+         </font>
+      </Label>
+      <Label fx:id="statusLabel" alignment="CENTER" layoutX="198.0" layoutY="238.0" prefHeight="17.0" prefWidth="183.0" />
+   </children>
+</AnchorPane>

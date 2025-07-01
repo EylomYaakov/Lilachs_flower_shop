@@ -13,5 +13,6 @@
       <Button fx:id="updatePriceBtn" layoutX="262.0" layoutY="281.0" mnemonicParsing="false" onAction="#updatePrice" prefHeight="26.0" prefWidth="103.0" text="update price" />
       <Button fx:id="catalogBtn" layoutX="14.0" layoutY="366.0" mnemonicParsing="false" onAction="#backToCatalog" prefHeight="26.0" prefWidth="184.0" text="get back to catalog" />
       <Label fx:id="statusLabel" layoutX="14.0" layoutY="318.0" prefHeight="26.0" prefWidth="198.0" />
+      <Button fx:id="loginButton" layoutX="536.0" layoutY="14.0" mnemonicParsing="false" onAction="#loginPressed" prefHeight="26.0" prefWidth="57.0" text="login" />
    </children>
 </AnchorPane>

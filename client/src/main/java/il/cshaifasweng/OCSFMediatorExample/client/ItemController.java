@@ -31,6 +31,9 @@ public class ItemController {
     @FXML
     private Button updatePriceBtn;
 
+    @FXML
+    private Button loginButton;
+
     int id;
 
 
@@ -78,6 +81,16 @@ public class ItemController {
             }
         } catch (NumberFormatException e) {
             statusLabel.setText("Invalid price");
+        }
+    }
+
+    @FXML
+    void loginPressed(ActionEvent event) {
+        try {
+            App.setRoot("login");
+        }
+        catch (IOException e) {
+            e.printStackTrace();
         }
     }
 

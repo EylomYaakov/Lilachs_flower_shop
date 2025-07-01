@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.text.Font?>
+
+
+<AnchorPane prefHeight="401.0" prefWidth="615.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="il.cshaifasweng.OCSFMediatorExample.client.MenuController">
+   <children>
+      <Label layoutX="244.0" layoutY="33.0" text="Menu">
+         <font>
+            <Font size="36.0" />
+         </font>
+      </Label>
+      <Button fx:id="catlogButton" layoutX="230.0" layoutY="104.0" mnemonicParsing="false" onAction="#catalog" prefHeight="44.0" prefWidth="114.0" text="catalog" />
+      <Button fx:id="orderButton" layoutX="230.0" layoutY="156.0" mnemonicParsing="false" onAction="#order" prefHeight="44.0" prefWidth="114.0" text="order" />
+      <Button fx:id="CancelOrderButton" layoutX="230.0" layoutY="206.0" mnemonicParsing="false" onAction="#cancelOrder" prefHeight="44.0" prefWidth="114.0" text="cancel order" />
+      <Button fx:id="complainButton" layoutX="230.0" layoutY="262.0" mnemonicParsing="false" onAction="#complain" prefHeight="44.0" prefWidth="114.0" text="complain" />
+   </children>
+</AnchorPane>

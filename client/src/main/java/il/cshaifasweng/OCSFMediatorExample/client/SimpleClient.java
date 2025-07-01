@@ -15,6 +15,8 @@ public class SimpleClient extends AbstractClient {
     public static String sign;
     public static CatalogController catalogController;
     public static ItemController itemController;
+    public static LoginController loginController;
+    public static SignUpController signUpController;
     private static SimpleClient client = null;
     private int lastItemId;
 
@@ -32,7 +34,7 @@ public class SimpleClient extends AbstractClient {
 
     public static SimpleClient getClient() throws IOException {
         if (client == null) {
-            client = new SimpleClient("localhost", 3000);
+            client = new SimpleClient("127.0.0.1", 3000);
         }
         return client;
     }
