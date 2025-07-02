@@ -20,9 +20,35 @@ public class DatabaseInitializer {
                     price INTEGER NOT NULL  
                 );
             """);
+            System.out.println("📦 E1.");
+
+            // Create the catalog table if it doesn't exist
+            stmt.executeUpdate("""
+                CREATE TABLE IF NOT EXISTS Users (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    Username TEXT NOT NULL,
+                    password TEXT NOT NULL,
+                    personalId INTEGER NOT NULL,
+                    creditId INTEGER NOT NULL  
+                );
+            """);
+
+            System.out.println("📦 E1.");
+
+            ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM Users");
+            if (rs.next() && rs.getInt(1) == 0) {
+                stmt.executeUpdate("""
+                    INSERT INTO Users (Username, password, personalId,creditId) VALUES
+                    ('Ariel', '@A1', 12345678,10),
+                    ('Amit', '@A1', 12345678,10);
+                    """);
+                System.out.println("🌱 Users initialized with demo data.");
+            } else {
+                System.out.println("📦 Users already initialized.");
+            }
 
             // Check if it's already populated
-            ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM catalog");
+            rs = stmt.executeQuery("SELECT COUNT(*) FROM catalog");
             if (rs.next() && rs.getInt(1) == 0) {
                 stmt.executeUpdate("""
                     INSERT INTO catalog (type, name, description,price) VALUES
