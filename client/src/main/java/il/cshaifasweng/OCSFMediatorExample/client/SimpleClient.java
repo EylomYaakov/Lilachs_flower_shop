@@ -2,6 +2,7 @@ package il.cshaifasweng.OCSFMediatorExample.client;
 
 import il.cshaifasweng.OCSFMediatorExample.entities.ChangePriceEvent;
 import il.cshaifasweng.OCSFMediatorExample.entities.InitDescriptionEvent;
+import il.cshaifasweng.OCSFMediatorExample.entities.LoginEvent;
 import il.cshaifasweng.OCSFMediatorExample.entities.Product;
 import org.greenrobot.eventbus.EventBus;
 
@@ -50,6 +51,10 @@ public class SimpleClient extends AbstractClient {
         } else if (msg instanceof List<?>) {
             List<Product> items = (List<Product>) msg;
             EventBus.getDefault().post(items);
+        }
+        else if (msg instanceof LoginEvent) {
+            LoginEvent event = (LoginEvent) msg;
+            EventBus.getDefault().post(event);
         }
     }
 }

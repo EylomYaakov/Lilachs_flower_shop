@@ -58,15 +58,21 @@ public class LoginController {
     }
 
     @Subscribe
-    public void loginAttempt(LoginEvent event){
-        if(event.getStatus().equals("SUCCESS")){
-            username.setText("");
-            password.setText("");
-        }
-        else{
-            statusLabel.setText("invalid username or password");
-        }
+    public void loginAttempt(LoginEvent event) {
+        Platform.runLater(() -> {
+            if (event.getStatus().equals("LOGIN_SUCCESS")) {
+                username.setText("");
+                password.setText("");
+                statusLabel.setText("success");
+            } else if (event.getStatus().equals("Already logged in")){
+                statusLabel.setText("Already logged in");
+            }
+            else if (event.getStatus().equals("LOGIN_FAIL")){
+                statusLabel.setText("invalid username or password");
+            }
+        });
     }
+
 
 
 }
