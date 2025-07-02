@@ -125,9 +125,11 @@ public class SignUpController {
     @Subscribe
     public void signUpAttempt(SignUpEvent event){
         String status = event.getStatus();
-        if(status.startsWith("SUCCESS")){
+        if(status.startsWith("SIGN_SUCCESS")){
             try {
                 SimpleClient.getClient().setAccountType("customer");
+                Platform.runLater(()-> statusLabel.setText("sign up succesful"));
+
             }
             catch (IOException e) {
                 e.printStackTrace();

@@ -62,6 +62,64 @@ public class DatabaseManager {
 
     }
 
+
+    public static boolean userExists(String username) {
+        String query = "SELECT * FROM Users WHERE username = ?";
+
+        try (PreparedStatement stmt = dbConnection.prepareStatement(query)) {
+            stmt.setString(1, username);
+            ResultSet rs = stmt.executeQuery();
+            return rs.next(); // ✅ true if a matching row exists
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false; // or throw an exception depending on your style
+        }
+    }
+
+    public static void printAllUsers() {
+        String query = "SELECT * FROM Users";
+
+        try (Statement stmt = dbConnection.createStatement();
+             ResultSet rs = stmt.executeQuery(query)) {
+
+            System.out.println("📋 Users in database:");
+            while (rs.next()) {
+                int id = rs.getInt("id");
+                String username = rs.getString("Username");
+                String password = rs.getString("password");
+                long personalId = rs.getLong("personalId");
+                long creditId = rs.getLong("creditId");
+                String userType = rs.getString("userType");
+
+                System.out.printf("🧑 ID: %d | Username: %s | Password: %s | PersonalID: %d | CreditID: %d | Type: %s%n",
+                        id, username, password, personalId, creditId, userType);
+            }
+
+        } catch (SQLException e) {
+            System.err.println("❌ Failed to list users:");
+            e.printStackTrace();
+        }
+    }
+
+
+
+    public static boolean createUser(String username, String password, long personalId, long creditId, String userType) {
+        String query = "INSERT INTO Users (Username, password, personalId, creditId, userType) VALUES (?, ?, ?, ?, ?)";
+        try (PreparedStatement stmt = dbConnection.prepareStatement(query)) {
+            stmt.setString(1, username);
+            stmt.setString(2, password);
+            stmt.setLong(3, personalId);
+            stmt.setLong(4, creditId);
+            stmt.setString(5, userType);
+            stmt.executeUpdate();
+            return true;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+
+    }
+
     public boolean checkCredentials (String username, String password){
         String query = "SELECT * FROM Users WHERE username = ? AND password = ?";
 

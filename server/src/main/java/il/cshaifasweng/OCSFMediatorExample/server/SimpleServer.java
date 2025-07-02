@@ -37,6 +37,15 @@ public class SimpleServer extends AbstractServer {
 		String text = (String) msg;
 		System.out.println(text);
 
+		System.out.println("Database users: ");
+		DatabaseManager.printAllUsers();
+		System.out.println("Connected users: ");
+
+		for (ConnectedUser cU : ConnectedList) {
+			System.out.println("🟢 Connected: " +
+					"Username = " + cU.getUsername() );
+		}
+
 		if (text.startsWith("GET_CATALOG")) {
 			// Client requested the full catalog
 			SubscribedClient exists = findClient(client);
@@ -68,6 +77,15 @@ public class SimpleServer extends AbstractServer {
 			SubscribedClient toRemove = findClient(client);
 			if (toRemove != null) {
 				SubscribersList.remove(toRemove);
+				if(!toRemove.getUsername().equals("~"))
+					for (ConnectedUser user : ConnectedList) {
+						if (user.getUsername().equals(toRemove.getUsername())) {
+							ConnectedUser userToRemove = user;
+							ConnectedList.remove(userToRemove);
+
+							break;
+						}
+					}
 			}
 
 		}
@@ -84,6 +102,8 @@ public class SimpleServer extends AbstractServer {
 
 				if (!alreadyConnected) {
 					ConnectedUser user = DatabaseManager.getUser(username);
+					SubscribedClient subscribedClient = findClient(client);
+					subscribedClient.setUsername(username);
 					ConnectedList.add(user);
 					System.out.println("LOGIN_SUCCESS");
 					event = new LoginEvent("LOGIN_SUCCESS");
@@ -101,7 +121,62 @@ public class SimpleServer extends AbstractServer {
 					e.printStackTrace();
 				}
 			}
-			else {
+
+		if (text.startsWith("SIGNUP:")) {
+			SignUpEvent event;
+			String[] parts = text.split(":", 6);
+			System.out.println("signup"+parts.length);
+
+			if (parts.length == 6) {
+				String username = parts[1];
+				String password = parts[2];
+
+				try {
+					System.out.println("id " + parts[3]+ "  credit  "+ parts[4]);
+					long personalId = Long.parseLong(parts[3]);
+					long creditId = Long.parseLong(parts[4]);
+
+					String userType = parts[5];  // can contain spaces like "chain account"
+
+					boolean userExists = DatabaseManager.userExists(username);
+
+					if (userExists) {
+						event = new SignUpEvent("USERNAME_TAKEN");
+						System.out.println("USERNAME_TAKEN");
+
+					} else {
+						boolean created = DatabaseManager.createUser(username, password, personalId, creditId, userType);
+						if (created) {
+							ConnectedUser newUser = DatabaseManager.getUser(username);
+							ConnectedList.add(newUser);
+							event = new SignUpEvent("SIGNUP_SUCCESS");
+							System.out.println("SIGNUP_SUCCESS");
+
+						} else {
+							event = new SignUpEvent("SIGNUP_FAILED");
+							System.out.println("SIGNUP_FAILED");
+
+						}
+					}
+				} catch (NumberFormatException e) {
+					event = new SignUpEvent("INVALID_ID_FORMAT");
+					System.out.println("I1");
+
+				}
+			} else {
+				event = new SignUpEvent("INVALID_FORMAT");
+				System.out.println("I2");
+
+			}
+
+			try {
+				client.sendToClient(event);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+
+		else {
 				// Unknown message received
 				System.out.println("!! Unknown message format received: " + text);
 			}
