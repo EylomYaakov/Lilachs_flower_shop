@@ -11,6 +11,9 @@ public class DatabaseInitializer {
              Statement stmt = conn.createStatement()) {
 
 
+
+
+
             // Create the catalog table if it doesn't exist
             stmt.executeUpdate("""
                 CREATE TABLE IF NOT EXISTS catalog (
@@ -29,8 +32,8 @@ public class DatabaseInitializer {
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     Username TEXT NOT NULL,
                     password TEXT NOT NULL,
-                    personalId INTEGER NOT NULL,
-                    creditId INTEGER NOT NULL,
+                    personalId LONG NOT NULL,
+                    creditId LONG NOT NULL,
                     userType TEXT NOT NULL
                 );
             """);
