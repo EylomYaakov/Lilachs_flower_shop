@@ -83,7 +83,7 @@ public class CatalogController{
             }
             else{
                 Platform.runLater(()->loginButton.setText("log in"));
-                SimpleClient.getClient().setLoggedIn(false);
+                SimpleClient.getClient().setAccountType("");
             }
         }
         catch (IOException e) {
@@ -99,7 +99,7 @@ public class CatalogController{
         EventBus.getDefault().register(this);
         try{
             SimpleClient.getClient().sendToServer("GET_CATALOG");
-            if (SimpleClient.getClient().getLoggedIn()) {
+            if (!SimpleClient.getClient().getAccountType().isEmpty()) {
                 Platform.runLater(()->loginButton.setText("log out"));
             }
             else{

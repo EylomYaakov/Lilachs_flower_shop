@@ -36,14 +36,20 @@ public class LoginController {
         EventBus.getDefault().register(this);
     }
 
+
     @FXML
     void loginPressed(ActionEvent event) {
-        String loginAttempt = "LOGIN:" + username.getText() + ":" + password.getText();
-        try {
-            SimpleClient.getClient().sendToServer(loginAttempt);
+        if(username.getText().isEmpty() || password.getText().isEmpty()){
+            Platform.runLater(()->statusLabel.setText("please fill all fields"));
+            Platform.runLater(()-> statusLabel.setStyle("-fx-text-fill: red;"));
         }
-        catch (IOException e) {
-            e.printStackTrace();
+        else {
+            String loginAttempt = "LOGIN:" + username.getText() + ":" + password.getText();
+            try {
+                SimpleClient.getClient().sendToServer(loginAttempt);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -59,11 +65,12 @@ public class LoginController {
 
     @Subscribe
     public void loginAttempt(LoginEvent event){
-        if(event.getStatus().equals("SUCCESS")){
+        String status = event.getStatus();
+        if(status.startsWith("SUCCESS")){
             Platform.runLater(()->username.setText(""));
             Platform.runLater(()->password.setText(""));
             try {
-                SimpleClient.getClient().setLoggedIn(true);
+                SimpleClient.getClient().setAccountType(status.substring(status.indexOf(":")+1));
             }
             catch (IOException e) {
                 e.printStackTrace();

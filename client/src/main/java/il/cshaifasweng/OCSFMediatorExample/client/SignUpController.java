@@ -1,7 +1,9 @@
 package il.cshaifasweng.OCSFMediatorExample.client;
 
 import il.cshaifasweng.OCSFMediatorExample.entities.InitDescriptionEvent;
+import il.cshaifasweng.OCSFMediatorExample.entities.LoginEvent;
 import il.cshaifasweng.OCSFMediatorExample.entities.Product;
+import il.cshaifasweng.OCSFMediatorExample.entities.SignUpEvent;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -37,6 +39,10 @@ public class SignUpController {
     @FXML
     private TextField username;
 
+    public void initialize() {
+        EventBus.getDefault().register(this);
+    }
+
     private boolean onlyDigits(String str){
         for(int i=0; i<str.length(); i++){
             if(!Character.isDigit(str.charAt(i))){
@@ -45,6 +51,7 @@ public class SignUpController {
         }
         return true;
     }
+
 
     private boolean isValidPassword(String password){
         boolean captial = false, lowercase = false, number = false;
@@ -93,7 +100,6 @@ public class SignUpController {
             String signupAttempt = "SIGNUP:" + username.getText() + ":" + password.getText() + ":" + idField.getText() + ":" + creditCard.getText() + ":" + accountType.getText();
             try {
                 SimpleClient.getClient().sendToServer(signupAttempt);
-                SimpleClient.getClient().setLoggedIn(true);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -113,6 +119,23 @@ public class SignUpController {
         }
         catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+
+    @Subscribe
+    public void signUpAttempt(SignUpEvent event){
+        String status = event.getStatus();
+        if(status.startsWith("SUCCESS")){
+            try {
+                SimpleClient.getClient().setAccountType("customer");
+            }
+            catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        else{
+            Platform.runLater(()-> statusLabel.setText("username already exists"));
+            Platform.runLater(()-> statusLabel.setStyle("-fx-text-fill: red;"));
         }
     }
 

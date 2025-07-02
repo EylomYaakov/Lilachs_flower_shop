@@ -18,7 +18,7 @@ public class SimpleClient extends AbstractClient {
     public static LoginController loginController;
     public static SignUpController signUpController;
     private static SimpleClient client = null;
-    private boolean loggedIn = false;
+    private String accountType = "";
     private int lastItemId;
 
     public void setLastItemId(int lastItemId) {
@@ -29,12 +29,12 @@ public class SimpleClient extends AbstractClient {
         return lastItemId;
     }
 
-    public boolean getLoggedIn() {
-        return loggedIn;
+    public String getAccountType() {
+        return accountType;
     }
 
-    public void setLoggedIn(boolean loggedIn) {
-        this.loggedIn = loggedIn;
+    public void setAccountType(String accountType) {
+        this.accountType = accountType;
     }
 
     private SimpleClient(String host, int port) throws IOException {
