@@ -66,7 +66,7 @@ public class LoginController {
     @Subscribe
     public void loginAttempt(LoginEvent event){
         String status = event.getStatus();
-        if(status.startsWith("SUCCESS")){
+        if(status.startsWith("LOGIN_SUCCESS")){
             Platform.runLater(()->username.setText(""));
             Platform.runLater(()->password.setText(""));
             try {
@@ -75,6 +75,10 @@ public class LoginController {
             catch (IOException e) {
                 e.printStackTrace();
             }
+        }
+        else if(status.startsWith("Already logged in")){
+            Platform.runLater(()->statusLabel.setText("Already logged in"));
+            Platform.runLater(()-> statusLabel.setStyle("-fx-text-fill: red;"));
         }
         else{
             Platform.runLater(()->statusLabel.setText("invalid username or password"));

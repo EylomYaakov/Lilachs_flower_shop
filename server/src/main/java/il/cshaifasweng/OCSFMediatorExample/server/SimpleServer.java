@@ -12,10 +12,9 @@ import java.util.List;
 public class SimpleServer extends AbstractServer {
 
 
-	private Connection dbConnection;
 	private static ArrayList<SubscribedClient> SubscribersList = new ArrayList<>();
 	private static ArrayList<ConnectedUser> ConnectedList = new ArrayList<>();
-
+	DatabaseManager databaseManager = new DatabaseManager();
 
 	public SimpleServer(int port) {
 		super(port);
@@ -25,21 +24,9 @@ public class SimpleServer extends AbstractServer {
 			System.out.println("❌ SQLite JDBC driver not found.");
 			e.printStackTrace();
 		}
-		connectToDatabase();
+		DatabaseManager.connect(); // Connect using DatabaseManager
 		DatabaseInitializer.initializeDatabase();
 
-	}
-
-
-	private void connectToDatabase() {
-		try {
-			Class.forName("org.sqlite.JDBC"); // Ensure driver is registered
-			dbConnection = DriverManager.getConnection("jdbc:sqlite:plantshop.db");
-			System.out.println("✅ Connected to SQLite");
-		} catch (Exception e) {
-			System.out.println("❌ Error initializing SQLite database: " + e.getMessage());
-			e.printStackTrace();
-		}
 	}
 
 
@@ -57,7 +44,7 @@ public class SimpleServer extends AbstractServer {
 				SubscribedClient connection = new SubscribedClient(client);
 				SubscribersList.add(connection);
 			}
-			sendCatalog(client);
+			databaseManager.sendCatalog(client);
 
 		} else if (text.startsWith("GET_ITEM")) {
 			// Format: GET_ITEM:<id>
@@ -73,7 +60,8 @@ public class SimpleServer extends AbstractServer {
 			if (parts.length == 3) {
 				int id = Integer.parseInt(parts[1]);
 				double newPrice = Double.parseDouble(parts[2]);
-				updatePrice(client, id, newPrice);
+				ChangePriceEvent event =DatabaseManager.updatePrice(client, id, newPrice);
+				sendToAllClients(event);
 			}
 
 		} else if (text.startsWith("remove client")) {
@@ -95,7 +83,9 @@ public class SimpleServer extends AbstractServer {
 				System.out.println(ConnectedList.size());
 
 				if (!alreadyConnected) {
-					ConnectedList.add(new ConnectedUser(username));
+					ConnectedUser user = DatabaseManager.getUser(username);
+					ConnectedList.add(user);
+					System.out.println("LOGIN_SUCCESS");
 					event = new LoginEvent("LOGIN_SUCCESS");
 				} else {
 					event = new LoginEvent("Already logged in");
@@ -130,28 +120,13 @@ public class SimpleServer extends AbstractServer {
 				String password = parts[2];
 
 				//  Replace with real authentication logic
-				boolean isAuthenticated = checkCredentials(username, password);
+				boolean isAuthenticated = databaseManager.checkCredentials(username, password);
 				return isAuthenticated;
 			} else {
 				return false;
 			}
 		}
 
-		public boolean checkCredentials (String username, String password){
-			String query = "SELECT * FROM Users WHERE username = ? AND password = ?";
-
-			try (PreparedStatement pstmt = dbConnection.prepareStatement(query)) {
-				pstmt.setString(1, username);
-				pstmt.setString(2, password); // 🔐 You can hash this for production
-
-				ResultSet rs = pstmt.executeQuery();
-				return rs.next(); // true if a row was found → valid credentials
-
-			} catch (SQLException e) {
-				e.printStackTrace();
-				return false;
-			}
-		}
 
 
 		public SubscribedClient findClient (ConnectionToClient client){
@@ -177,39 +152,11 @@ public class SimpleServer extends AbstractServer {
 			}
 		}
 
-		private void sendCatalog (ConnectionToClient client){
-			try {
-				Statement stmt = dbConnection.createStatement();
-				ResultSet rs = stmt.executeQuery("SELECT * FROM catalog");
 
-				List<Product> items = new ArrayList<>();
-				while (rs.next()) {
-					Product item = new Product(rs.getInt("id"), rs.getString("name"), rs.getString("type"), rs.getString("description"), rs.getDouble("price"));
-					items.add(item);
-				}
-				client.sendToClient(items);
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
 
-		private Product getItem (ConnectionToClient client,int id){
-			try {
-				PreparedStatement stmt = dbConnection.prepareStatement("SELECT * FROM catalog WHERE id = ?");
-				stmt.setInt(1, id);
-				ResultSet rs = stmt.executeQuery();
-				if (rs.next()) {
-					Product item = new Product(rs.getInt("id"), rs.getString("name"), rs.getString("type"), rs.getString("description"), rs.getDouble("price"));
-					return item;
-				}
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-			return null;
-		}
 
 		private void sendItem (ConnectionToClient client,int id){
-			Product product = getItem(client, id);
+			Product product = DatabaseManager.getItem(client, id);
 			InitDescriptionEvent event = new InitDescriptionEvent(product);
 			try {
 				client.sendToClient(event);
@@ -218,23 +165,7 @@ public class SimpleServer extends AbstractServer {
 			}
 		}
 
-		private void updatePrice (ConnectionToClient client,int id, double price){
-			try {
-				PreparedStatement stmt = dbConnection.prepareStatement("UPDATE catalog SET price = ? WHERE id = ?");
-				stmt.setDouble(1, price);
-				stmt.setInt(2, id);
-				stmt.executeUpdate();
-				Product updatedProduct = getItem(client, id);
-				ChangePriceEvent event = new ChangePriceEvent(updatedProduct);
-				sendToAllClients(event);
 
-				// Send updated catalog
-				sendCatalog(client);
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-
-		}
 
 
 	}

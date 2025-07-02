@@ -10,6 +10,7 @@ public class DatabaseInitializer {
         try (Connection conn = DriverManager.getConnection(DB_URL);
              Statement stmt = conn.createStatement()) {
 
+
             // Create the catalog table if it doesn't exist
             stmt.executeUpdate("""
                 CREATE TABLE IF NOT EXISTS catalog (
@@ -29,7 +30,8 @@ public class DatabaseInitializer {
                     Username TEXT NOT NULL,
                     password TEXT NOT NULL,
                     personalId INTEGER NOT NULL,
-                    creditId INTEGER NOT NULL  
+                    creditId INTEGER NOT NULL,
+                    userType TEXT NOT NULL
                 );
             """);
 
@@ -38,9 +40,9 @@ public class DatabaseInitializer {
             ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM Users");
             if (rs.next() && rs.getInt(1) == 0) {
                 stmt.executeUpdate("""
-                    INSERT INTO Users (Username, password, personalId,creditId) VALUES
-                    ('Ariel', '@A1', 12345678,10),
-                    ('Amit', '@A1', 12345678,10);
+                    INSERT INTO Users (Username, password, personalId,creditId,userType) VALUES
+                    ('Ariel', '@A1', 12345678,10,'A'),
+                    ('Amit', '@A1', 12345678,10,'A');
                     """);
                 System.out.println("🌱 Users initialized with demo data.");
             } else {
