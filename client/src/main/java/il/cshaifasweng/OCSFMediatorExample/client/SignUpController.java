@@ -7,20 +7,16 @@ import il.cshaifasweng.OCSFMediatorExample.entities.SignUpEvent;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.scene.control.Button;
-import javafx.scene.control.TextField;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextArea;
+import javafx.scene.control.*;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
-import javafx.scene.control.MenuButton;
-import javafx.scene.control.MenuItem;
+
 import java.io.IOException;
 
 public class SignUpController {
 
     @FXML
-    private MenuButton accountType;
+    private ComboBox<String> typesList;
 
     @FXML
     private TextField creditCard;
@@ -41,6 +37,11 @@ public class SignUpController {
 
     public void initialize() {
         EventBus.getDefault().register(this);
+        assert typesList != null : "fx:id=\"listBox\" was not injected: check your FXML file 'primary.fxml'.";
+        typesList.getItems().add("store account");
+        typesList.getItems().add("chain account");
+        typesList.getItems().add("subscription");
+
     }
 
     private boolean onlyDigits(String str){
@@ -91,13 +92,14 @@ public class SignUpController {
 
     @FXML
     void signUpPressed(ActionEvent event) {
-        String valid  = checkDetails(username.getText(), password.getText(), idField.getText(), creditCard.getText(), accountType.getText());
+        String accountType = typesList.getSelectionModel().getSelectedItem();
+        String valid  = checkDetails(username.getText(), password.getText(), idField.getText(), creditCard.getText(), accountType);
         if(!valid.isEmpty()){
             Platform.runLater(()-> statusLabel.setText(valid));
             Platform.runLater(()-> statusLabel.setStyle("-fx-text-fill: red;"));
         }
         else {
-            String signupAttempt = "SIGNUP:" + username.getText() + ":" + password.getText() + ":" + idField.getText() + ":" + creditCard.getText() + ":" + accountType.getText();
+            String signupAttempt = "SIGNUP:" + username.getText() + ":" + password.getText() + ":" + idField.getText() + ":" + creditCard.getText() + ":" + accountType;
             try {
                 SimpleClient.getClient().sendToServer(signupAttempt);
             } catch (IOException e) {
@@ -106,11 +108,6 @@ public class SignUpController {
         }
     }
 
-    @FXML
-    void accountTypePressed(ActionEvent event) {
-        MenuItem item = (MenuItem) event.getSource();
-        Platform.runLater(()-> accountType.setText(item.getText()));
-    }
 
     @FXML
     void loginPressed(ActionEvent event) {

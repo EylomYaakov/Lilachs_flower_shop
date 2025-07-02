@@ -146,6 +146,12 @@ public class DatabaseManager {
                 Product item = new Product(rs.getInt("id"), rs.getString("name"), rs.getString("type"), rs.getString("description"), rs.getDouble("price"));
                 items.add(item);
             }
+            //added only for testing the pages mechanism in the catalog - these items are not in the database and therefore exception is raised trying to get their details
+            String[] names = {"a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "q"};
+            for(int i = 0; i < 100; i++) {
+                Product item = new Product(6+i, names[i%11], names[i%11], names[i%11], 6+i);
+                items.add(item);
+            }
             client.sendToClient(items);
         } catch (Exception e) {
             e.printStackTrace();
