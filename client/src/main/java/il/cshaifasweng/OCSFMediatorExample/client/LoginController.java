@@ -32,18 +32,24 @@ public class LoginController {
     private TextField username;
 
     public void initialize() {
-        statusLabel.setText("");
+        Platform.runLater(()->statusLabel.setText(""));
         EventBus.getDefault().register(this);
     }
 
+
     @FXML
     void loginPressed(ActionEvent event) {
-        String loginAttempt = "LOGIN:" + username.getText() + ":" + password.getText();
-        try {
-            SimpleClient.getClient().sendToServer(loginAttempt);
+        if(username.getText().isEmpty() || password.getText().isEmpty()){
+            Platform.runLater(()->statusLabel.setText("please fill all fields"));
+            Platform.runLater(()-> statusLabel.setStyle("-fx-text-fill: red;"));
         }
-        catch (IOException e) {
-            e.printStackTrace();
+        else {
+            String loginAttempt = "LOGIN:" + username.getText() + ":" + password.getText();
+            try {
+                SimpleClient.getClient().sendToServer(loginAttempt);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -58,21 +64,33 @@ public class LoginController {
     }
 
     @Subscribe
-    public void loginAttempt(LoginEvent event) {
-        Platform.runLater(() -> {
-            if (event.getStatus().equals("LOGIN_SUCCESS")) {
-                username.setText("");
-                password.setText("");
-                statusLabel.setText("success");
-            } else if (event.getStatus().equals("Already logged in")){
-                statusLabel.setText("Already logged in");
+    public void loginAttempt(LoginEvent event){
+        String status = event.getStatus();
+        if(status.startsWith("SUCCESS")){
+            Platform.runLater(()->username.setText(""));
+            Platform.runLater(()->password.setText(""));
+            try {
+                SimpleClient.getClient().setAccountType(status.substring(status.indexOf(":")+1));
             }
-            else if (event.getStatus().equals("LOGIN_FAIL")){
-                statusLabel.setText("invalid username or password");
+            catch (IOException e) {
+                e.printStackTrace();
             }
-        });
+        }
+        else{
+            Platform.runLater(()->statusLabel.setText("invalid username or password"));
+            Platform.runLater(()-> statusLabel.setStyle("-fx-text-fill: red;"));
+        }
     }
 
 
+    @FXML
+    void backToCatalog(ActionEvent event) {
+        try {
+            App.setRoot("catalog");
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
 }

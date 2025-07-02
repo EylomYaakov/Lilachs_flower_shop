@@ -40,10 +40,13 @@ public class ItemController {
 
     public void initialize() {
         EventBus.getDefault().register(this);
-        description.setEditable(false);
         try {
             id = SimpleClient.getClient().getLastItemId();
             SimpleClient.getClient().sendToServer("GET_ITEM:" + id);
+            if(!SimpleClient.getClient().getAccountType().equals("worker")){
+                description.setEditable(false);
+                price.setEditable(false);
+            }
         }
         catch (IOException e) {
             e.printStackTrace();

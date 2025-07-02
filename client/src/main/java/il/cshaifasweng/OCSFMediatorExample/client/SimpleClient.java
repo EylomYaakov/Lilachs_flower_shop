@@ -19,6 +19,7 @@ public class SimpleClient extends AbstractClient {
     public static LoginController loginController;
     public static SignUpController signUpController;
     private static SimpleClient client = null;
+    private String accountType = "";
     private int lastItemId;
 
     public void setLastItemId(int lastItemId) {
@@ -27,6 +28,14 @@ public class SimpleClient extends AbstractClient {
 
     public int getLastItemId() {
         return lastItemId;
+    }
+
+    public String getAccountType() {
+        return accountType;
+    }
+
+    public void setAccountType(String accountType) {
+        this.accountType = accountType;
     }
 
     private SimpleClient(String host, int port) throws IOException {
