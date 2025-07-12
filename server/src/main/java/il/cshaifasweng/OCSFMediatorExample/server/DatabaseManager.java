@@ -5,6 +5,9 @@ import il.cshaifasweng.OCSFMediatorExample.entities.ConnectedUser;
 import il.cshaifasweng.OCSFMediatorExample.entities.Product;
 import il.cshaifasweng.OCSFMediatorExample.server.ocsf.ConnectionToClient;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -143,13 +146,17 @@ public class DatabaseManager {
 
             List<Product> items = new ArrayList<>();
             while (rs.next()) {
-                Product item = new Product(rs.getInt("id"), rs.getString("name"), rs.getString("type"), rs.getString("description"), rs.getDouble("price"));
+                Path imagePath = Paths.get("images/" + rs.getString("name") + ".jpg");
+                byte[] image = Files.readAllBytes(imagePath);
+                Product item = new Product(rs.getInt("id"), rs.getString("name"), rs.getString("type"), rs.getString("description"), rs.getDouble("price"), image);
                 items.add(item);
             }
             //added only for testing the pages mechanism in the catalog - these items are not in the database and therefore exception is raised trying to get their details
             String[] names = {"a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "q"};
             for(int i = 0; i < 100; i++) {
-                Product item = new Product(6+i, names[i%11], names[i%11], names[i%11], 6+i);
+                Path imagePath = Paths.get("images/tulip.jpg");
+                byte[] image = Files.readAllBytes(imagePath);
+                Product item = new Product(6+i, names[i%11], names[i%11], names[i%11], 6+i, image);
                 items.add(item);
             }
             client.sendToClient(items);
@@ -164,7 +171,9 @@ public class DatabaseManager {
             stmt.setInt(1, id);
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
-                Product item = new Product(rs.getInt("id"), rs.getString("name"), rs.getString("type"), rs.getString("description"), rs.getDouble("price"));
+                Path imagePath = Paths.get("images/" + rs.getString("name") + ".jpg");
+                byte[] image = Files.readAllBytes(imagePath);
+                Product item = new Product(rs.getInt("id"), rs.getString("name"), rs.getString("type"), rs.getString("description"), rs.getDouble("price"), image);
                 return item;
             }
         } catch (Exception e) {

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="il.cshaifasweng.OCSFMediatorExample.client.AddItemController">
+   <children>
+      <Button layoutX="14.0" layoutY="20.0" mnemonicParsing="false" onAction="#backToCatalog" prefHeight="26.0" prefWidth="150.0" text="get back to catalog" />
+      <Label alignment="CENTER" layoutX="258.0" layoutY="19.0" prefHeight="26.0" prefWidth="107.0" text="add item">
+         <font>
+            <Font size="24.0" />
+         </font>
+      </Label>
+      <Label layoutX="207.0" layoutY="60.0" prefHeight="17.0" prefWidth="74.0" text="name:" />
+      <TextField fx:id="name" layoutX="207.0" layoutY="77.0" prefHeight="29.0" prefWidth="215.0" />
+      <Label layoutX="207.0" layoutY="112.0" prefHeight="17.0" prefWidth="74.0" text="price:" />
+      <TextField fx:id="price" layoutX="207.0" layoutY="129.0" prefHeight="26.0" prefWidth="215.0" />
+      <Label layoutX="207.0" layoutY="163.0" prefHeight="17.0" prefWidth="74.0" text="description:" />
+      <TextField fx:id="description" layoutX="208.0" layoutY="184.0" prefHeight="26.0" prefWidth="215.0" />
+      <Label layoutX="207.0" layoutY="216.0" prefHeight="17.0" prefWidth="114.0" text="type:" />
+      <TextField fx:id="type" layoutX="208.0" layoutY="233.0" prefHeight="29.0" prefWidth="215.0" />
+      <Label layoutX="207.0" layoutY="264.0" prefHeight="17.0" prefWidth="114.0" text="path to image:" />
+      <TextField fx:id="imagePath" layoutX="207.0" layoutY="281.0" prefHeight="29.0" prefWidth="215.0" />
+      <Button layoutX="257.0" layoutY="359.0" mnemonicParsing="false" onAction="#addItem" prefHeight="27.0" prefWidth="87.0" text="add item" />
+      <Label fx:id="statusLabel" alignment="TOP_LEFT" contentDisplay="CENTER" layoutX="209.0" layoutY="321.0" prefHeight="29.0" prefWidth="209.0" />
+   </children>
+</AnchorPane>

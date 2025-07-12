@@ -19,7 +19,7 @@ public class SimpleClient extends AbstractClient {
     public static LoginController loginController;
     public static SignUpController signUpController;
     private static SimpleClient client = null;
-    private String accountType = "";
+    private String accountType = "worker";
     private int lastItemId;
 
     public void setLastItemId(int lastItemId) {

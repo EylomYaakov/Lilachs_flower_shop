@@ -2,17 +2,33 @@
 
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
-<?import javafx.scene.control.TextArea?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.text.Font?>
 
 <AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="426.0" prefWidth="615.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="il.cshaifasweng.OCSFMediatorExample.client.ItemController">
    <children>
-      <TextArea fx:id="description" layoutX="14.0" layoutY="14.0" prefHeight="258.0" prefWidth="352.0" />
-      <TextField fx:id="price" layoutX="14.0" layoutY="281.0" prefHeight="26.0" prefWidth="239.0" />
-      <Button fx:id="updatePriceBtn" layoutX="262.0" layoutY="281.0" mnemonicParsing="false" onAction="#updatePrice" prefHeight="26.0" prefWidth="103.0" text="update price" />
-      <Button fx:id="catalogBtn" layoutX="14.0" layoutY="366.0" mnemonicParsing="false" onAction="#backToCatalog" prefHeight="26.0" prefWidth="184.0" text="get back to catalog" />
-      <Label fx:id="statusLabel" layoutX="14.0" layoutY="318.0" prefHeight="26.0" prefWidth="198.0" />
       <Button fx:id="loginButton" layoutX="536.0" layoutY="14.0" mnemonicParsing="false" onAction="#loginPressed" prefHeight="26.0" prefWidth="57.0" text="login" />
+      <Button layoutX="24.0" layoutY="30.0" mnemonicParsing="false" onAction="#backToCatalog" prefHeight="26.0" prefWidth="150.0" text="get back to catalog" />
+      <Label alignment="CENTER" layoutX="258.0" layoutY="29.0" prefHeight="26.0" prefWidth="134.0" text="item details">
+         <font>
+            <Font size="24.0" />
+         </font>
+      </Label>
+      <Label layoutX="24.0" layoutY="66.0" prefHeight="17.0" prefWidth="74.0" text="name:" />
+      <TextField fx:id="name" layoutX="24.0" layoutY="89.0" prefHeight="29.0" prefWidth="375.0" />
+      <Label layoutX="24.0" layoutY="124.0" prefHeight="17.0" prefWidth="74.0" text="price:" />
+      <TextField fx:id="price" layoutX="24.0" layoutY="141.0" prefHeight="29.0" prefWidth="375.0" />
+      <Label layoutX="24.0" layoutY="178.0" prefHeight="17.0" prefWidth="74.0" text="description:" />
+      <TextField fx:id="description" layoutX="24.0" layoutY="199.0" prefHeight="26.0" prefWidth="375.0" />
+      <Label layoutX="25.0" layoutY="234.0" prefHeight="17.0" prefWidth="74.0" text="type:" />
+      <TextField fx:id="type" layoutX="23.0" layoutY="253.0" prefHeight="26.0" prefWidth="375.0" />
+      <ImageView fx:id="image" fitHeight="146.0" fitWidth="175.0" layoutX="418.0" layoutY="106.0" pickOnBounds="true" preserveRatio="true" />
+      <Label fx:id="imageLabel" layoutX="25.0" layoutY="286.0" prefHeight="16.0" prefWidth="138.0" text="image(enter new path):" />
+      <TextField fx:id="imagePath" layoutX="25.0" layoutY="314.0" prefHeight="26.0" prefWidth="375.0" />
+      <Button fx:id="updateButton" layoutX="21.0" layoutY="384.0" mnemonicParsing="false" onAction="#updateDetails" prefHeight="27.0" prefWidth="123.0" text="update details" />
+      <Label fx:id="statusLabel" alignment="TOP_LEFT" contentDisplay="CENTER" layoutX="28.0" layoutY="347.0" prefHeight="29.0" prefWidth="209.0" />
+      <Button fx:id="removeItemButton" layoutX="168.0" layoutY="384.0" mnemonicParsing="false" onAction="#removeItem" prefHeight="27.0" prefWidth="123.0" text="remove this item" />
    </children>
 </AnchorPane>
