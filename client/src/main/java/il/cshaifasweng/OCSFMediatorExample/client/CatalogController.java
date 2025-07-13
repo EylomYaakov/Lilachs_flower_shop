@@ -6,14 +6,10 @@ import javafx.application.Platform;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import javafx.fxml.FXML;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextArea;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import org.greenrobot.eventbus.EventBus;
@@ -103,16 +99,20 @@ public class CatalogController {
     @FXML
     private ImageView img6;
 
+    @FXML
+    private ComboBox<String> typesFilter;
+
     private Button[] buttons;
     private TextArea[] texts;
     private int[] ids;
     private ImageView[] images;
     private List<Product> products = new ArrayList<>();
-    private int currentPage = 0;
+    private int currentIndex = 0;
     private final int pageSize = 6;
     private boolean chooseItems = false;
     private List<Product> saleProducts = new ArrayList<>();
     private boolean[] isSalePressed;
+    private boolean[] toShow;
 
     @FXML
     void buttonPressed(ActionEvent event) {
@@ -131,13 +131,13 @@ public class CatalogController {
                 else{
                     if(clicked.getStyle().startsWith("-fx-border-color: red")){
                         clicked.setStyle("");
-                        saleProducts.remove(products.get(currentPage*pageSize+i));
-                        isSalePressed[currentPage*pageSize+i] = false;
+                        saleProducts.remove(products.get(currentIndex-currentPageSize()+i));
+                        isSalePressed[currentIndex-currentPageSize()+i] = false;
                     }
                     else {
-                        saleProducts.add(products.get(currentPage*pageSize+i));
+                        saleProducts.add(products.get(currentIndex-currentPageSize()+i));
                         clicked.setStyle("-fx-border-color: red; -fx-border-width: 2px; -fx-border-radius: 5px;");
-                        isSalePressed[currentPage*pageSize+i] = true;
+                        isSalePressed[currentIndex-currentPageSize()+i] = true;
                     }
                 }
             }
@@ -198,40 +198,87 @@ public class CatalogController {
         return details;
     }
 
+
+    private int productLeftToShow(){
+        int count = 0;
+        for(int i=currentIndex; i<toShow.length; i++){
+            if(toShow[i]){
+                count++;
+            }
+        }
+        return count;
+    }
+
+    private Product[] getPage(){
+        int size = Math.min(productLeftToShow(), pageSize);
+        Product[] page = new Product[size];
+        int i = 0;
+        while(i < size){
+            if(toShow[currentIndex]){
+                page[i] = products.get(currentIndex);
+                i++;
+            }
+            currentIndex++;
+        }
+        return page;
+    }
+
     @Subscribe
     public void initCatalog(List<Product> products){
         this.products = products;
         isSalePressed = new boolean[products.size()];
-        int firstPageSize = Math.min(products.size(), pageSize);
-        Product[] firstPage = new Product[firstPageSize];
-        for(int i = 0; i < firstPageSize; i++){
-            firstPage[i] = products.get(i);
-        }
+        toShow = new boolean[products.size()];
+        Arrays.fill(toShow, true);
+        Product[] firstPage = getPage();
         initPage(firstPage);
         Platform.runLater(()->leftArrow.setVisible(false));
         if(products.size() <= pageSize){
             Platform.runLater(()->rightArrow.setVisible(false));
         }
+        typesFilter.getItems().add("all items");
+        Set<String> types = new HashSet<>();
+        for(Product p : products){
+            types.add(p.type);
+        }
+        for(String type : types){
+            typesFilter.getItems().add(type);
+        }
+    }
+
+    private int currentPageSize(){
+        int size = 0;
+        for(int i=0; i<buttons.length; i++){
+            int finalI = i;
+            if(buttons[i].isVisible()){
+                size++;
+            }
+        }
+        return size;
     }
 
     private void initPage(Product[] products){
         for(int i=0; i<products.length; i++){
             int finalI = i;
+            Platform.runLater(()->buttons[finalI].setVisible(true));
+            Platform.runLater(()->texts[finalI].setVisible(true));
+            Platform.runLater(()->images[finalI].setVisible(true));
+            Platform.runLater(()->rightArrow.setVisible(true));
             Platform.runLater(()->buttons[finalI].setStyle(""));
             Platform.runLater(()->texts[finalI].setText(getDetails(products[finalI])));
             ids[finalI] = products[finalI].id;
             Platform.runLater(()->texts[finalI].setEditable(false));
             Image image = new Image(new ByteArrayInputStream(products[finalI].image));
             Platform.runLater(()->images[finalI].setImage(image));
-            if(isSalePressed[currentPage*pageSize+i]){
+           if(isSalePressed[currentIndex-products.length+i]){
                 Platform.runLater(()->buttons[finalI].setStyle("-fx-border-color: red; -fx-border-width: 2px; -fx-border-radius: 5px;"));
-            }
+           }
 
         }
         for(int i = products.length; i < pageSize; i++){
             int finalI = i;
             Platform.runLater(()->buttons[finalI].setVisible(false));
             Platform.runLater(()->texts[finalI].setVisible(false));
+            Platform.runLater(()->images[finalI].setVisible(false));
             Platform.runLater(()->rightArrow.setVisible(false));
         }
     }
@@ -247,19 +294,47 @@ public class CatalogController {
         }
     }
 
-    @FXML
-    void leftArrowPressed(ActionEvent event) {
-        Product[] prevPage = new Product[pageSize];
-        currentPage--;
-        for(int i = 0; i < pageSize; i++){
-            int finalI = i;
-            prevPage[i] = products.get(i + (currentPage)*pageSize);
-            Platform.runLater(()->buttons[finalI].setVisible(true));
-            Platform.runLater(()->texts[finalI].setVisible(true));
 
+    private void findPrevPageStart(){
+        int itemCount = 0;
+        for(int i=currentIndex-1; i>=0; i--){
+            if(toShow[i]){
+                itemCount++;
+            }
+            if(itemCount == pageSize + currentPageSize()){
+                currentIndex = i;
+                return;
+            }
         }
+    }
+
+    private boolean isAnotherPrevPage(){
+        int beforeCount = 0;
+        for(int i=currentIndex-1; i>=0; i--){
+            if(toShow[i]){
+                beforeCount++;
+            }
+            if(beforeCount > pageSize){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @FXML
+    void leftArrowPressed(ActionEvent event){
+        for(int i = 0; i<buttons.length; i++){
+            if(!buttons[i].isVisible()){
+                int finalI = i;
+                Platform.runLater(()->buttons[finalI].setVisible(true));
+                Platform.runLater(()->texts[finalI].setVisible(true));
+                Platform.runLater(()->images[finalI].setVisible(true));
+            }
+        }
+        findPrevPageStart();
+        Product[] prevPage = getPage();
         initPage(prevPage);
-        if(currentPage != 0){
+        if(isAnotherPrevPage()){
             Platform.runLater(()->leftArrow.setVisible(true));
         }
         else{
@@ -268,17 +343,18 @@ public class CatalogController {
         Platform.runLater(()->rightArrow.setVisible(true));
     }
 
+
+
     @FXML
     void rightArrowPressed(ActionEvent event) {
-        int nextPageSize = Math.min(products.size() - (currentPage+1)*pageSize, pageSize);
-        Product[] nextPage = new Product[nextPageSize];
-        currentPage++;
-        for(int i = 0; i < nextPageSize; i++){
-            nextPage[i] = products.get(i + currentPage*pageSize);
-        }
+        Product[] nextPage = getPage();
         initPage(nextPage);
         Platform.runLater(()->leftArrow.setVisible(true));
+        if(productLeftToShow() == 0){
+            Platform.runLater(()->rightArrow.setVisible(false));
+        }
     }
+
 
     @FXML
     void addItem(ActionEvent event) {
@@ -343,6 +419,22 @@ public class CatalogController {
         catch (IOException e){
             e.printStackTrace();
         }
+    }
+
+    @FXML
+    void filter(ActionEvent event) {
+        String chosenType =  typesFilter.getSelectionModel().getSelectedItem();
+        for(int i = 0; i < products.size(); i++){
+            if(products.get(i).type.equals(chosenType) || chosenType.equals("all items")){
+                toShow[i] = true;
+            }
+            else{
+                toShow[i] = false;
+            }
+        }
+        currentIndex = 0;
+        Product[] page = getPage();
+        initPage(page);
     }
 
 }

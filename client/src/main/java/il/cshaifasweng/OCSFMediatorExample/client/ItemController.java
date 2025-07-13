@@ -65,7 +65,6 @@ public class ItemController {
     int id;
 
 
-
     public void initialize() {
         EventBus.getDefault().register(this);
         try {
