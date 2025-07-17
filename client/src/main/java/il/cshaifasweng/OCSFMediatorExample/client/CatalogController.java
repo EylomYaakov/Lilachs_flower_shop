@@ -102,6 +102,12 @@ public class CatalogController {
     @FXML
     private ComboBox<String> typesFilter;
 
+    @FXML
+    private ComboBox<String> shopsFilter;
+
+    @FXML
+    private Button chooseAllButton;
+
     private Button[] buttons;
     private TextArea[] texts;
     private int[] ids;
@@ -113,6 +119,12 @@ public class CatalogController {
     private List<Product> saleProducts = new ArrayList<>();
     private boolean[] isSalePressed;
     private boolean[] toShow;
+    private static List<String> shops;
+
+
+    public static List<String> getShops(){
+        return shops;
+    }
 
     @FXML
     void buttonPressed(ActionEvent event) {
@@ -161,7 +173,7 @@ public class CatalogController {
         }
     }
 
-
+    @FXML
     public void initialize() {
         buttons = new Button[]{btn1, btn2, btn3, btn4, btn5, btn6};
         texts = new TextArea[]{txt1, txt2, txt3, txt4, txt5, txt6};
@@ -171,6 +183,7 @@ public class CatalogController {
         Platform.runLater(()->discountLabel.setVisible(false));
         Platform.runLater(()->startSaleButton.setVisible(false));
         Platform.runLater(()->discount.setVisible(false));
+        Platform.runLater(()->chooseAllButton.setVisible(false));
         try{
             SimpleClient.getClient().sendToServer("GET_CATALOG");
             if (!SimpleClient.getClient().getAccountType().isEmpty()) {
@@ -221,6 +234,14 @@ public class CatalogController {
             currentIndex++;
         }
         return page;
+    }
+
+    @Subscribe void initShops(List<String> shops){
+        CatalogController.shops = shops;
+        shopsFilter.getItems().add("all chain");
+        for(String shop : shops){
+            shopsFilter.getItems().add(shop);
+        }
     }
 
     @Subscribe
@@ -373,6 +394,7 @@ public class CatalogController {
         Platform.runLater(()->discountLabel.setVisible(chooseItems));
         Platform.runLater(()->startSaleButton.setVisible(chooseItems));
         Platform.runLater(()->discount.setVisible(chooseItems));
+        Platform.runLater(()->chooseAllButton.setVisible(chooseItems));
         if(chooseItems){
             saleButton.setText("hide sale options");
             discount.setText("");
@@ -381,25 +403,19 @@ public class CatalogController {
         else{
             saleButton.setText("show sale options");
             isSalePressed = new boolean[products.size()];
-            for(int i = 0; i < buttons.length; i++){
-                int finalI = i;
-                Platform.runLater(()->buttons[finalI].setStyle(""));
-            }
+            Utils.setStyleAllButtons(buttons, "");
         }
     }
 
     @FXML
     void startSale(ActionEvent event) {
-        int discountAmount = 0;
-        try{
-            discountAmount = Integer.parseInt(discount.getText());
-        }
-        catch(NumberFormatException e){
-            statusLabel.setText("Invalid discount amount");
+        int discountAmount = Utils.getDiscount(discount.getText());
+        if(saleProducts.isEmpty()){
+            statusLabel.setText("please choose items");
             statusLabel.setStyle("-fx-text-fill: red");
             return;
         }
-        if(discountAmount < 1 || discountAmount > 99){
+        if(discountAmount < 0){
             statusLabel.setText("Invalid discount amount");
             statusLabel.setStyle("-fx-text-fill: red");
             return;
@@ -415,6 +431,9 @@ public class CatalogController {
             statusLabel.setStyle("-fx-text-fill: green");
             saleProducts.clear();
             chooseItems = false;
+            Arrays.fill(isSalePressed, false);
+            Utils.setStyleAllButtons(buttons, "");
+
         }
         catch (IOException e){
             e.printStackTrace();
@@ -424,8 +443,9 @@ public class CatalogController {
     @FXML
     void filter(ActionEvent event) {
         String chosenType =  typesFilter.getSelectionModel().getSelectedItem();
+        String chosenShop = shopsFilter.getSelectionModel().getSelectedItem();
         for(int i = 0; i < products.size(); i++){
-            if(products.get(i).type.equals(chosenType) || chosenType.equals("all items")){
+            if((products.get(i).type.equals(chosenType) || chosenType.equals("all items")) && (products.get(i).shop.equals(chosenShop) || products.get(i).shop.equals("all chain"))){
                 toShow[i] = true;
             }
             else{
@@ -435,6 +455,23 @@ public class CatalogController {
         currentIndex = 0;
         Product[] page = getPage();
         initPage(page);
+    }
+
+    @FXML
+    void chooseAll(ActionEvent event) {
+        String style;
+        if(chooseAllButton.getText().equals("choose all items")){
+            Platform.runLater(()->chooseAllButton.setText("reset choice"));
+            Arrays.fill(isSalePressed, true);
+            style = "-fx-border-color: red; -fx-border-width: 2px; -fx-border-radius: 5px;";
+        }
+        else{
+            Platform.runLater(()->chooseAllButton.setText("choose all items"));
+            Arrays.fill(isSalePressed, false);
+            style = "";
+        }
+        Utils.setStyleAllButtons(buttons, style);
+
     }
 
 }

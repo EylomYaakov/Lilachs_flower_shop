@@ -11,6 +11,7 @@ public class Product implements Serializable {
     public double price;
     public byte[] image;
     public int sale;
+    public String shop;
 
 
     public Product(int id, String name, String type, String description, double price, byte[] image) {

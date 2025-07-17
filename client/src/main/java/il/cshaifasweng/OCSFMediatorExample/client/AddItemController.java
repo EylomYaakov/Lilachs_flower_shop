@@ -3,6 +3,7 @@ package il.cshaifasweng.OCSFMediatorExample.client;
 import il.cshaifasweng.OCSFMediatorExample.entities.Product;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 
@@ -13,6 +14,7 @@ import java.nio.file.Paths;
 import java.nio.file.Files;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
+import java.util.List;
 
 public class AddItemController {
 
@@ -34,44 +36,39 @@ public class AddItemController {
     @FXML
     private TextField type;
 
-    private static boolean isValidImagePath(String imagePath) {
-        Path path = Paths.get(imagePath);
-        if (!Files.exists(path) || !Files.isReadable(path)) {
-            return false;
-        }
-        try {
-            BufferedImage img = ImageIO.read(path.toFile());
-            return img != null;
-        } catch (IOException e) {
-            return false;
-        }
+    @FXML
+    private ComboBox<String> shopsFilter;
+
+
+    @FXML
+    public void initialize() {
+        //List<String> shops = CatalogController.getShops();
+        shopsFilter.getItems().add("all chain");
+//        for(String shop : shops) {
+//            shopsFilter.getItems().add(shop);
+//        }
     }
+
 
     @FXML
     void addItem(ActionEvent event) {
         String productName = name.getText();
         String productDescription = description.getText();
         String productImagePath = imagePath.getText();
-        String ProductType = type.getText();
-        String ProductPrice = price.getText();
-        double productPriceDouble = 0;
+        String productType = type.getText();
+        String productPrice = price.getText();
+        String productShop =  shopsFilter.getSelectionModel().getSelectedItem();
+        double productPriceDouble = Utils.getPrice(productPrice);
         byte[] image = null;
-        if(productName.isEmpty() || productDescription.isEmpty() || productImagePath.isEmpty() || ProductType.isEmpty() || ProductPrice.isEmpty()) {
+        if(productName.isEmpty() || productDescription.isEmpty() || productImagePath.isEmpty() || productType.isEmpty() || productPrice.isEmpty() || productShop == null) {
             Platform.runLater(()->statusLabel.setText("Please fill all the fields"));
             return;
         }
-        try{
-            productPriceDouble = Double.parseDouble(ProductPrice);
-            if(productPriceDouble < 0) {
-                Platform.runLater(()->statusLabel.setText("Invalid price"));
-                return;
-            }
-        }
-        catch (NumberFormatException e) {
-            Platform.runLater(()->statusLabel.setText("Invalid price"));
+        if(productPriceDouble < 0){
+            Platform.runLater(() -> statusLabel.setText("Invalid price"));
             return;
         }
-        if(!isValidImagePath(productImagePath)) {
+        if(!Utils.isValidImagePath(productImagePath)) {
             Platform.runLater(()->statusLabel.setText("Invalid image path"));
             return;
         }
@@ -82,7 +79,7 @@ public class AddItemController {
             e.printStackTrace();
         }
         //server should give an actual id
-        Product product = new Product(-1 ,productName, ProductType, productDescription, productPriceDouble, image);
+        Product product = new Product(-1 ,productName, productType, productDescription, productPriceDouble, image);
         try {
             SimpleClient.getClient().sendToServer(product);
         }

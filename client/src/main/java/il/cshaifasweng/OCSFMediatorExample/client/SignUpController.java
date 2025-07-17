@@ -12,6 +12,7 @@ import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 
 import java.io.IOException;
+import java.util.List;
 
 public class SignUpController {
 
@@ -38,9 +39,12 @@ public class SignUpController {
     public void initialize() {
         EventBus.getDefault().register(this);
         assert typesList != null : "fx:id=\"listBox\" was not injected: check your FXML file 'primary.fxml'.";
-        typesList.getItems().add("store account");
+        List<String> shops = CatalogController.getShops();
         typesList.getItems().add("chain account");
         typesList.getItems().add("subscription");
+        for (String shop : shops) {
+            typesList.getItems().add("shop account: " + shop);
+        }
 
     }
 

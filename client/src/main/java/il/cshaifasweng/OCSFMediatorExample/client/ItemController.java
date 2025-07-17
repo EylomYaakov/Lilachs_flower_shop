@@ -8,18 +8,14 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Label;
-import javafx.scene.control.TextArea;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class ItemController {
@@ -139,18 +135,6 @@ public class ItemController {
         }
     }
 
-    private static boolean isValidImagePath(String imagePath) {
-        Path path = Paths.get(imagePath);
-        if (!Files.exists(path) || !Files.isReadable(path)) {
-            return false;
-        }
-        try {
-            BufferedImage img = ImageIO.read(path.toFile());
-            return img != null;
-        } catch (IOException e) {
-            return false;
-        }
-    }
 
     @FXML
     void updateDetails(ActionEvent event) {
@@ -159,26 +143,19 @@ public class ItemController {
         String productImagePath = imagePath.getText();
         String ProductType = type.getText();
         String ProductPrice = price.getText();
-        int productPriceInt = 0;
+        double productPriceDouble = Utils.getPrice(ProductPrice);
         byte[] imageBytes = null;
         Product product = null;
         if(productName.isEmpty() || productDescription.isEmpty() || ProductPrice.isEmpty() || ProductType.isEmpty()) {
             Platform.runLater(() -> statusLabel.setText("please fill all fields"));
             return;
         }
-        try{
-            productPriceInt = Integer.parseInt(ProductPrice);
-            if(productPriceInt < 0) {
-                Platform.runLater(()->statusLabel.setText("Invalid price"));
-                return;
-            }
-        }
-        catch (NumberFormatException e) {
-            Platform.runLater(()->statusLabel.setText("Invalid price"));
+        if(productPriceDouble < 0){
+            Platform.runLater(() -> statusLabel.setText("Invalid price"));
             return;
         }
         if(!productImagePath.isEmpty()) {
-            if (!isValidImagePath(productImagePath)) {
+            if (!Utils.isValidImagePath(productImagePath)) {
                 Platform.runLater(() -> statusLabel.setText("Invalid image path"));
                 return;
             }
@@ -189,10 +166,10 @@ public class ItemController {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            product = new Product(id ,productName, ProductType, productDescription, productPriceInt, imageBytes );
+            product = new Product(id ,productName, ProductType, productDescription, productPriceDouble, imageBytes );
         }
         else{
-            product = new Product(id ,productName, ProductType, productDescription, productPriceInt, currentItem.image);
+            product = new Product(id ,productName, ProductType, productDescription, productPriceDouble, currentItem.image);
         }
         try {
             SimpleClient.getClient().sendToServer(product);
