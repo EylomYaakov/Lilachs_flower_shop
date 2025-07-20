@@ -5,9 +5,7 @@ import il.cshaifasweng.OCSFMediatorExample.entities.Product;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.scene.control.Button;
-import javafx.scene.control.TextField;
-import javafx.scene.control.Label;
+import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import org.greenrobot.eventbus.EventBus;
@@ -48,6 +46,9 @@ public class ItemController {
     private Label statusLabel;
 
     @FXML
+    private Label addedToCartLabel;
+
+    @FXML
     private TextField type;
 
     @FXML
@@ -58,6 +59,9 @@ public class ItemController {
 
     private Product currentItem;
 
+    @FXML
+    private Spinner<Integer> amountSpinner;
+
     int id;
 
 
@@ -66,6 +70,7 @@ public class ItemController {
         try {
             id = SimpleClient.getClient().getLastItemId();
             SimpleClient.getClient().sendToServer("GET_ITEM:" + id);
+            amountSpinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 1000));
             if(!SimpleClient.getClient().getAccountType().equals("worker")){
                 Platform.runLater(()->name.setEditable(false));
                 Platform.runLater(()->description.setEditable(false));
@@ -220,6 +225,13 @@ public class ItemController {
         catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    @FXML
+    void addToCart(ActionEvent event) {
+        SimpleClient.addToCart(currentItem, amountSpinner.getValue());
+        Platform.runLater(()->addedToCartLabel.setText("Item added to cart"));
+        Platform.runLater(()->addedToCartLabel.setStyle("-fx-text-fill: green"));
     }
 
 }

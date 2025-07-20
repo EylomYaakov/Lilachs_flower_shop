@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="il.cshaifasweng.OCSFMediatorExample.client.OrdersController">
+   <children>
+      <Button layoutX="22.0" layoutY="23.0" mnemonicParsing="false" onAction="#backToCatalog" prefHeight="26.0" prefWidth="144.0" text="back to catalog" />
+      <Label layoutX="225.0" layoutY="14.0" text="my orders">
+         <font>
+            <Font size="36.0" />
+         </font>
+      </Label>
+      <Label fx:id="label1" layoutX="45.0" layoutY="70.0" prefHeight="26.0" prefWidth="388.0" text="Label" />
+      <Button fx:id="button1" layoutX="441.0" layoutY="70.0" mnemonicParsing="false" onAction="#buttonPressed" prefHeight="26.0" prefWidth="112.0" text="cancel order" />
+      <Label fx:id="label2" layoutX="45.0" layoutY="149.0" prefHeight="26.0" prefWidth="388.0" text="Label" />
+      <Label fx:id="label3" layoutX="45.0" layoutY="226.0" prefHeight="26.0" prefWidth="388.0" text="Label" />
+      <Button fx:id="button3" layoutX="441.0" layoutY="226.0" mnemonicParsing="false" onAction="#buttonPressed" prefHeight="26.0" prefWidth="118.0" text="cancel order" />
+      <Label fx:id="statusLabel" layoutX="20.0" layoutY="317.0" prefHeight="12.0" prefWidth="593.0" />
+      <Button fx:id="rightArrow" layoutX="595.0" layoutY="174.0" mnemonicParsing="false" onAction="#rightArrowPressed" text="&gt;" />
+      <Button fx:id="leftArrow" layoutX="2.0" layoutY="174.0" mnemonicParsing="false" onAction="#leftArrowPressed" text="&lt;" />
+      <TextField fx:id="complaint1" layoutX="45.0" layoutY="104.0" prefHeight="17.0" prefWidth="388.0" visible="false" />
+      <Button fx:id="sendComplaintButton1" layoutX="444.0" layoutY="105.0" mnemonicParsing="false" onAction="#sendComplaint" prefHeight="26.0" prefWidth="112.0" text="send complaint" visible="false" />
+      <TextField fx:id="complaint2" layoutX="45.0" layoutY="187.0" prefHeight="17.0" prefWidth="388.0" visible="false" />
+      <Button fx:id="button2" layoutX="444.0" layoutY="149.0" mnemonicParsing="false" onAction="#buttonPressed" prefHeight="26.0" prefWidth="112.0" text="cancel order" />
+      <Button fx:id="sendComplaintButton2" layoutX="444.0" layoutY="187.0" mnemonicParsing="false" onAction="#sendComplaint" prefHeight="26.0" prefWidth="112.0" text="send complaint" visible="false" />
+      <TextField fx:id="complaint3" layoutX="45.0" layoutY="259.0" prefHeight="17.0" prefWidth="388.0" visible="false" />
+      <Button fx:id="sendComplaintButton3" layoutX="444.0" layoutY="259.0" mnemonicParsing="false" onAction="#sendComplaint" prefHeight="26.0" prefWidth="112.0" text="send complaint" visible="false" />
+   </children>
+</AnchorPane>

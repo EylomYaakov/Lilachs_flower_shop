@@ -1,0 +1,116 @@
+package il.cshaifasweng.OCSFMediatorExample.client;
+
+
+import il.cshaifasweng.OCSFMediatorExample.entities.Product;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import javafx.scene.control.*;
+
+public class Paginator<T>{
+    private final List<T> items;
+    private final int pageSize;
+    private int currentIndex = 0;
+    private boolean[] productsToShow;
+    private int currentPageSize;
+
+    public Paginator(List<T> items, int pageSize) {
+        this.items = items;
+        this.pageSize = pageSize;
+        productsToShow = new boolean[items.size()];
+        Arrays.fill(productsToShow, true);
+
+    }
+
+    public void addItem(T item) {
+        items.add(item);
+        productsToShow = new boolean[items.size()];
+        Arrays.fill(productsToShow, true);
+    }
+
+    public void removeItem(T item) {
+        items.remove(item);
+        productsToShow = new boolean[items.size()];
+        Arrays.fill(productsToShow, true);
+    }
+
+    public int productsLeftToShow(){
+        int count = 0;
+        for(int i=currentIndex; i<productsToShow.length; i++){
+            if(productsToShow[i]){
+                count++;
+            }
+        }
+        return count;
+    }
+    public List<T> getCurrentPageItems(){
+        int size = Math.min(productsLeftToShow(), pageSize);
+        List<T> page = new ArrayList<T>();
+        int i = 0;
+        while(i < size){
+            if(productsToShow[currentIndex]){
+                page.add(items.get(currentIndex));
+                i++;
+            }
+            currentIndex++;
+        }
+        currentPageSize = page.size();
+        return page;
+    }
+
+    public boolean hasNextPage() {
+        return productsLeftToShow() > 0;
+    }
+
+
+    public boolean hasPreviousPage(){
+        for(int i=currentIndex-currentPageSize-1; i>=0; i--){
+            if(productsToShow[i]){
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+    public void changeShowProducts(int index, boolean value){
+        productsToShow[index] = value;
+    }
+
+    public void prevPage(){
+        int itemCount = 0;
+        for(int i=currentIndex-currentPageSize-1; i>=0; i--){
+            if(productsToShow[i]){
+                itemCount++;
+            }
+            if(itemCount == pageSize){
+                currentIndex = i;
+                return;
+            }
+        }
+    }
+
+    public int getCurrentPageSize() {
+        return currentPageSize;
+    }
+
+    public int getCurrentIndex() {
+        return currentIndex;
+    }
+
+    public void setCurrentIndex(int currentIndex) {
+        this.currentIndex = currentIndex;
+    }
+
+    public void reset(){
+        currentIndex = 0;
+    }
+
+    public void clearItems(){
+        items.clear();
+        currentIndex = 0;
+        productsToShow = new boolean[0];
+    }
+
+}

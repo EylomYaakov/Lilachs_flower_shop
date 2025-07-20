@@ -57,4 +57,5 @@ public class Utils {
             Platform.runLater(()->button.setStyle(style));
         }
     }
+
 }

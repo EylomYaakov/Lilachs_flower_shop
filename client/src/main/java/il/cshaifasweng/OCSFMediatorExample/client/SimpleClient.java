@@ -1,15 +1,15 @@
 package il.cshaifasweng.OCSFMediatorExample.client;
 
-import il.cshaifasweng.OCSFMediatorExample.entities.ChangePriceEvent;
-import il.cshaifasweng.OCSFMediatorExample.entities.InitDescriptionEvent;
-import il.cshaifasweng.OCSFMediatorExample.entities.LoginEvent;
-import il.cshaifasweng.OCSFMediatorExample.entities.Product;
+import il.cshaifasweng.OCSFMediatorExample.entities.*;
 import org.greenrobot.eventbus.EventBus;
 
 import il.cshaifasweng.OCSFMediatorExample.client.ocsf.AbstractClient;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public class SimpleClient extends AbstractClient {
 
@@ -21,6 +21,20 @@ public class SimpleClient extends AbstractClient {
     private static SimpleClient client = null;
     private String accountType = "worker";
     private int lastItemId;
+    private static Map<BaseProduct, Integer> cart = new LinkedHashMap<>();
+    private static int accountId;
+
+    public static int getId(){
+        return accountId;
+    }
+
+    public static Map<BaseProduct, Integer> getCart(){
+        return cart;
+    }
+
+    public static void addToCart(Product product, int amount){
+        cart.merge(product, amount, Integer::sum);
+    }
 
     public void setLastItemId(int lastItemId) {
         this.lastItemId = lastItemId;

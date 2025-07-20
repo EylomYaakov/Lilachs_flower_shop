@@ -1,11 +1,13 @@
 package il.cshaifasweng.OCSFMediatorExample.client;
 
 import il.cshaifasweng.OCSFMediatorExample.entities.ChangePriceEvent;
+import il.cshaifasweng.OCSFMediatorExample.entities.Sale;
 import javafx.event.ActionEvent;
 import javafx.application.Platform;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.*;
 
 import javafx.fxml.FXML;
@@ -108,18 +110,26 @@ public class CatalogController {
     @FXML
     private Button chooseAllButton;
 
+    @FXML
+    private Label saleTimeLabel;
+
+    @FXML
+    private Spinner<Integer> timeAmountSpinner;
+
+    @FXML
+    private ComboBox<String> timeList;
+
+
     private Button[] buttons;
     private TextArea[] texts;
     private int[] ids;
     private ImageView[] images;
     private List<Product> products = new ArrayList<>();
-    private int currentIndex = 0;
-    private final int pageSize = 6;
     private boolean chooseItems = false;
-    private List<Product> saleProducts = new ArrayList<>();
+    private final List<Product> saleProducts = new ArrayList<>();
     private boolean[] isSalePressed;
-    private boolean[] toShow;
     private static List<String> shops;
+    private Paginator<Product> paginator;
 
 
     public static List<String> getShops(){
@@ -129,6 +139,8 @@ public class CatalogController {
     @FXML
     void buttonPressed(ActionEvent event) {
         Button clicked = (Button) event.getSource();
+        int currentIndex = paginator.getCurrentIndex();
+        int currentPageSize = paginator.getCurrentPageSize();
         for (int i = 0; i < buttons.length; i++) {
             if (buttons[i] == clicked) {
                 if(!chooseItems) {
@@ -143,13 +155,13 @@ public class CatalogController {
                 else{
                     if(clicked.getStyle().startsWith("-fx-border-color: red")){
                         clicked.setStyle("");
-                        saleProducts.remove(products.get(currentIndex-currentPageSize()+i));
-                        isSalePressed[currentIndex-currentPageSize()+i] = false;
+                        saleProducts.remove(products.get(currentIndex-currentPageSize+i));
+                        isSalePressed[currentIndex-currentPageSize+i] = false;
                     }
                     else {
-                        saleProducts.add(products.get(currentIndex-currentPageSize()+i));
+                        saleProducts.add(products.get(currentIndex-currentPageSize+i));
                         clicked.setStyle("-fx-border-color: red; -fx-border-width: 2px; -fx-border-radius: 5px;");
-                        isSalePressed[currentIndex-currentPageSize()+i] = true;
+                        isSalePressed[currentIndex-currentPageSize+i] = true;
                     }
                 }
             }
@@ -173,6 +185,18 @@ public class CatalogController {
         }
     }
 
+    private void setSaleVisibility(boolean visible){
+        Platform.runLater(()->discountLabel.setVisible(visible));
+        Platform.runLater(()->startSaleButton.setVisible(visible));
+        Platform.runLater(()->discount.setVisible(visible));
+        Platform.runLater(()->chooseAllButton.setVisible(visible));
+        Platform.runLater(()->saleTimeLabel.setVisible(visible));
+        Platform.runLater(()->timeAmountSpinner.setVisible(visible));
+        Platform.runLater(()->timeList.setVisible(visible));
+        Platform.runLater(()->statusLabel.setVisible(visible));
+
+    }
+
     @FXML
     public void initialize() {
         buttons = new Button[]{btn1, btn2, btn3, btn4, btn5, btn6};
@@ -180,10 +204,10 @@ public class CatalogController {
         images = new ImageView[]{img1, img2, img3, img4, img5, img6};
         ids = new int[buttons.length];
         EventBus.getDefault().register(this);
-        Platform.runLater(()->discountLabel.setVisible(false));
-        Platform.runLater(()->startSaleButton.setVisible(false));
-        Platform.runLater(()->discount.setVisible(false));
-        Platform.runLater(()->chooseAllButton.setVisible(false));
+        timeAmountSpinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 100));
+        timeList.getItems().addAll("Minutes", "Hours", "Days");
+        timeList.getSelectionModel().select("Hours");
+        setSaleVisibility(false);
         try{
             SimpleClient.getClient().sendToServer("GET_CATALOG");
             if (!SimpleClient.getClient().getAccountType().isEmpty()) {
@@ -212,31 +236,10 @@ public class CatalogController {
     }
 
 
-    private int productLeftToShow(){
-        int count = 0;
-        for(int i=currentIndex; i<toShow.length; i++){
-            if(toShow[i]){
-                count++;
-            }
-        }
-        return count;
-    }
 
-    private Product[] getPage(){
-        int size = Math.min(productLeftToShow(), pageSize);
-        Product[] page = new Product[size];
-        int i = 0;
-        while(i < size){
-            if(toShow[currentIndex]){
-                page[i] = products.get(currentIndex);
-                i++;
-            }
-            currentIndex++;
-        }
-        return page;
-    }
 
-    @Subscribe void initShops(List<String> shops){
+    @Subscribe
+    public void initShops(List<String> shops){
         CatalogController.shops = shops;
         shopsFilter.getItems().add("all chain");
         for(String shop : shops){
@@ -248,14 +251,9 @@ public class CatalogController {
     public void initCatalog(List<Product> products){
         this.products = products;
         isSalePressed = new boolean[products.size()];
-        toShow = new boolean[products.size()];
-        Arrays.fill(toShow, true);
-        Product[] firstPage = getPage();
-        initPage(firstPage);
-        Platform.runLater(()->leftArrow.setVisible(false));
-        if(products.size() <= pageSize){
-            Platform.runLater(()->rightArrow.setVisible(false));
-        }
+        int pageSize = 6;
+        paginator = new Paginator<>(products, pageSize);
+        renderPage();
         typesFilter.getItems().add("all items");
         Set<String> types = new HashSet<>();
         for(Product p : products){
@@ -266,43 +264,6 @@ public class CatalogController {
         }
     }
 
-    private int currentPageSize(){
-        int size = 0;
-        for(int i=0; i<buttons.length; i++){
-            int finalI = i;
-            if(buttons[i].isVisible()){
-                size++;
-            }
-        }
-        return size;
-    }
-
-    private void initPage(Product[] products){
-        for(int i=0; i<products.length; i++){
-            int finalI = i;
-            Platform.runLater(()->buttons[finalI].setVisible(true));
-            Platform.runLater(()->texts[finalI].setVisible(true));
-            Platform.runLater(()->images[finalI].setVisible(true));
-            Platform.runLater(()->rightArrow.setVisible(true));
-            Platform.runLater(()->buttons[finalI].setStyle(""));
-            Platform.runLater(()->texts[finalI].setText(getDetails(products[finalI])));
-            ids[finalI] = products[finalI].id;
-            Platform.runLater(()->texts[finalI].setEditable(false));
-            Image image = new Image(new ByteArrayInputStream(products[finalI].image));
-            Platform.runLater(()->images[finalI].setImage(image));
-           if(isSalePressed[currentIndex-products.length+i]){
-                Platform.runLater(()->buttons[finalI].setStyle("-fx-border-color: red; -fx-border-width: 2px; -fx-border-radius: 5px;"));
-           }
-
-        }
-        for(int i = products.length; i < pageSize; i++){
-            int finalI = i;
-            Platform.runLater(()->buttons[finalI].setVisible(false));
-            Platform.runLater(()->texts[finalI].setVisible(false));
-            Platform.runLater(()->images[finalI].setVisible(false));
-            Platform.runLater(()->rightArrow.setVisible(false));
-        }
-    }
 
     @Subscribe
     public void updateDetails(ChangePriceEvent event){
@@ -315,65 +276,16 @@ public class CatalogController {
         }
     }
 
-
-    private void findPrevPageStart(){
-        int itemCount = 0;
-        for(int i=currentIndex-1; i>=0; i--){
-            if(toShow[i]){
-                itemCount++;
-            }
-            if(itemCount == pageSize + currentPageSize()){
-                currentIndex = i;
-                return;
-            }
-        }
-    }
-
-    private boolean isAnotherPrevPage(){
-        int beforeCount = 0;
-        for(int i=currentIndex-1; i>=0; i--){
-            if(toShow[i]){
-                beforeCount++;
-            }
-            if(beforeCount > pageSize){
-                return true;
-            }
-        }
-        return false;
-    }
-
     @FXML
-    void leftArrowPressed(ActionEvent event){
-        for(int i = 0; i<buttons.length; i++){
-            if(!buttons[i].isVisible()){
-                int finalI = i;
-                Platform.runLater(()->buttons[finalI].setVisible(true));
-                Platform.runLater(()->texts[finalI].setVisible(true));
-                Platform.runLater(()->images[finalI].setVisible(true));
-            }
-        }
-        findPrevPageStart();
-        Product[] prevPage = getPage();
-        initPage(prevPage);
-        if(isAnotherPrevPage()){
-            Platform.runLater(()->leftArrow.setVisible(true));
-        }
-        else{
-            Platform.runLater(()->leftArrow.setVisible(false));
-        }
-        Platform.runLater(()->rightArrow.setVisible(true));
+    void leftArrowPressed(ActionEvent event) {
+        paginator.prevPage();
+        renderPage();
     }
-
 
 
     @FXML
-    void rightArrowPressed(ActionEvent event) {
-        Product[] nextPage = getPage();
-        initPage(nextPage);
-        Platform.runLater(()->leftArrow.setVisible(true));
-        if(productLeftToShow() == 0){
-            Platform.runLater(()->rightArrow.setVisible(false));
-        }
+    void rightArrowPressed(ActionEvent event){
+        renderPage();
     }
 
 
@@ -391,10 +303,7 @@ public class CatalogController {
     @FXML
     void showSaleOptions(ActionEvent event) {
         chooseItems = !chooseItems;
-        Platform.runLater(()->discountLabel.setVisible(chooseItems));
-        Platform.runLater(()->startSaleButton.setVisible(chooseItems));
-        Platform.runLater(()->discount.setVisible(chooseItems));
-        Platform.runLater(()->chooseAllButton.setVisible(chooseItems));
+        setSaleVisibility(chooseItems);
         if(chooseItems){
             saleButton.setText("hide sale options");
             discount.setText("");
@@ -420,13 +329,17 @@ public class CatalogController {
             statusLabel.setStyle("-fx-text-fill: red");
             return;
         }
-        String saleString = "SALE:" + discountAmount;
-        for(int i = 0; i < saleProducts.size() ; i++){
-            saleString += ":" + saleProducts.get(i).id;
-        }
+        String timeUnit = timeList.getValue();
+        int timeAmount = timeAmountSpinner.getValue();
+        LocalDateTime saleEnd = switch (timeUnit) {
+            case "Minutes" -> LocalDateTime.now().plusMinutes(timeAmount);
+            case "Hours" -> LocalDateTime.now().plusHours(timeAmount);
+            case "Days" -> LocalDateTime.now().plusDays(timeAmount);
+            default -> LocalDateTime.now();
+        };
+        Sale sale = new Sale(products, discountAmount, saleEnd);
         try{
-            //format: SALE:saleAmount:id1:id2:...
-            SimpleClient.getClient().sendToServer(saleString);
+            SimpleClient.getClient().sendToServer(sale);
             statusLabel.setText("Sale started!");
             statusLabel.setStyle("-fx-text-fill: green");
             saleProducts.clear();
@@ -446,15 +359,14 @@ public class CatalogController {
         String chosenShop = shopsFilter.getSelectionModel().getSelectedItem();
         for(int i = 0; i < products.size(); i++){
             if((products.get(i).type.equals(chosenType) || chosenType.equals("all items")) && (products.get(i).shop.equals(chosenShop) || products.get(i).shop.equals("all chain"))){
-                toShow[i] = true;
+               paginator.changeShowProducts(i, true);
             }
             else{
-                toShow[i] = false;
+                paginator.changeShowProducts(i, false);
             }
         }
-        currentIndex = 0;
-        Product[] page = getPage();
-        initPage(page);
+        paginator.reset();
+        renderPage();
     }
 
     @FXML
@@ -474,4 +386,42 @@ public class CatalogController {
 
     }
 
+    public void renderPage(){
+        List<Product> pageItems = paginator.getCurrentPageItems();
+        for(int i=0; i<buttons.length; i++){
+            if(i<pageItems.size()){
+                int finalI = i;
+                setProductVisibility(i,true);
+                Platform.runLater(()->buttons[finalI].setStyle(""));
+                Platform.runLater(()->texts[finalI].setText(getDetails(pageItems.get(finalI))));
+                ids[i] = pageItems.get(i).id;
+                Image image = new Image(new ByteArrayInputStream(pageItems.get(finalI).image));
+                Platform.runLater(()->images[finalI].setImage(image));
+                if(isSalePressed[paginator.getCurrentIndex()-pageItems.size()+i]){
+                    Platform.runLater(()->buttons[finalI].setStyle("-fx-border-color: red; -fx-border-width: 2px; -fx-border-radius: 5px;"));
+                }
+            }
+            else{
+                setProductVisibility(i,false);
+            }
+        }
+        rightArrow.setVisible(paginator.hasNextPage());
+        leftArrow.setVisible(paginator.hasPreviousPage());
+    }
+
+    public void setProductVisibility(int index, boolean value){
+        Platform.runLater(()->buttons[index].setVisible(value));
+        Platform.runLater(()->texts[index].setVisible(value));
+        Platform.runLater(()->images[index].setVisible(value));
+    }
+
+    @FXML
+    void toCart(ActionEvent event) {
+        try{
+            App.setRoot("cart");
+        }
+        catch (IOException e){
+            e.printStackTrace();
+        }
+    }
 }

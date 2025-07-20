@@ -2,12 +2,13 @@
 
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Spinner?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.text.Font?>
 
-<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="426.0" prefWidth="615.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="il.cshaifasweng.OCSFMediatorExample.client.ItemController">
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="463.0" prefWidth="615.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="il.cshaifasweng.OCSFMediatorExample.client.ItemController">
    <children>
       <Button fx:id="loginButton" layoutX="536.0" layoutY="14.0" mnemonicParsing="false" onAction="#loginPressed" prefHeight="26.0" prefWidth="57.0" text="login" />
       <Button layoutX="24.0" layoutY="30.0" mnemonicParsing="false" onAction="#backToCatalog" prefHeight="26.0" prefWidth="150.0" text="get back to catalog" />
@@ -27,8 +28,11 @@
       <ImageView fx:id="image" fitHeight="146.0" fitWidth="175.0" layoutX="418.0" layoutY="106.0" pickOnBounds="true" preserveRatio="true" />
       <Label fx:id="imageLabel" layoutX="25.0" layoutY="286.0" prefHeight="16.0" prefWidth="138.0" text="image(enter new path):" />
       <TextField fx:id="imagePath" layoutX="25.0" layoutY="314.0" prefHeight="26.0" prefWidth="375.0" />
-      <Button fx:id="updateButton" layoutX="21.0" layoutY="384.0" mnemonicParsing="false" onAction="#updateDetails" prefHeight="27.0" prefWidth="123.0" text="update details" />
-      <Label fx:id="statusLabel" alignment="TOP_LEFT" contentDisplay="CENTER" layoutX="28.0" layoutY="347.0" prefHeight="29.0" prefWidth="209.0" />
-      <Button fx:id="removeItemButton" layoutX="168.0" layoutY="384.0" mnemonicParsing="false" onAction="#removeItem" prefHeight="27.0" prefWidth="123.0" text="remove this item" />
+      <Button fx:id="updateButton" layoutX="295.0" layoutY="384.0" mnemonicParsing="false" onAction="#updateDetails" prefHeight="27.0" prefWidth="123.0" text="update details" />
+      <Label fx:id="addedToCartLabel" alignment="TOP_LEFT" contentDisplay="CENTER" layoutX="23.0" layoutY="420.0" prefHeight="29.0" prefWidth="209.0" />
+      <Button fx:id="removeItemButton" layoutX="434.0" layoutY="384.0" mnemonicParsing="false" onAction="#removeItem" prefHeight="27.0" prefWidth="123.0" text="remove this item" />
+      <Spinner fx:id="amountSpinner" layoutX="25.0" layoutY="385.0" prefHeight="26.0" prefWidth="134.0" />
+      <Button layoutX="174.0" layoutY="385.0" mnemonicParsing="false" onAction="#addToCart" prefHeight="26.0" prefWidth="109.0" text="add to cart" />
+      <Label fx:id="statusLabel1" alignment="TOP_LEFT" contentDisplay="CENTER" layoutX="38.0" layoutY="357.0" prefHeight="29.0" prefWidth="209.0" />
    </children>
 </AnchorPane>
