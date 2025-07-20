@@ -205,7 +205,7 @@ public class ItemController {
     @Subscribe
     public void initDetails(InitDescriptionEvent event){
         Product product = event.getProduct();
-        Platform.runLater(() -> name.setText(product.description));
+        Platform.runLater(() -> name.setText(product.name));
         Platform.runLater(() -> description.setText(product.description));
         Platform.runLater(()-> price.setText(String.valueOf(product.price)));
         Platform.runLater(() -> type.setText(product.type));

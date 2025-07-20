@@ -1,6 +1,7 @@
 package il.cshaifasweng.OCSFMediatorExample.client;
 
 import il.cshaifasweng.OCSFMediatorExample.entities.BaseProduct;
+import il.cshaifasweng.OCSFMediatorExample.entities.Complaint;
 import il.cshaifasweng.OCSFMediatorExample.entities.Order;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
@@ -149,11 +150,12 @@ public class OrdersController {
         Button source = (Button) event.getSource();
         for(int i = 0; i < sendComplaintButtons.length; i++){
             if(source == sendComplaintButtons[i]){
-                String complaint = complaints[i].getText();
-                int orderId = orders.get(paginator.getCurrentIndex()-paginator.getCurrentPageSize()+i).getId();
-                if(!complaint.isEmpty()){
+                String customerComplaint = complaints[i].getText();
+                Order order  = orders.get(paginator.getCurrentIndex()-paginator.getCurrentPageSize()+i);
+                if(!customerComplaint.isEmpty()){
                     try{
-                        SimpleClient.getClient().sendToServer("COMPLAINT:" + orderId + ":" +complaint);
+                        Complaint complaint = new Complaint(customerComplaint, order.getId(), SimpleClient.getId());
+                        SimpleClient.getClient().sendToServer(complaint);
                         Platform.runLater(() -> statusLabel.setText("complaint sent"));
                     }
                     catch(Exception e){
@@ -169,7 +171,7 @@ public class OrdersController {
         for(int i=0; i<orderLabels.length; i++){
             if(i<pageItems.size()){
                 int finalI = i;
-                setProductVisibility(i,true);
+                setOrderVisibilty(i,true);
                 Order order = pageItems.get(i);
                 LocalDateTime date = order.getDeliveryTime();
                 String text = "";
@@ -192,14 +194,14 @@ public class OrdersController {
                 Platform.runLater(() -> orderLabels[finalI].setText(finalText));
             }
             else{
-                setProductVisibility(i,false);
+                setOrderVisibilty(i,false);
             }
         }
         rightArrow.setVisible(paginator.hasNextPage());
         leftArrow.setVisible(paginator.hasPreviousPage());
     }
 
-    public void setProductVisibility(int i, boolean visible){
+    public void setOrderVisibilty(int i, boolean visible){
         Platform.runLater(() -> orderLabels[i].setVisible(visible));
         Platform.runLater(()-> buttons[i].setVisible(visible));
     }

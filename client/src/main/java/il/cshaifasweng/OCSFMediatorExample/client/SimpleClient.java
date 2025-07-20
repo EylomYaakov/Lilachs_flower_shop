@@ -19,7 +19,7 @@ public class SimpleClient extends AbstractClient {
     public static LoginController loginController;
     public static SignUpController signUpController;
     private static SimpleClient client = null;
-    private String accountType = "worker";
+    private static String accountType = "worker";
     private int lastItemId;
     private static Map<BaseProduct, Integer> cart = new LinkedHashMap<>();
     private static int accountId;
@@ -44,7 +44,7 @@ public class SimpleClient extends AbstractClient {
         return lastItemId;
     }
 
-    public String getAccountType() {
+    public static String getAccountType() {
         return accountType;
     }
 
