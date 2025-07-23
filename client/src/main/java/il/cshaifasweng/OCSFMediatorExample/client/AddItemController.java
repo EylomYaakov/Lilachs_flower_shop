@@ -43,7 +43,7 @@ public class AddItemController {
     @FXML
     public void initialize() {
         //List<String> shops = CatalogController.getShops();
-        shopsFilter.getItems().add("all chain");
+        Platform.runLater(()-> shopsFilter.getItems().add("all chain"));
 //        for(String shop : shops) {
 //            shopsFilter.getItems().add(shop);
 //        }
@@ -80,6 +80,7 @@ public class AddItemController {
         }
         //server should give an actual id
         Product product = new Product(-1 ,productName, productType, productDescription, productPriceDouble, image);
+
         try {
             SimpleClient.getClient().sendToServer(product);
         }
@@ -90,13 +91,8 @@ public class AddItemController {
     }
 
     @FXML
-    void backToCatalog(ActionEvent event) {
-        try {
-            App.setRoot("catalog");
-        }
-        catch (IOException e) {
-            e.printStackTrace();
-        }
+    void toMenu(ActionEvent event) {
+        App.switchScreen("menu");
     }
 
 }

@@ -26,12 +26,14 @@ public class App extends Application {
     private Label itemDetails;
     private static Scene scene;
     private SimpleClient client;
+    public static Stage appStage;
 
     @Override
     public void start(Stage stage) throws IOException {
+        appStage = stage;
         client = SimpleClient.getClient();
         client.openConnection();
-        scene = new Scene(loadFXML("complaints"), 640, 480);
+        scene = new Scene(loadFXML("catalog"));
         stage.setScene(scene);
         stage.show();
 
@@ -54,6 +56,28 @@ public class App extends Application {
         SimpleClient.getClient().sendToServer("remove client");
         SimpleClient.getClient().closeConnection();
         super.stop();
+    }
+
+    public static void setWindowTitle(String title) {
+        appStage.setTitle(title);
+    }
+
+    public static void setContent(String pageName) throws IOException {
+        Parent root = loadFXML(pageName);
+        scene = new Scene(root);
+        appStage.setScene(scene);
+        appStage.show();
+    }
+
+    public static void switchScreen (String screenName) {
+        Platform.runLater(() -> {
+            setWindowTitle(screenName);
+            try {
+                setContent(screenName);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
     }
 
     public static void main(String[] args) {

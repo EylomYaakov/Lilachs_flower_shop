@@ -59,7 +59,7 @@
       <Label layoutX="292.0" layoutY="324.0" prefHeight="17.0" prefWidth="0.0" text=":" />
       <Button fx:id="placeOrderButton" layoutX="189.0" layoutY="358.0" mnemonicParsing="false" onAction="#placeOrder" prefHeight="26.0" prefWidth="90.0" text="order" />
       <Label fx:id="priceLabel" layoutX="17.0" layoutY="362.0" prefHeight="18.0" prefWidth="168.0" text="total price:" />
-      <Button layoutX="15.0" layoutY="17.0" mnemonicParsing="false" onAction="#backToCatalog" prefHeight="26.0" prefWidth="144.0" text="back to catalog" />
+      <Button layoutX="15.0" layoutY="17.0" mnemonicParsing="false" onAction="#toMenu" prefHeight="26.0" prefWidth="90.0" text="menu" />
       <Label fx:id="emptyCart" alignment="CENTER" layoutX="136.0" layoutY="72.0" prefHeight="66.0" prefWidth="361.0" text="Cart is empty" visible="false">
          <font>
             <Font size="24.0" />

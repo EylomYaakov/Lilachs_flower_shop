@@ -1,15 +1,12 @@
 package il.cshaifasweng.OCSFMediatorExample.client;
 
-import il.cshaifasweng.OCSFMediatorExample.entities.InitDescriptionEvent;
 import il.cshaifasweng.OCSFMediatorExample.entities.LoginEvent;
-import il.cshaifasweng.OCSFMediatorExample.entities.Product;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Label;
-import javafx.scene.control.TextArea;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import java.io.IOException;
@@ -55,12 +52,7 @@ public class LoginController {
 
     @FXML
     void signUpPressed(ActionEvent event) {
-        try {
-            App.setRoot("signup");
-        }
-        catch (IOException e) {
-            e.printStackTrace();
-        }
+        App.switchScreen("signup");
     }
 
     @Subscribe
@@ -69,12 +61,7 @@ public class LoginController {
         if(status.startsWith("LOGIN_SUCCESS")){
             Platform.runLater(()->username.setText(""));
             Platform.runLater(()->password.setText(""));
-            try {
-                SimpleClient.getClient().setAccountType(status.substring(status.indexOf(":")+1));
-            }
-            catch (IOException e) {
-                e.printStackTrace();
-            }
+            App.switchScreen("menu");
         }
         else if(status.startsWith("Already logged in")){
             Platform.runLater(()->statusLabel.setText("Already logged in"));
@@ -89,12 +76,7 @@ public class LoginController {
 
     @FXML
     void backToCatalog(ActionEvent event) {
-        try {
-            App.setRoot("catalog");
-        }
-        catch (IOException e) {
-            e.printStackTrace();
-        }
+        App.switchScreen("catalog");
     }
 
 }

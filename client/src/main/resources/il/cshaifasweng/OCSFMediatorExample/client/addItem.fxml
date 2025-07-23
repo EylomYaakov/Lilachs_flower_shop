@@ -9,7 +9,7 @@
 
 <AnchorPane prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="il.cshaifasweng.OCSFMediatorExample.client.AddItemController">
    <children>
-      <Button layoutX="14.0" layoutY="20.0" mnemonicParsing="false" onAction="#backToCatalog" prefHeight="26.0" prefWidth="150.0" text="get back to catalog" />
+      <Button layoutX="14.0" layoutY="20.0" mnemonicParsing="false" onAction="#toMenu" prefHeight="27.0" prefWidth="100.0" text="menu" />
       <Label alignment="CENTER" layoutX="258.0" layoutY="19.0" prefHeight="26.0" prefWidth="107.0" text="add item">
          <font>
             <Font size="24.0" />

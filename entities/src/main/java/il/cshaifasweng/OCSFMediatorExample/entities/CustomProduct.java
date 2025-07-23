@@ -9,4 +9,11 @@ public class CustomProduct extends BaseProduct {
         this.priceRange = priceRange;
         this.color = color;
     }
+
+    public double getAveragePrice(){
+        int dashIndex = priceRange.indexOf("-");
+        int minPrice = Integer.parseInt(priceRange.substring(0, dashIndex-1));
+        int maxPrice = Integer.parseInt(priceRange.substring(dashIndex+1, priceRange.length()-1));
+        return (minPrice + maxPrice)/2.0;
+    }
 }

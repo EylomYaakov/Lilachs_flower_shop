@@ -1,6 +1,7 @@
 package il.cshaifasweng.OCSFMediatorExample.entities;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 
 public class Complaint implements Serializable {
     private String complaint;
@@ -8,13 +9,17 @@ public class Complaint implements Serializable {
     private int customerId;
     private int complaintId;
     private String response;
+    private LocalDate date;
+    private boolean accepted;
 
-    public Complaint(String complaint, int orderId, int customerId){
+    public Complaint(String complaint, int orderId, int customerId, LocalDate date){
         this.complaint = complaint;
         this.orderId = orderId;
         this.customerId = customerId;
         this.complaintId = -1;
         this.response = "";
+        this.date = date;
+        this.accepted = false;
     }
 
     public int getOrderId(){
@@ -39,5 +44,17 @@ public class Complaint implements Serializable {
 
     public void setResponse(String response){
         this.response = response;
+    }
+
+    public LocalDate getDate(){
+        return date;
+    }
+
+    public boolean getAccepted(){
+        return accepted;
+    }
+
+    public void setAccepted(boolean accepted){
+        this.accepted = accepted;
     }
 }

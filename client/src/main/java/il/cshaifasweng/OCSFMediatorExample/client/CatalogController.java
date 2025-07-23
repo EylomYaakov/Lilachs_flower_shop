@@ -1,7 +1,6 @@
 package il.cshaifasweng.OCSFMediatorExample.client;
 
-import il.cshaifasweng.OCSFMediatorExample.entities.ChangePriceEvent;
-import il.cshaifasweng.OCSFMediatorExample.entities.Sale;
+import il.cshaifasweng.OCSFMediatorExample.entities.*;
 import javafx.event.ActionEvent;
 import javafx.application.Platform;
 
@@ -16,12 +15,11 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
-import il.cshaifasweng.OCSFMediatorExample.entities.Product;
 
 public class CatalogController {
 
     @FXML
-    private Button addItemButton;
+    private Button menuButton;
 
     @FXML
     private Button btn1;
@@ -40,6 +38,9 @@ public class CatalogController {
 
     @FXML
     private Button btn6;
+
+    @FXML
+    private Button filterButton;
 
     @FXML
     private Button loginButton;
@@ -144,11 +145,11 @@ public class CatalogController {
         for (int i = 0; i < buttons.length; i++) {
             if (buttons[i] == clicked) {
                 if(!chooseItems) {
-                    try{
+                    try {
                         SimpleClient.getClient().setLastItemId(ids[i]);
-                        App.setRoot("item");
+                        App.switchScreen("item");
                     }
-                    catch(IOException e){
+                    catch (IOException e) {
                         e.printStackTrace();
                     }
                 }
@@ -173,11 +174,13 @@ public class CatalogController {
     void loginPressed(ActionEvent event) {
         try {
             if(loginButton.getText().equals("log in")){
-                App.setRoot("login");
+                App.switchScreen("login");
             }
             else{
                 Platform.runLater(()->loginButton.setText("log in"));
-                SimpleClient.getClient().setAccountType("");
+                SimpleClient.getClient().sendToServer("LOGOUT:" + SimpleClient.getUser().getUsername());
+                SimpleClient.setRole("");
+                SimpleClient.setUser(null);
             }
         }
         catch (IOException e) {
@@ -205,19 +208,19 @@ public class CatalogController {
         ids = new int[buttons.length];
         EventBus.getDefault().register(this);
         timeAmountSpinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 100));
-        timeList.getItems().addAll("Minutes", "Hours", "Days");
-        timeList.getSelectionModel().select("Hours");
+        Platform.runLater(()->timeList.getItems().addAll("Minutes", "Hours", "Days"));
+        Platform.runLater(()-> timeList.getSelectionModel().select("Hours"));
         setSaleVisibility(false);
         try{
             SimpleClient.getClient().sendToServer("GET_CATALOG");
-            if (!SimpleClient.getClient().getAccountType().isEmpty()) {
+            if (!SimpleClient.getRole().isEmpty()) {
                 Platform.runLater(()->loginButton.setText("log out"));
             }
             else{
                 Platform.runLater(()->loginButton.setText("log in"));
+                Platform.runLater(()->menuButton.setVisible(false));
             }
-            if(!SimpleClient.getClient().getAccountType().equals("worker")){
-                Platform.runLater(()-> addItemButton.setVisible(false));
+            if(!SimpleClient.getRole().equals("worker")){
                 Platform.runLater(()-> saleButton.setVisible(false));
             }
 
@@ -225,6 +228,15 @@ public class CatalogController {
         catch(IOException e){
             e.printStackTrace();
         }
+
+        //for shops to be not empty
+        List<String> shops = new ArrayList<>();
+        shops.add("shop1");
+        shops.add("shop2");
+        shops.add("shop3");
+        ShopsListEvent event = new ShopsListEvent(shops);
+        initShops(event);
+
     }
 
     private String getDetails(Product product){
@@ -239,28 +251,44 @@ public class CatalogController {
 
 
     @Subscribe
-    public void initShops(List<String> shops){
+    public void initShops(ShopsListEvent event){
+        List<String> shops = event.getShops();
         CatalogController.shops = shops;
-        shopsFilter.getItems().add("all chain");
+        Platform.runLater(()->shopsFilter.getItems().add("all chain"));
         for(String shop : shops){
-            shopsFilter.getItems().add(shop);
+            Platform.runLater(()->shopsFilter.getItems().add(shop));
         }
     }
 
     @Subscribe
-    public void initCatalog(List<Product> products){
+    public void initCatalog(ProductListEvent event){
+        List<Product> products = event.getProducts();
+        if(products.get(0) == null){
+            return;
+        }
         this.products = products;
         isSalePressed = new boolean[products.size()];
         int pageSize = 6;
         paginator = new Paginator<>(products, pageSize);
+        if(SimpleClient.getUser() != null && SimpleClient.getUser().getAccountType().startsWith("shop")){
+            String shop = SimpleClient.getUser().getAccountType().substring(14);
+            for(int i=0; i<products.size(); i++){
+                if(!products.get(i).shop.equals(shop) && !products.get(i).shop.equals("all chain")){
+                    paginator.changeShowProducts(i, false);
+                }
+                Platform.runLater(()->shopsFilter.setVisible(false));
+                Platform.runLater(()->filterButton.setLayoutX(176));
+
+            }
+        }
         renderPage();
-        typesFilter.getItems().add("all items");
+        Platform.runLater(()->typesFilter.getItems().add("all items"));
         Set<String> types = new HashSet<>();
         for(Product p : products){
             types.add(p.type);
         }
         for(String type : types){
-            typesFilter.getItems().add(type);
+            Platform.runLater(()->typesFilter.getItems().add(type));
         }
     }
 
@@ -290,27 +318,23 @@ public class CatalogController {
 
 
     @FXML
-    void addItem(ActionEvent event) {
-        try {
-            App.setRoot("addItem");
-        }
-        catch (IOException e) {
-            e.printStackTrace();
-        }
+    void toMenu(ActionEvent event) {
+        App.switchScreen("menu");
     }
 
 
     @FXML
     void showSaleOptions(ActionEvent event) {
         chooseItems = !chooseItems;
+        System.out.println(chooseItems);
         setSaleVisibility(chooseItems);
         if(chooseItems){
-            saleButton.setText("hide sale options");
-            discount.setText("");
+            Platform.runLater(()->saleButton.setText("hide sale options"));
+            Platform.runLater(()->discount.setText(""));
             saleProducts.clear();
         }
         else{
-            saleButton.setText("show sale options");
+            Platform.runLater(()->saleButton.setText("show sale options"));
             isSalePressed = new boolean[products.size()];
             Utils.setStyleAllButtons(buttons, "");
         }
@@ -343,7 +367,6 @@ public class CatalogController {
             statusLabel.setText("Sale started!");
             statusLabel.setStyle("-fx-text-fill: green");
             saleProducts.clear();
-            chooseItems = false;
             Arrays.fill(isSalePressed, false);
             Utils.setStyleAllButtons(buttons, "");
 
@@ -357,6 +380,15 @@ public class CatalogController {
     void filter(ActionEvent event) {
         String chosenType =  typesFilter.getSelectionModel().getSelectedItem();
         String chosenShop = shopsFilter.getSelectionModel().getSelectedItem();
+        if(chosenType == null && chosenShop == null){
+            return;
+        }
+        else if(chosenType == null){
+           chosenType = "all items";
+        }
+        else if(chosenShop == null){
+            chosenShop = "all chain";
+        }
         for(int i = 0; i < products.size(); i++){
             if((products.get(i).type.equals(chosenType) || chosenType.equals("all items")) && (products.get(i).shop.equals(chosenShop) || products.get(i).shop.equals("all chain"))){
                paginator.changeShowProducts(i, true);
@@ -405,8 +437,8 @@ public class CatalogController {
                 setProductVisibility(i,false);
             }
         }
-        rightArrow.setVisible(paginator.hasNextPage());
-        leftArrow.setVisible(paginator.hasPreviousPage());
+        Platform.runLater(()->rightArrow.setVisible(paginator.hasNextPage()));
+        Platform.runLater(()->leftArrow.setVisible(paginator.hasPreviousPage()));
     }
 
     public void setProductVisibility(int index, boolean value){
@@ -415,13 +447,4 @@ public class CatalogController {
         Platform.runLater(()->images[index].setVisible(value));
     }
 
-    @FXML
-    void toCart(ActionEvent event) {
-        try{
-            App.setRoot("cart");
-        }
-        catch (IOException e){
-            e.printStackTrace();
-        }
-    }
 }

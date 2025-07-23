@@ -121,9 +121,9 @@ public class CartController {
     @FXML
     public void initialize(){
         cart = SimpleClient.getCart();
-        typesList.getItems().addAll("flower arrangement", "Flowering potted plant", "bridal bouquet", "flowers cluster");
-        priceRangesList.getItems().addAll("10₪-50₪", "50₪-100₪", "100₪-150₪", "150₪-250₪", "250₪-350₪", "350₪-500₪");
-        colorsList.getItems().addAll("red", "green", "blue", "yellow", "white", "purple", "pink", "orange");
+        Platform.runLater(()->typesList.getItems().addAll("flower arrangement", "Flowering potted plant", "bridal bouquet", "flowers cluster"));
+        Platform.runLater(()->priceRangesList.getItems().addAll("10₪-50₪", "50₪-100₪", "100₪-150₪", "150₪-250₪", "250₪-350₪", "350₪-500₪"));
+        Platform.runLater(()->colorsList.getItems().addAll("red", "green", "blue", "yellow", "white", "purple", "pink", "orange"));
         spinner1.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 1000));
         spinner2.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 1000));
         spinner3.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 1000));
@@ -250,9 +250,16 @@ public class CartController {
         int hour = hoursSpinner.getValue();
         int minute = minutesSpinner.getValue();
         if(date == null){
-            Platform.runLater(()->statusLabel.setText("Please select a date"));
+            Platform.runLater(()->statusLabel.setText("Please select date"));
             Platform.runLater(()->statusLabel.setStyle("-fx-text-fill: red;"));
             return;
+        }
+        if(deliveryCheckBox.isSelected()){
+            if(address.getText().isEmpty() || name.getText().isEmpty() || phoneNumber.getText().isEmpty()){
+                Platform.runLater(()->statusLabel.setText("Please fill all the fields"));
+                Platform.runLater(()->statusLabel.setStyle("-fx-text-fill: red;"));
+                return;
+            }
         }
         if(date.isBefore(LocalDate.now())){
             Platform.runLater(()->statusLabel.setText("please select a future date"));
@@ -260,7 +267,7 @@ public class CartController {
             return;
         }
         LocalDateTime dateWithTime = LocalDateTime.of(date, LocalTime.of(hour, minute));
-        Order order = new Order(cart, grettingCard.getText(), address.getText(), phoneNumber.getText(), name.getText(), dateWithTime, SimpleClient.getId());
+        Order order = new Order(cart, grettingCard.getText(), address.getText(), phoneNumber.getText(), name.getText(), dateWithTime, LocalDate.now(), SimpleClient.getId());
         try{
             SimpleClient.getClient().sendToServer(order);
             statusLabel.setText("Order Placed!");
@@ -318,8 +325,8 @@ public class CartController {
                 setProductVisibility(i,false);
             }
         }
-        rightArrow.setVisible(paginator.hasNextPage());
-        leftArrow.setVisible(paginator.hasPreviousPage());
+        Platform.runLater(()->rightArrow.setVisible(paginator.hasNextPage()));
+        Platform.runLater(()->leftArrow.setVisible(paginator.hasPreviousPage()));
     }
 
     private void setProductVisibility(int i, boolean visible){
@@ -346,6 +353,7 @@ public class CartController {
         renderPage();
     }
 
+
     private void changePrice(){
         double minPrice = 0;
         double maxPrice = 0;
@@ -369,6 +377,15 @@ public class CartController {
             minPrice += 10;
             maxPrice += 10;
         }
+        try{
+            if(SimpleClient.getUser().getAccountType().equals("subscription")){
+                minPrice = minPrice*0.9;
+                maxPrice = maxPrice*0.9;
+            }
+        }
+        catch(Exception e){
+            e.printStackTrace();
+        }
         if(minPrice == maxPrice){
             priceLabel.setText("total price: " + minPrice);
         }
@@ -378,12 +395,8 @@ public class CartController {
     }
 
     @FXML
-    void backToCatalog(ActionEvent event) {
-        try {
-            App.setRoot("catalog");
-        }
-        catch (IOException e) {
-            e.printStackTrace();
-        }
+    void toMenu(ActionEvent event) {
+        App.switchScreen("menu");
     }
+
 }

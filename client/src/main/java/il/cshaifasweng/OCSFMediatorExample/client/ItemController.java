@@ -37,6 +37,9 @@ public class ItemController {
     private Button loginButton;
 
     @FXML
+    private Button addToCartButton;
+
+    @FXML
     private TextField name;
 
     @FXML
@@ -71,7 +74,7 @@ public class ItemController {
             id = SimpleClient.getClient().getLastItemId();
             SimpleClient.getClient().sendToServer("GET_ITEM:" + id);
             amountSpinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 1000));
-            if(!SimpleClient.getClient().getAccountType().equals("worker")){
+            if(!SimpleClient.getRole().startsWith("worker")){
                 Platform.runLater(()->name.setEditable(false));
                 Platform.runLater(()->description.setEditable(false));
                 Platform.runLater(() -> price.setEditable(false));
@@ -81,7 +84,12 @@ public class ItemController {
                 Platform.runLater(()->imagePath.setVisible(false));
                 Platform.runLater(()->removeItemButton.setVisible(false));
             }
-            if(!SimpleClient.getClient().getAccountType().isEmpty()){
+            else{
+                Platform.runLater(()-> amountSpinner.setVisible(false));
+                Platform.runLater(()->addToCartButton.setVisible(false));
+
+            }
+            if(!SimpleClient.getRole().isEmpty()){
                 Platform.runLater(()->loginButton.setText("logout"));
             }
         }
@@ -92,11 +100,7 @@ public class ItemController {
 
     @FXML
     void backToCatalog(ActionEvent event) {
-        try {
-            App.setRoot("catalog");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        App.switchScreen("Catalog");
     }
 
 
@@ -190,11 +194,11 @@ public class ItemController {
     void loginPressed(ActionEvent event) {
         try {
             if(loginButton.getText().equals("log in")){
-                App.setRoot("login");
+                App.switchScreen("login");
             }
             else{
                 Platform.runLater(()->loginButton.setText("log in"));
-                SimpleClient.getClient().setAccountType("");
+                SimpleClient.getClient().setRole("");
             }
         }
         catch (IOException e) {

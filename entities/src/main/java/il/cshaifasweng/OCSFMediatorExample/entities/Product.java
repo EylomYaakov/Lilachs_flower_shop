@@ -20,6 +20,6 @@ public class Product extends BaseProduct{
         this.price = price;
         this.image = image;
         this.sale = 0;
-
+        this.shop = "all chain";
     }
 }

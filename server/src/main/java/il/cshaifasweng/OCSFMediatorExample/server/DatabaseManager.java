@@ -3,6 +3,7 @@ package il.cshaifasweng.OCSFMediatorExample.server;
 import il.cshaifasweng.OCSFMediatorExample.entities.ChangePriceEvent;
 import il.cshaifasweng.OCSFMediatorExample.entities.ConnectedUser;
 import il.cshaifasweng.OCSFMediatorExample.entities.Product;
+import il.cshaifasweng.OCSFMediatorExample.entities.ProductListEvent;
 import il.cshaifasweng.OCSFMediatorExample.server.ocsf.ConnectionToClient;
 
 import java.nio.file.Files;
@@ -49,13 +50,15 @@ public class DatabaseManager {
             ResultSet rs = stmt.executeQuery();
 
             if (rs.next()) {
-                int userId = rs.getInt("personalId");
-                int creditId = rs.getInt("creditId");
+                String userId = rs.getString("personalId");
+                String creditId = rs.getString("creditId");
                 String userType = rs.getString("userType");
+                String role = rs.getString("role");
+                String password = rs.getString("password");
+
                 System.out.print(userId + " "+ creditId + " "+ userType + " ");
 
-
-                return new ConnectedUser(username, userId, creditId, userType);
+                return new ConnectedUser(username,password, userId, creditId, role,userType);
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -90,12 +93,13 @@ public class DatabaseManager {
                 int id = rs.getInt("id");
                 String username = rs.getString("Username");
                 String password = rs.getString("password");
-                long personalId = rs.getLong("personalId");
-                long creditId = rs.getLong("creditId");
+                String personalId = rs.getString("personalId");
+                String creditId = rs.getString("creditId");
+                String role = rs.getString("role");
                 String userType = rs.getString("userType");
 
-                System.out.printf("🧑 ID: %d | Username: %s | Password: %s | PersonalID: %d | CreditID: %d | Type: %s%n",
-                        id, username, password, personalId, creditId, userType);
+                System.out.printf("🧑 ID: %d | Username: %s | Password: %s | PersonalID: %s | CreditID: %s | Type: %s | role: %s%n",
+                        id, username, password, personalId, creditId, userType, role);
             }
 
         } catch (SQLException e) {
@@ -106,14 +110,15 @@ public class DatabaseManager {
 
 
 
-    public static boolean createUser(String username, String password, long personalId, long creditId, String userType) {
-        String query = "INSERT INTO Users (Username, password, personalId, creditId, userType) VALUES (?, ?, ?, ?, ?)";
+    public static boolean createUser(String username, String password, String personalId, String creditId, String role, String userType) {
+        String query = "INSERT INTO Users (Username, password, personalId, creditId, role, userType) VALUES (?, ?, ?, ?, ?, ?)";
         try (PreparedStatement stmt = dbConnection.prepareStatement(query)) {
             stmt.setString(1, username);
             stmt.setString(2, password);
-            stmt.setLong(3, personalId);
-            stmt.setLong(4, creditId);
-            stmt.setString(5, userType);
+            stmt.setString(3, personalId);
+            stmt.setString(4, creditId);
+            stmt.setString(5, role);
+            stmt.setString(6, userType);
             stmt.executeUpdate();
             return true;
         } catch (SQLException e) {
@@ -159,7 +164,8 @@ public class DatabaseManager {
                 Product item = new Product(6+i, names[i%11], names[i%11], names[i%11], 6+i, image);
                 items.add(item);
             }
-            client.sendToClient(items);
+            ProductListEvent event = new ProductListEvent(items);
+            client.sendToClient(event);
         } catch (Exception e) {
             e.printStackTrace();
         }

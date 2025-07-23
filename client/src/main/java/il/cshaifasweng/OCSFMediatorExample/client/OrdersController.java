@@ -3,6 +3,7 @@ package il.cshaifasweng.OCSFMediatorExample.client;
 import il.cshaifasweng.OCSFMediatorExample.entities.BaseProduct;
 import il.cshaifasweng.OCSFMediatorExample.entities.Complaint;
 import il.cshaifasweng.OCSFMediatorExample.entities.Order;
+import il.cshaifasweng.OCSFMediatorExample.entities.OrdersListEvent;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -12,6 +13,7 @@ import javafx.scene.control.TextField;
 import org.greenrobot.eventbus.Subscribe;
 
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -89,11 +91,11 @@ public class OrdersController {
         //only for orders to be not empty
         orders = new ArrayList<>();
         Map<BaseProduct, Integer> map = new HashMap<>();
-        Order order1 = new Order(map, "", "", "", "", LocalDateTime.now().plusHours(2),-1);
-        Order order2 = new Order(map, "", "", "", "", LocalDateTime.now().plusHours(4),-1);
-        Order order3 = new Order(map, "", "", "", "", LocalDateTime.now().plusMinutes(30),-1);
-        Order order4 = new Order(map, "", "", "", "", LocalDateTime.now().minusHours(2),-1);
-        Order order5 = new Order(map, "", "", "", "", LocalDateTime.now().minusHours(4),-1);
+        Order order1 = new Order(map, "", "", "", "",  LocalDateTime.now().plusHours(2), LocalDate.now(), -1);
+        Order order2 = new Order(map, "", "", "", "",  LocalDateTime.now().plusHours(4),LocalDate.now(), -1);
+        Order order3 = new Order(map, "", "", "", "", LocalDateTime.now().plusMinutes(30),LocalDate.now(),-1);
+        Order order4 = new Order(map, "", "", "", "", LocalDateTime.now().minusHours(2),LocalDate.now(),-1);
+        Order order5 = new Order(map, "", "", "", "",  LocalDateTime.now().minusHours(4),LocalDate.now(),-1);
         orders.add(order1);
         orders.add(order2);
         orders.add(order3);
@@ -104,20 +106,16 @@ public class OrdersController {
     }
 
     @Subscribe
-    public void initOrders(List<Order> orders){
+    public void initOrders(OrdersListEvent event){
+        List<Order> orders = event.getOrders();
         this.orders = orders;
         paginator = new Paginator<>(orders, pageSize);
         renderPage();
     }
 
     @FXML
-    void backToCatalog(ActionEvent event) {
-        try{
-            App.setRoot("catalog");
-        }
-        catch(Exception e){
-            e.printStackTrace();
-        }
+    void toMenu(ActionEvent event) {
+        App.switchScreen("menu");
     }
 
     @FXML
@@ -154,7 +152,7 @@ public class OrdersController {
                 Order order  = orders.get(paginator.getCurrentIndex()-paginator.getCurrentPageSize()+i);
                 if(!customerComplaint.isEmpty()){
                     try{
-                        Complaint complaint = new Complaint(customerComplaint, order.getId(), SimpleClient.getId());
+                        Complaint complaint = new Complaint(customerComplaint, order.getId(), SimpleClient.getId(), LocalDate.now());
                         SimpleClient.getClient().sendToServer(complaint);
                         Platform.runLater(() -> statusLabel.setText("complaint sent"));
                     }
@@ -176,7 +174,7 @@ public class OrdersController {
                 LocalDateTime date = order.getDeliveryTime();
                 String text = "";
                 Platform.runLater(()->buttons[finalI].setVisible(true));
-                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm");
                 String formattedTime = date.format(formatter);
                 if(order.isCancelled()){
                     text = "order scheduled to " + formattedTime + " - cancelled!";
@@ -197,8 +195,8 @@ public class OrdersController {
                 setOrderVisibilty(i,false);
             }
         }
-        rightArrow.setVisible(paginator.hasNextPage());
-        leftArrow.setVisible(paginator.hasPreviousPage());
+        Platform.runLater(()->rightArrow.setVisible(paginator.hasNextPage()));
+        Platform.runLater(()->leftArrow.setVisible(paginator.hasPreviousPage()));
     }
 
     public void setOrderVisibilty(int i, boolean visible){
@@ -233,9 +231,11 @@ public class OrdersController {
             LocalDateTime delivery = order.getDeliveryTime();
             long remainingHours = Duration.between(LocalDateTime.now(), delivery).toHours();
             if(remainingHours >= 3){
+                order.setRefund(1);
                 Platform.runLater(()->statusLabel.setText("Order cancelled - you will get 100% refund"));
             }
             else if(remainingHours >= 1){
+                order.setRefund(0.5);
                 Platform.runLater(()->statusLabel.setText("Order cancelled - you will get 50% refund"));
             }
             else{

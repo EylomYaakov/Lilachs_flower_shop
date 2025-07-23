@@ -30,7 +30,6 @@ public class Paginator<T>{
     }
 
     public void removeItem(T item) {
-        items.remove(item);
         productsToShow = new boolean[items.size()];
         Arrays.fill(productsToShow, true);
     }
@@ -65,8 +64,12 @@ public class Paginator<T>{
 
 
     public boolean hasPreviousPage(){
-        for(int i=currentIndex-currentPageSize-1; i>=0; i--){
+        int count = 0;
+        for(int i=currentIndex-1; i>=0; i--){
             if(productsToShow[i]){
+                count++;
+            }
+            if(count == currentPageSize+1){
                 return true;
             }
         }
@@ -80,11 +83,11 @@ public class Paginator<T>{
 
     public void prevPage(){
         int itemCount = 0;
-        for(int i=currentIndex-currentPageSize-1; i>=0; i--){
+        for(int i=currentIndex-1; i>=0; i--){
             if(productsToShow[i]){
                 itemCount++;
             }
-            if(itemCount == pageSize){
+            if(itemCount == pageSize + currentPageSize){
                 currentIndex = i;
                 return;
             }

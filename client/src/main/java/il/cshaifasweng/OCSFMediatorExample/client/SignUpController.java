@@ -1,9 +1,6 @@
 package il.cshaifasweng.OCSFMediatorExample.client;
 
-import il.cshaifasweng.OCSFMediatorExample.entities.InitDescriptionEvent;
-import il.cshaifasweng.OCSFMediatorExample.entities.LoginEvent;
-import il.cshaifasweng.OCSFMediatorExample.entities.Product;
-import il.cshaifasweng.OCSFMediatorExample.entities.SignUpEvent;
+import il.cshaifasweng.OCSFMediatorExample.entities.*;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -12,6 +9,7 @@ import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 public class SignUpController {
@@ -40,10 +38,15 @@ public class SignUpController {
         EventBus.getDefault().register(this);
         assert typesList != null : "fx:id=\"listBox\" was not injected: check your FXML file 'primary.fxml'.";
         List<String> shops = CatalogController.getShops();
-        typesList.getItems().add("chain account");
-        typesList.getItems().add("subscription");
+        Platform.runLater(() -> typesList.getItems().add("chain account"));
+        Platform.runLater(() -> typesList.getItems().add("subscription"));
+        //just for shops to be not empty
+        shops = new ArrayList<>();
+        shops.add("shop1");
+        shops.add("shop2");
+        shops.add("shop3");
         for (String shop : shops) {
-            typesList.getItems().add("shop account: " + shop);
+            Platform.runLater(() -> typesList.getItems().add("shop account: " + shop));
         }
 
     }
@@ -58,28 +61,12 @@ public class SignUpController {
     }
 
 
-    private boolean isValidPassword(String password){
-        boolean captial = false, lowercase = false, number = false;
-        for(int i=0; i<password.length(); i++){
-            if(Character.isUpperCase(password.charAt(i))){
-                captial = true;
-            }
-            else if(Character.isLowerCase(password.charAt(i))){
-                lowercase = true;
-            }
-            else if(Character.isDigit(password.charAt(i))){
-                number = true;
-            }
-        }
-        return captial && lowercase && number && password.length() >= 8;
-    }
-
     private String checkDetails(String username, String password, String id, String creditCard, String type) {
         if(username.isEmpty() || password.isEmpty() || id.isEmpty() || creditCard.isEmpty() || type.equals("account type")){
             return "please fill all fields";
         }
         String notValid = "";
-        if(!isValidPassword(password)){
+        if(!Utils.isValidPassword(password)){
             notValid += "\npassword does not meet requirements";
         }
         if(creditCard.length() != 16 || !onlyDigits(creditCard)){
@@ -103,9 +90,13 @@ public class SignUpController {
             Platform.runLater(()-> statusLabel.setStyle("-fx-text-fill: red;"));
         }
         else {
-            String signupAttempt = "SIGNUP:" + username.getText() + ":" + password.getText() + ":" + idField.getText() + ":" + creditCard.getText() + ":" + accountType;
+            if(accountType.startsWith("shop")){
+                accountType = accountType.substring(14);
+            }
+            ConnectedUser newUser = new ConnectedUser(username.getText(), password.getText(), idField.getId(), creditCard.getText(), "customer", accountType);
             try {
-                SimpleClient.getClient().sendToServer(signupAttempt);
+                SimpleClient.getClient().sendToServer(newUser);
+                App.switchScreen("menu");
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -115,12 +106,7 @@ public class SignUpController {
 
     @FXML
     void loginPressed(ActionEvent event) {
-        try {
-            App.setRoot("login");
-        }
-        catch (IOException e) {
-            e.printStackTrace();
-        }
+        App.switchScreen("login");
     }
 
     @Subscribe
@@ -128,8 +114,8 @@ public class SignUpController {
         String status = event.getStatus();
         if(status.startsWith("SIGN_SUCCESS")){
             try {
-                SimpleClient.getClient().setAccountType("customer");
-                Platform.runLater(()-> statusLabel.setText("sign up succesful"));
+                SimpleClient.getClient().setRole("customer");
+                Platform.runLater(()-> statusLabel.setText("sign up successfully"));
 
             }
             catch (IOException e) {
@@ -144,12 +130,7 @@ public class SignUpController {
 
     @FXML
     void backToCatalog(ActionEvent event) {
-        try {
-            App.setRoot("catalog");
-        }
-        catch (IOException e) {
-            e.printStackTrace();
-        }
+        App.switchScreen("Catalog");
     }
 
 }

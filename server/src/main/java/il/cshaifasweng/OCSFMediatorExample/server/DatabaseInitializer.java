@@ -32,8 +32,9 @@ public class DatabaseInitializer {
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     Username TEXT NOT NULL,
                     password TEXT NOT NULL,
-                    personalId LONG NOT NULL,
-                    creditId LONG NOT NULL,
+                    personalId TEXT NOT NULL,
+                    creditId TEXT NOT NULL,
+                    role TEXT NOT NULL,
                     userType TEXT NOT NULL
                 );
             """);
@@ -43,9 +44,9 @@ public class DatabaseInitializer {
             ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM Users");
             if (rs.next() && rs.getInt(1) == 0) {
                 stmt.executeUpdate("""
-                    INSERT INTO Users (Username, password, personalId,creditId,userType) VALUES
-                    ('Ariel', '@A1', 12345678,10,'A'),
-                    ('Amit', '@A1', 12345678,10,'A');
+                    INSERT INTO Users (Username, password, personalId, creditId, role, userType) VALUES
+                    ('Ariel', '@A1', '12345678','10','worker:manager', ''),
+                    ('Amit', '@A1', '12345678','10', 'worker', '');
                     """);
                 System.out.println("🌱 Users initialized with demo data.");
             } else {

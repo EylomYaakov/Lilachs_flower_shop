@@ -5,17 +5,22 @@
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.text.Font?>
 
-
 <AnchorPane prefHeight="401.0" prefWidth="615.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="il.cshaifasweng.OCSFMediatorExample.client.MenuController">
    <children>
-      <Label layoutX="244.0" layoutY="33.0" text="Menu">
+      <Label layoutX="244.0" layoutY="23.0" text="Menu">
          <font>
             <Font size="36.0" />
          </font>
       </Label>
-      <Button fx:id="catlogButton" layoutX="230.0" layoutY="104.0" mnemonicParsing="false" onAction="#catalog" prefHeight="44.0" prefWidth="114.0" text="catalog" />
-      <Button fx:id="orderButton" layoutX="230.0" layoutY="156.0" mnemonicParsing="false" onAction="#order" prefHeight="44.0" prefWidth="114.0" text="order" />
-      <Button fx:id="CancelOrderButton" layoutX="230.0" layoutY="206.0" mnemonicParsing="false" onAction="#cancelOrder" prefHeight="44.0" prefWidth="114.0" text="cancel order" />
-      <Button fx:id="complainButton" layoutX="230.0" layoutY="262.0" mnemonicParsing="false" onAction="#complain" prefHeight="44.0" prefWidth="114.0" text="complain" />
+      <Button fx:id="catlogButton" layoutX="230.0" layoutY="85.0" mnemonicParsing="false" onAction="#toCatalog" prefHeight="37.0" prefWidth="114.0" text="catalog" />
+      <Button fx:id="cartButton" layoutX="230.0" layoutY="131.0" mnemonicParsing="false" onAction="#toCart" prefHeight="37.0" prefWidth="114.0" text="my cart" visible="false" />
+      <Button fx:id="userComplaintsButton" layoutX="230.0" layoutY="182.0" mnemonicParsing="false" onAction="#toComplaints" prefHeight="37.0" prefWidth="114.0" text="my complaints" visible="false" />
+      <Button fx:id="ordersButton" layoutX="230.0" layoutY="232.0" mnemonicParsing="false" onAction="#toOrders" prefHeight="37.0" prefWidth="114.0" text="my orders" visible="false" />
+      <Button fx:id="subscriptionButton" layoutX="230.0" layoutY="281.0" mnemonicParsing="false" onAction="#buySubscription" prefHeight="37.0" prefWidth="114.0" text="buy subscription" visible="false" />
+      <Label fx:id="subscriptionStatus" layoutX="220.0" layoutY="334.0" text="subscribed successfully!" visible="false" />
+      <Button fx:id="addItemButton" layoutX="230.0" layoutY="131.0" mnemonicParsing="false" onAction="#toAddItem" prefHeight="37.0" prefWidth="114.0" text="add item" />
+      <Button fx:id="WorkerComplaintsButton" layoutX="230.0" layoutY="176.0" mnemonicParsing="false" onAction="#toComplaints" prefHeight="37.0" prefWidth="114.0" text="complaints" />
+      <Button fx:id="createReportButton" layoutX="230.0" layoutY="219.0" mnemonicParsing="false" onAction="#toCreateReport" prefHeight="37.0" prefWidth="114.0" text="create report" />
+      <Button fx:id="usersButton" layoutX="230.0" layoutY="263.0" mnemonicParsing="false" onAction="#toUsers" prefHeight="37.0" prefWidth="114.0" text="users" />
    </children>
 </AnchorPane>

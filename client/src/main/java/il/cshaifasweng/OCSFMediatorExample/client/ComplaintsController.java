@@ -1,22 +1,40 @@
 package il.cshaifasweng.OCSFMediatorExample.client;
 
 import il.cshaifasweng.OCSFMediatorExample.entities.Complaint;
-import il.cshaifasweng.OCSFMediatorExample.entities.Order;
+import il.cshaifasweng.OCSFMediatorExample.entities.ComplaintsListEvent;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import org.greenrobot.eventbus.Subscribe;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 public class ComplaintsController {
+
+    @FXML
+    private CheckBox acceptCheckBox1;
+
+    @FXML
+    private CheckBox acceptCheckBox2;
+
+    @FXML
+    private CheckBox acceptCheckBox3;
+
+    @FXML
+    private Label acceptedLabel1;
+
+    @FXML
+    private Label acceptedLabel2;
+
+    @FXML
+    private Label acceptedLabel3;
 
     @FXML
     private TextField complaintText1;
@@ -88,6 +106,8 @@ public class ComplaintsController {
     private TextField[] responses;
     private Button[] responseButtons;
     private Label[] statusLabels;
+    private CheckBox[] acceptCheckBoxes;
+    private Label[] acceptedLabels;
     private final int pageSize = 3;
     private List<Complaint> complaints;
     private Paginator<Complaint> paginator;
@@ -101,8 +121,10 @@ public class ComplaintsController {
         responses = new TextField[]{response1, response2, response3};
         responseButtons = new Button[]{sendResponseButton1, sendResponseButton2, sendResponseButton3};
         statusLabels = new Label[]{statusLabel1, statusLabel2, statusLabel3};
+        acceptCheckBoxes = new CheckBox[]{acceptCheckBox1, acceptCheckBox2, acceptCheckBox3};
+        acceptedLabels = new Label[]{acceptedLabel1, acceptedLabel2, acceptedLabel3};
         try{
-            if(SimpleClient.getAccountType().startsWith("worker")){
+            if(SimpleClient.getRole().startsWith("worker")){
                 SimpleClient.getClient().sendToServer("GET_ALL_COMPLAINTS");
             }
             else {
@@ -114,12 +136,13 @@ public class ComplaintsController {
         }
         //only for complaints to be not empty
         complaints = new ArrayList<>();
-        Complaint complaint1 = new Complaint("A", 1, 1);
-        Complaint complaint2 = new Complaint("B", 1, 1);
-        Complaint complaint3 = new Complaint("C", 1, 1);
-        Complaint complaint4 = new Complaint("D", 1, 1);
-        Complaint complaint5 = new Complaint("E", 1, 1);
-        Complaint complaint6 = new Complaint("F", 1, 1);
+        LocalDate date = LocalDate.now();
+        Complaint complaint1 = new Complaint("A", 1, 1, date);
+        Complaint complaint2 = new Complaint("B", 1, 1, date);
+        Complaint complaint3 = new Complaint("C", 1, 1, date);
+        Complaint complaint4 = new Complaint("D", 1, 1, date);
+        Complaint complaint5 = new Complaint("E", 1, 1, date);
+        Complaint complaint6 = new Complaint("F", 1, 1, date);
         complaint3.setResponse("OK");
         complaints.add(complaint1);
         complaints.add(complaint2);
@@ -133,7 +156,8 @@ public class ComplaintsController {
     }
 
     @Subscribe
-    public void initComplaints(List<Complaint> complaints){
+    public void initComplaints(ComplaintsListEvent event){
+        List<Complaint> complaints = event.getComplaints();
         Collections.reverse(complaints);
         this.complaints = complaints;
         paginator = new Paginator<>(complaints, pageSize);
@@ -141,13 +165,8 @@ public class ComplaintsController {
     }
 
     @FXML
-    void backToCatalog(ActionEvent event) {
-        try{
-            App.setRoot("catalog");
-        }
-        catch(Exception e){
-            e.printStackTrace();
-        }
+    void toMenu(ActionEvent event) {
+        App.switchScreen("menu");
     }
 
     @FXML
@@ -163,7 +182,7 @@ public class ComplaintsController {
 
     private void renderPage(){
         List<Complaint> pageItems = paginator.getCurrentPageItems();
-        String accountType = SimpleClient.getAccountType();
+        String accountType = SimpleClient.getRole();
         if(accountType.startsWith("worker")){
            Platform.runLater(() -> title.setText("complaints"));
         }
@@ -184,8 +203,8 @@ public class ComplaintsController {
                 setComplaintVisibility(i,false);
             }
         }
-        rightArrow.setVisible(paginator.hasNextPage());
-        leftArrow.setVisible(paginator.hasPreviousPage());
+        Platform.runLater(()->rightArrow.setVisible(paginator.hasNextPage()));
+        Platform.runLater(()->leftArrow.setVisible(paginator.hasPreviousPage()));
     }
 
     private void setComplaintVisibility(int i, boolean visible){
@@ -194,7 +213,9 @@ public class ComplaintsController {
         Platform.runLater(()->complaintTexts[i].setVisible(visible));
         Platform.runLater(()->responses[i].setVisible(visible));
         Platform.runLater(()->responseButtons[i].setVisible(false));
+        Platform.runLater(()->acceptCheckBoxes[i].setVisible(false));
         Platform.runLater(()->responses[i].setEditable(false));
+        Platform.runLater(()->acceptedLabels[i].setVisible(false));
     }
 
 
@@ -205,7 +226,7 @@ public class ComplaintsController {
         }
         else{
             Platform.runLater(()->responseLabels[index].setText("response:"));
-            Platform.runLater(()->responses[index].setText(complaint.getResponse()));
+            showAnswer(index, complaint);
         }
     }
 
@@ -213,11 +234,21 @@ public class ComplaintsController {
         if(complaint.getResponse().isEmpty()){
             Platform.runLater(()->responses[index].setEditable(true));
             Platform.runLater(()->responseButtons[index].setVisible(true));
+            Platform.runLater(()->acceptCheckBoxes[index].setVisible(true));
         }
-        else{
-            Platform.runLater(()->responses[index].setText(complaint.getResponse()));
-        }
+        showAnswer(index, complaint);
+    }
 
+    private void showAnswer(int index, Complaint complaint){
+        Platform.runLater(()->responses[index].setText(complaint.getResponse()));
+        if(!complaint.getResponse().isEmpty()) {
+            Platform.runLater(() -> acceptedLabels[index].setVisible(true));
+            if (complaint.getAccepted()) {
+                Platform.runLater(() -> acceptedLabels[index].setText("complaint accepted!"));
+            } else {
+                Platform.runLater(() -> acceptedLabels[index].setText("complaint rejected"));
+            }
+        }
     }
 
     @FXML
@@ -232,8 +263,17 @@ public class ComplaintsController {
                 }
                 Platform.runLater(()->responseButtons[finalI].setVisible(false));
                 Platform.runLater(()->statusLabels[finalI].setVisible(true));
+                Platform.runLater(()->acceptedLabels[finalI].setVisible(true));
+                Platform.runLater(()->acceptCheckBoxes[finalI].setVisible(false));
                 Complaint complaint = complaints.get(paginator.getCurrentIndex() - paginator.getCurrentPageSize()+ i);
                 complaint.setResponse(response);
+                if(acceptCheckBoxes[finalI].isSelected()){
+                    complaint.setAccepted(true);
+                    Platform.runLater(()->acceptedLabels[finalI].setText("complaint accepted!"));
+                }
+                else{
+                    Platform.runLater(()->acceptedLabels[finalI].setText("complaint rejected"));
+                }
                 try{
                     SimpleClient.getClient().sendToServer(complaint);
                 }
@@ -243,4 +283,6 @@ public class ComplaintsController {
             }
         }
     }
+
+
 }

@@ -8,7 +8,7 @@
 
 <AnchorPane prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="il.cshaifasweng.OCSFMediatorExample.client.OrdersController">
    <children>
-      <Button layoutX="22.0" layoutY="23.0" mnemonicParsing="false" onAction="#backToCatalog" prefHeight="26.0" prefWidth="144.0" text="back to catalog" />
+      <Button layoutX="15.0" layoutY="14.0" mnemonicParsing="false" onAction="#toMenu" prefHeight="26.0" prefWidth="84.0" text="menu" />
       <Label layoutX="225.0" layoutY="14.0" text="my orders">
          <font>
             <Font size="36.0" />

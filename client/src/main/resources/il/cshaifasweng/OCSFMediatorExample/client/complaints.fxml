@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.AnchorPane?>
@@ -13,7 +14,7 @@
             <Font size="36.0" />
          </font>
       </Label>
-      <Button layoutX="14.0" layoutY="38.0" mnemonicParsing="false" onAction="#backToCatalog" prefHeight="26.0" prefWidth="144.0" text="back to catalog" />
+      <Button layoutX="19.0" layoutY="16.0" mnemonicParsing="false" onAction="#toMenu" prefHeight="25.0" prefWidth="117.0" text="menu" />
       <Button fx:id="rightArrow" layoutX="651.0" layoutY="188.0" mnemonicParsing="false" onAction="#rightArrowPressed" text="&gt;" />
       <Button fx:id="leftArrow" layoutX="1.0" layoutY="188.0" mnemonicParsing="false" onAction="#leftArrowPressed" text="&lt;" />
       <Label fx:id="complaintLabel1" layoutX="39.0" layoutY="88.0" prefHeight="25.0" prefWidth="87.0" text="complaint:" />
@@ -34,5 +35,11 @@
       <Label fx:id="statusLabel1" layoutX="535.0" layoutY="119.0" prefHeight="31.0" prefWidth="95.0" text="response sent" visible="false" />
       <Label fx:id="statusLabel2" layoutX="534.0" layoutY="214.0" prefHeight="31.0" prefWidth="95.0" text="response sent" visible="false" />
       <Label fx:id="statusLabel3" layoutX="536.0" layoutY="309.0" prefHeight="31.0" prefWidth="95.0" text="response sent" visible="false" />
+      <CheckBox fx:id="acceptCheckBox1" layoutX="39.0" layoutY="150.0" mnemonicParsing="false" text="complaint accepted?" />
+      <CheckBox fx:id="acceptCheckBox2" layoutX="39.0" layoutY="245.0" mnemonicParsing="false" text="complaint accepted?" />
+      <CheckBox fx:id="acceptCheckBox3" layoutX="39.0" layoutY="340.0" mnemonicParsing="false" text="complaint accepted?" />
+      <Label fx:id="acceptedLabel1" layoutX="39.0" layoutY="150.0" prefHeight="17.0" prefWidth="137.0" text="Label" visible="false" />
+      <Label fx:id="acceptedLabel2" layoutX="39.0" layoutY="245.0" prefHeight="17.0" prefWidth="137.0" text="Label" visible="false" />
+      <Label fx:id="acceptedLabel3" layoutX="39.0" layoutY="340.0" prefHeight="17.0" prefWidth="137.0" text="Label" visible="false" />
    </children>
 </AnchorPane>

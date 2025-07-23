@@ -6,7 +6,6 @@ import org.greenrobot.eventbus.EventBus;
 import il.cshaifasweng.OCSFMediatorExample.client.ocsf.AbstractClient;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,7 +18,7 @@ public class SimpleClient extends AbstractClient {
     public static LoginController loginController;
     public static SignUpController signUpController;
     private static SimpleClient client = null;
-    private static String accountType = "worker";
+    private static ConnectedUser user = null;
     private int lastItemId;
     private static Map<BaseProduct, Integer> cart = new LinkedHashMap<>();
     private static int accountId;
@@ -44,12 +43,29 @@ public class SimpleClient extends AbstractClient {
         return lastItemId;
     }
 
-    public static String getAccountType() {
-        return accountType;
+    public static String getRole() {
+        if(user != null){
+            return user.getRole();
+        }
+        return "customer";
     }
 
-    public void setAccountType(String accountType) {
-        this.accountType = accountType;
+    public static void setUser(ConnectedUser user) {
+        SimpleClient.user = user;
+    }
+
+    public static void setRole(String accountType) {
+        if(user != null){
+            user.setRole(accountType);
+        }
+    }
+
+    public static ConnectedUser getUser() {
+        if(user == null){
+            ConnectedUser user = new ConnectedUser("a", "a", "a", "a", "customer", "subscription");
+            return user;
+        }
+        return user;
     }
 
     private SimpleClient(String host, int port) throws IOException {
@@ -68,16 +84,58 @@ public class SimpleClient extends AbstractClient {
         if (msg instanceof InitDescriptionEvent) {
             InitDescriptionEvent event = (InitDescriptionEvent) msg;
             EventBus.getDefault().post(event);
-        } else if (msg instanceof ChangePriceEvent) {
+        }
+        else if (msg instanceof ChangePriceEvent) {
             ChangePriceEvent event = (ChangePriceEvent) msg;
             EventBus.getDefault().post(event);
-        } else if (msg instanceof List<?>) {
-            List<Product> items = (List<Product>) msg;
-            EventBus.getDefault().post(items);
+        }
+        else if (msg instanceof ProductListEvent) {
+            ProductListEvent event = (ProductListEvent) msg;
+            EventBus.getDefault().post(event);
         }
         else if (msg instanceof LoginEvent) {
             LoginEvent event = (LoginEvent) msg;
             EventBus.getDefault().post(event);
+
+        }
+        else if (msg instanceof SignUpEvent) {
+            SignUpEvent event = (SignUpEvent) msg;
+            EventBus.getDefault().post(event);
+        }
+        else if(msg instanceof ShopsListEvent){
+            ShopsListEvent event = (ShopsListEvent) msg;
+            EventBus.getDefault().post(event);
+        }
+        else if(msg instanceof OrdersListEvent){
+            OrdersListEvent event = (OrdersListEvent) msg;
+            EventBus.getDefault().post(event);
+        }
+        else if(msg instanceof ComplaintsListEvent){
+            ComplaintsListEvent event = (ComplaintsListEvent) msg;
+            EventBus.getDefault().post(event);
+        }
+        else if(msg instanceof ChangeUserDetailsEvent){
+            ChangeUserDetailsEvent event = (ChangeUserDetailsEvent) msg;
+            EventBus.getDefault().post(event);
+        }
+        else if(msg instanceof BaseProductsListEvent){
+            BaseProductsListEvent event = (BaseProductsListEvent) msg;
+            EventBus.getDefault().post(event);
+        }
+        else if(msg instanceof AllOrdersEvent){
+            AllOrdersEvent event = (AllOrdersEvent) msg;
+            EventBus.getDefault().post(event);
+        }
+        else if(msg instanceof AllComplaintsEvent){
+            AllComplaintsEvent event = (AllComplaintsEvent) msg;
+            EventBus.getDefault().post(event);
+        }
+        else if(msg instanceof UsersListEvent){
+            UsersListEvent event = (UsersListEvent) msg;
+            EventBus.getDefault().post(event);
+        }
+        else if(msg instanceof ConnectedUser) {
+            user = (ConnectedUser) msg;
         }
     }
 }
