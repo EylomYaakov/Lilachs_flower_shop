@@ -220,7 +220,7 @@ public class CatalogController {
                 Platform.runLater(()->loginButton.setText("log in"));
                 Platform.runLater(()->menuButton.setVisible(false));
             }
-            if(!SimpleClient.getRole().equals("worker")){
+            if(!SimpleClient.getRole().startsWith("worker")){
                 Platform.runLater(()-> saleButton.setVisible(false));
             }
 
@@ -241,8 +241,8 @@ public class CatalogController {
 
     private String getDetails(Product product){
         String details =  product.name + "\ntype: " + product.type + "\n" + "price: " + product.price;
-        if(product.sale > 0){
-            details = product.sale + "% sale!\n" + details;
+        if(product.sale > 0) {
+            details = product.sale + "% sale!\n" + product.name + "\ntype: " + product.type + "\n" + "price: " + product.price * product.sale;
         }
         return details;
     }
@@ -326,7 +326,6 @@ public class CatalogController {
     @FXML
     void showSaleOptions(ActionEvent event) {
         chooseItems = !chooseItems;
-        System.out.println(chooseItems);
         setSaleVisibility(chooseItems);
         if(chooseItems){
             Platform.runLater(()->saleButton.setText("hide sale options"));
@@ -367,6 +366,7 @@ public class CatalogController {
             statusLabel.setText("Sale started!");
             statusLabel.setStyle("-fx-text-fill: green");
             saleProducts.clear();
+            Platform.runLater(()->chooseAllButton.setText("choose all items"));
             Arrays.fill(isSalePressed, false);
             Utils.setStyleAllButtons(buttons, "");
 
@@ -407,10 +407,17 @@ public class CatalogController {
         if(chooseAllButton.getText().equals("choose all items")){
             Platform.runLater(()->chooseAllButton.setText("reset choice"));
             Arrays.fill(isSalePressed, true);
+            saleProducts.clear();
+            for(int i = 0; i < products.size(); i++){
+                if(paginator.getShowProducts(i)){
+                    saleProducts.add(products.get(i));
+                }
+            }
             style = "-fx-border-color: red; -fx-border-width: 2px; -fx-border-radius: 5px;";
         }
         else{
             Platform.runLater(()->chooseAllButton.setText("choose all items"));
+            saleProducts.clear();
             Arrays.fill(isSalePressed, false);
             style = "";
         }

@@ -81,6 +81,10 @@ public class Paginator<T>{
         productsToShow[index] = value;
     }
 
+    public boolean getShowProducts(int index){
+        return productsToShow[index];
+    }
+
     public void prevPage(){
         int itemCount = 0;
         for(int i=currentIndex-1; i>=0; i--){

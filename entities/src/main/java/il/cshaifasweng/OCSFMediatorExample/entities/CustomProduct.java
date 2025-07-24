@@ -16,4 +16,8 @@ public class CustomProduct extends BaseProduct {
         int maxPrice = Integer.parseInt(priceRange.substring(dashIndex+1, priceRange.length()-1));
         return (minPrice + maxPrice)/2.0;
     }
+
+    public boolean equals(CustomProduct product){
+        return product.priceRange.equals(this.priceRange) && product.color.equals(this.color) && product.type.equals(this.type);
+    }
 }

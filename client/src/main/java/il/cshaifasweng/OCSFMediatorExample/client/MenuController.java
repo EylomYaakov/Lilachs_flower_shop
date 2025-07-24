@@ -63,7 +63,7 @@ public class MenuController {
         Platform.runLater(()->subscriptionStatus.setVisible(true));
         Platform.runLater(()->subscriptionStatus.setStyle("-fx-text-fill: green;"));
         try{
-            SimpleClient.getClient().sendToServer("SUBSCRIBED:" + SimpleClient.getId());
+            SimpleClient.getClient().sendToServer("SUBSCRIBED:" + SimpleClient.getUser().getUsername());
         }
         catch(Exception e){
             e.printStackTrace();

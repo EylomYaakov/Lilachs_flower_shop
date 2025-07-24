@@ -47,7 +47,7 @@ public class SimpleClient extends AbstractClient {
         if(user != null){
             return user.getRole();
         }
-        return "customer";
+        return "worker:manager";
     }
 
     public static void setUser(ConnectedUser user) {

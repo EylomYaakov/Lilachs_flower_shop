@@ -230,8 +230,20 @@ public class CartController {
         }
         String color = colorsList.getValue();
         CustomProduct newProduct = new CustomProduct(type, priceRange, color);
-        cart.put(newProduct, 1);
-        paginator.addItem(newProduct);
+        boolean added = false;
+        for(BaseProduct baseProduct: cart.keySet()){
+            if(baseProduct instanceof CustomProduct){
+                CustomProduct customProduct = (CustomProduct) baseProduct;
+                if(customProduct.equals(newProduct)){
+                    cart.put(customProduct, cart.get(customProduct)+1);
+                    added = true;
+                }
+            }
+        }
+        if(!added) {
+            cart.put(newProduct, 1);
+            paginator.addItem(newProduct);
+        }
         refreshPage();
         changePrice();
         Platform.runLater(()->addProductStatus.setText("product added!"));
@@ -249,6 +261,7 @@ public class CartController {
         LocalDate date = datePicker.getValue();
         int hour = hoursSpinner.getValue();
         int minute = minutesSpinner.getValue();
+        LocalDateTime dateWithTime = LocalDateTime.of(date, LocalTime.of(hour, minute));
         if(date == null){
             Platform.runLater(()->statusLabel.setText("Please select date"));
             Platform.runLater(()->statusLabel.setStyle("-fx-text-fill: red;"));
@@ -261,12 +274,11 @@ public class CartController {
                 return;
             }
         }
-        if(date.isBefore(LocalDate.now())){
+        if(dateWithTime.isBefore(LocalDateTime.now())){
             Platform.runLater(()->statusLabel.setText("please select a future date"));
             Platform.runLater(()->statusLabel.setStyle("-fx-text-fill: red;"));
             return;
         }
-        LocalDateTime dateWithTime = LocalDateTime.of(date, LocalTime.of(hour, minute));
         Order order = new Order(cart, grettingCard.getText(), address.getText(), phoneNumber.getText(), name.getText(), dateWithTime, LocalDate.now(), SimpleClient.getId());
         try{
             SimpleClient.getClient().sendToServer(order);
@@ -379,8 +391,13 @@ public class CartController {
         }
         try{
             if(SimpleClient.getUser().getAccountType().equals("subscription")){
-                minPrice = minPrice*0.9;
-                maxPrice = maxPrice*0.9;
+                if(minPrice >= 50){
+                    minPrice = minPrice*0.9;
+                    maxPrice = maxPrice*0.9;
+                }
+                else if(maxPrice >= 50){
+                    maxPrice = maxPrice*0.9;
+                }
             }
         }
         catch(Exception e){

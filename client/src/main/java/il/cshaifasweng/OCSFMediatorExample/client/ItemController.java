@@ -19,7 +19,6 @@ import java.nio.file.Paths;
 public class ItemController {
 
 
-
     @FXML
     private TextField description;
 
