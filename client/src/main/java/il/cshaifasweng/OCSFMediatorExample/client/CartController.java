@@ -279,7 +279,12 @@ public class CartController {
             Platform.runLater(()->statusLabel.setStyle("-fx-text-fill: red;"));
             return;
         }
-        Order order = new Order(cart, grettingCard.getText(), address.getText(), phoneNumber.getText(), name.getText(), dateWithTime, LocalDate.now(), SimpleClient.getId());
+        double price = changePrice();
+        Order order = new Order(cart, grettingCard.getText(), address.getText(), phoneNumber.getText(), name.getText(), dateWithTime, LocalDate.now(), price, SimpleClient.getId());
+        if(order.getShop().equals("all chain")){
+            order.setShop(SimpleClient.getLastShop());
+            order.setShop(SimpleClient.getLastShop());
+        }
         try{
             SimpleClient.getClient().sendToServer(order);
             statusLabel.setText("Order Placed!");
@@ -317,13 +322,13 @@ public class CartController {
     private void renderPage(){
         List<BaseProduct> pageItems = paginator.getCurrentPageItems();
         if(pageItems.isEmpty()){
-            emptyCart.setVisible(true);
-            placeOrderButton.setDisable(true);
+            Platform.runLater(()-> emptyCart.setVisible(true));
+            Platform.runLater(()-> placeOrderButton.setDisable(true));
 
         }
         else {
-            emptyCart.setVisible(false);
-            placeOrderButton.setDisable(false);
+            Platform.runLater(()-> emptyCart.setVisible(false));
+            Platform.runLater(()-> placeOrderButton.setDisable(false));
         }
         for(int i=0; i<productLabels.length; i++){
             if(i<pageItems.size()){
@@ -366,7 +371,7 @@ public class CartController {
     }
 
 
-    private void changePrice(){
+    private double changePrice(){
         double minPrice = 0;
         double maxPrice = 0;
         for (Map.Entry<BaseProduct, Integer> entry : cart.entrySet()){
@@ -374,8 +379,8 @@ public class CartController {
             int count = entry.getValue();
             if(baseProduct instanceof Product){
                 Product product = (Product)baseProduct;
-                minPrice += product.price*count;
-                maxPrice += product.price*count;
+                minPrice += product.price*count*(1-product.sale);
+                maxPrice += product.price*count*(1-product.sale);
             }
             else{
                 CustomProduct customProduct = (CustomProduct)baseProduct;
@@ -390,7 +395,7 @@ public class CartController {
             maxPrice += 10;
         }
         try{
-            if(SimpleClient.getUser().getAccountType().equals("subscription")){
+            if(SimpleClient.getRole().equals("subscription")){
                 if(minPrice >= 50){
                     minPrice = minPrice*0.9;
                     maxPrice = maxPrice*0.9;
@@ -409,6 +414,7 @@ public class CartController {
         else{
             priceLabel.setText("total price: " + minPrice + " - " + maxPrice);
         }
+        return (minPrice+maxPrice)/2;
     }
 
     @FXML

@@ -29,5 +29,10 @@
       <Button fx:id="sendComplaintButton2" layoutX="444.0" layoutY="187.0" mnemonicParsing="false" onAction="#sendComplaint" prefHeight="26.0" prefWidth="112.0" text="send complaint" visible="false" />
       <TextField fx:id="complaint3" layoutX="45.0" layoutY="259.0" prefHeight="17.0" prefWidth="388.0" visible="false" />
       <Button fx:id="sendComplaintButton3" layoutX="444.0" layoutY="259.0" mnemonicParsing="false" onAction="#sendComplaint" prefHeight="26.0" prefWidth="112.0" text="send complaint" visible="false" />
+      <Label fx:id="ordersEmpty" alignment="CENTER" layoutX="113.0" layoutY="154.0" prefHeight="66.0" prefWidth="361.0" text="no orders" visible="false">
+         <font>
+            <Font size="24.0" />
+         </font>
+      </Label>
    </children>
 </AnchorPane>

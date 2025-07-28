@@ -174,10 +174,10 @@ public class ItemController {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            product = new Product(id ,productName, ProductType, productDescription, productPriceDouble, imageBytes );
+            product = new Product(id ,productName, ProductType, productDescription, productPriceDouble, imageBytes, currentItem.shop);
         }
         else{
-            product = new Product(id ,productName, ProductType, productDescription, productPriceDouble, currentItem.image);
+            product = new Product(id ,productName, ProductType, productDescription, productPriceDouble, currentItem.image, currentItem.shop);
         }
         try {
             SimpleClient.getClient().sendToServer(product);

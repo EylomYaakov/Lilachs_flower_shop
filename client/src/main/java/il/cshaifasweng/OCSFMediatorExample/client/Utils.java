@@ -7,6 +7,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
@@ -82,16 +83,16 @@ public class Utils {
         return captial && lowercase && number && password.length() >= 8;
     }
 
-    public static void initReportOptions(DatePicker startDate, DatePicker endDate, ComboBox<String> reportTypes, ComboBox<String> shopsList){
+    public static void initReportOptions(DatePicker startDate, DatePicker endDate, ComboBox<String> reportTypes, ComboBox<String> shopsList, Label shopLabel){
         startDate.setDayCellFactory(picker -> new DateCell() {
             @Override
             public void updateItem(LocalDate date, boolean empty) {
                 super.updateItem(date, empty);
 
-                // Disable all future
+                // Disable all future dates
                 if (date.isAfter(LocalDate.now())) {
                     setDisable(true);
-                    setStyle("-fx-background-color: #dddddd;"); // optional gray out
+                    setStyle("-fx-background-color: #dddddd;");
                 }
             }
         });
@@ -100,26 +101,27 @@ public class Utils {
             public void updateItem(LocalDate date, boolean empty) {
                 super.updateItem(date, empty);
 
-                // Disable all future
+                // Disable all future dates
                 if (date.isAfter(LocalDate.now())) {
                     setDisable(true);
-                    setStyle("-fx-background-color: #dddddd;"); // optional gray out
+                    setStyle("-fx-background-color: #dddddd;");
                 }
             }
         });
         Platform.runLater(()->reportTypes.getItems().addAll("income", "orders", "complaints"));
-        Platform.runLater(()->shopsList.getItems().add("all chain"));
-        List<String> shops = CatalogController.getShops();
-        shops = new ArrayList<>();
-        shops.add("shop1");
-        shops.add("shop2");
-        shops.add("shop3");
-        for(String shop : shops) {
-            Platform.runLater(()->shopsList.getItems().add(shop));
-        }
+        initShopsFilter(shopsList);
+        Platform.runLater(()->shopLabel.setVisible(shopsList.isVisible()));
     }
 
     public static void sendReportMessage(String type){
+        if(type.equals("income")){
+            try{
+                SimpleClient.getClient().sendToServer("GET_SUBSCRIPTION_DATES");
+            }
+            catch(Exception e){
+                e.printStackTrace();
+            }
+        }
         String message = "GET_ALL_";
         if(type.equals("income") || type.equals("orders")){
             message += "ORDERS";
@@ -135,13 +137,16 @@ public class Utils {
         }
     }
 
-    public static void incomeReport(List<Order> orders, BarChart<String, Number> histogram, LocalDate startDate, LocalDate endDate, String shop){
+    public static void incomeReport(List<Order> orders, BarChart<String, Number> histogram, LocalDate startDate, LocalDate endDate, String shop, List<LocalDate> subscriptionDates){
         Map<LocalDate, Double> data = new LinkedHashMap<>();
         for(LocalDate begin = startDate; begin.isBefore(endDate.plusDays(1)); begin = begin.plusDays(1)) {
             data.put(begin, 0.0);
         }
         for(Order order : orders) {
-
+            data.put(order.getOrderDate(), data.get(order.getOrderDate()) + order.getPrice());
+        }
+        for(LocalDate date : subscriptionDates){
+            data.put(date, data.get(date) + 100);
         }
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM");
         XYChart.Series<String, Number> series = new XYChart.Series<>();
@@ -214,8 +219,24 @@ public class Utils {
         Platform.runLater(()->histogram.setTitle("complaints " + title(startDate, endDate, shop)));
     }
 
+
     private static String title(LocalDate startDate, LocalDate endDate, String shop){
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
         return "Report for " + shop + ", " + formatter.format(startDate) + " - " + formatter.format(endDate);
     }
+
+
+    public static void initShopsFilter(ComboBox<String> shopsList){
+        Platform.runLater(()->shopsList.getItems().add("all chain"));
+        List<String> shops = CatalogController.getShops();
+        for(String shop : shops) {
+            Platform.runLater(()->shopsList.getItems().add(shop));
+        }
+        String shop = SimpleClient.getUser().getShop();
+        if(!shop.equals("all chain")){
+            Platform.runLater(()->shopsList.getSelectionModel().select(shop));
+            Platform.runLater(()->shopsList.setVisible(false));
+        }
+    }
+
 }

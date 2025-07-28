@@ -10,6 +10,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 
 import java.time.Duration;
@@ -51,6 +52,9 @@ public class OrdersController {
     private Label label3;
 
     @FXML
+    private Label ordersEmpty;
+
+    @FXML
     private Button leftArrow;
 
     @FXML
@@ -82,6 +86,7 @@ public class OrdersController {
         orderLabels = new Label[]{label1, label2, label3};
         complaints = new TextField[]{complaint1, complaint2, complaint3};
         sendComplaintButtons = new Button[]{sendComplaintButton1, sendComplaintButton2, sendComplaintButton3};
+        EventBus.getDefault().register(this);
         try{
             SimpleClient.getClient().sendToServer("GET_ORDERS:" + SimpleClient.getId());
         }
@@ -91,25 +96,24 @@ public class OrdersController {
         //only for orders to be not empty
         orders = new ArrayList<>();
         Map<BaseProduct, Integer> map = new HashMap<>();
-        Order order1 = new Order(map, "", "", "", "",  LocalDateTime.now().plusHours(2), LocalDate.now(), -1);
-        Order order2 = new Order(map, "", "", "", "",  LocalDateTime.now().plusHours(4),LocalDate.now(), -1);
-        Order order3 = new Order(map, "", "", "", "", LocalDateTime.now().plusMinutes(30),LocalDate.now(),-1);
-        Order order4 = new Order(map, "", "", "", "", LocalDateTime.now().minusHours(2),LocalDate.now(),-1);
-        Order order5 = new Order(map, "", "", "", "",  LocalDateTime.now().minusHours(4),LocalDate.now(),-1);
+        Order order1 = new Order(map, "", "", "", "",  LocalDateTime.now().plusHours(2), LocalDate.now(),10, -1);
+        Order order2 = new Order(map, "", "", "", "",  LocalDateTime.now().plusHours(4),LocalDate.now(), 10,-1);
+        Order order3 = new Order(map, "", "", "", "", LocalDateTime.now().plusMinutes(30),LocalDate.now(),10,-1);
+        Order order4 = new Order(map, "", "", "", "", LocalDateTime.now().minusHours(2),LocalDate.now(),10,-1);
+        Order order5 = new Order(map, "", "", "", "",  LocalDateTime.now().minusHours(4),LocalDate.now(),10,-1);
         orders.add(order1);
         orders.add(order2);
         orders.add(order3);
         orders.add(order4);
         orders.add(order5);
-        paginator = new Paginator<>(orders, pageSize);
-        renderPage();
+        OrdersListEvent ordersListEvent = new OrdersListEvent(orders);
+        initOrders(ordersListEvent);
     }
 
     @Subscribe
     public void initOrders(OrdersListEvent event){
-        List<Order> orders = event.getOrders();
-        this.orders = orders;
-        paginator = new Paginator<>(orders, pageSize);
+        orders = event.getOrders();
+        paginator = new Paginator<>(this.orders, pageSize);
         renderPage();
     }
 
@@ -133,7 +137,10 @@ public class OrdersController {
                     setComplaintVisibility(i, !complaints[i].isVisible());
                     return;
                 }
-                cancelOrder(i);
+                else if(button.getText().equals("cancel order")) {
+                    cancelOrder(i);
+                    return;
+                }
             }
         }
     }
@@ -150,9 +157,10 @@ public class OrdersController {
             if(source == sendComplaintButtons[i]){
                 String customerComplaint = complaints[i].getText();
                 Order order  = orders.get(paginator.getCurrentIndex()-paginator.getCurrentPageSize()+i);
+                order.setComplained(true);
                 if(!customerComplaint.isEmpty()){
                     try{
-                        Complaint complaint = new Complaint(customerComplaint, order.getId(), SimpleClient.getId(), LocalDate.now());
+                        Complaint complaint = new Complaint(customerComplaint, order.getShop(), order.getId(), SimpleClient.getId(), LocalDate.now());
                         SimpleClient.getClient().sendToServer(complaint);
                         Platform.runLater(() -> statusLabel.setText("complaint sent"));
                     }
@@ -166,10 +174,17 @@ public class OrdersController {
 
     public void renderPage(){
         List<Order> pageItems = paginator.getCurrentPageItems();
+        if(pageItems.isEmpty()){
+            Platform.runLater(()->ordersEmpty.setVisible(true));
+        }
+        else{
+            Platform.runLater(()->ordersEmpty.setVisible(false));
+        }
         for(int i=0; i<orderLabels.length; i++){
             if(i<pageItems.size()){
                 int finalI = i;
                 setOrderVisibilty(i,true);
+                setComplaintVisibility(i, false);
                 Order order = pageItems.get(i);
                 LocalDateTime date = order.getDeliveryTime();
                 String text = "";
@@ -186,7 +201,13 @@ public class OrdersController {
                 }
                 else{
                     text = "Order delivered at " + formattedTime;
-                    Platform.runLater(()->buttons[finalI].setText("complain"));
+                    if(order.isComplained()){
+                        Platform.runLater(()->buttons[finalI].setText("complaint sent"));
+                        Platform.runLater(()->buttons[finalI].setDisable(true));
+                    }
+                    else {
+                        Platform.runLater(() -> buttons[finalI].setText("complain"));
+                    }
                 }
                 String finalText = text;
                 Platform.runLater(() -> orderLabels[finalI].setText(finalText));
@@ -202,6 +223,7 @@ public class OrdersController {
     public void setOrderVisibilty(int i, boolean visible){
         Platform.runLater(() -> orderLabels[i].setVisible(visible));
         Platform.runLater(()-> buttons[i].setVisible(visible));
+        Platform.runLater(()->buttons[i].setDisable(false));
     }
 
     public String getOrderDescription(Order order){
@@ -246,4 +268,6 @@ public class OrdersController {
             e.printStackTrace();
         }
     }
+
+
 }

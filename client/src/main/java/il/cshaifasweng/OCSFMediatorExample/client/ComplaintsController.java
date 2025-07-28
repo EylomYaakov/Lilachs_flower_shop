@@ -9,6 +9,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 
 import java.time.LocalDate;
@@ -35,6 +36,9 @@ public class ComplaintsController {
 
     @FXML
     private Label acceptedLabel3;
+
+    @FXML
+    private Label complaintsEmpty;
 
     @FXML
     private TextField complaintText1;
@@ -123,9 +127,10 @@ public class ComplaintsController {
         statusLabels = new Label[]{statusLabel1, statusLabel2, statusLabel3};
         acceptCheckBoxes = new CheckBox[]{acceptCheckBox1, acceptCheckBox2, acceptCheckBox3};
         acceptedLabels = new Label[]{acceptedLabel1, acceptedLabel2, acceptedLabel3};
+        EventBus.getDefault().register(this);
         try{
             if(SimpleClient.getRole().startsWith("worker")){
-                SimpleClient.getClient().sendToServer("GET_ALL_COMPLAINTS");
+                SimpleClient.getClient().sendToServer("GET_COMPLAINTS");
             }
             else {
                 SimpleClient.getClient().sendToServer("GET_COMPLAINTS:" + SimpleClient.getId());
@@ -137,12 +142,12 @@ public class ComplaintsController {
         //only for complaints to be not empty
         complaints = new ArrayList<>();
         LocalDate date = LocalDate.now();
-        Complaint complaint1 = new Complaint("A", 1, 1, date);
-        Complaint complaint2 = new Complaint("B", 1, 1, date);
-        Complaint complaint3 = new Complaint("C", 1, 1, date);
-        Complaint complaint4 = new Complaint("D", 1, 1, date);
-        Complaint complaint5 = new Complaint("E", 1, 1, date);
-        Complaint complaint6 = new Complaint("F", 1, 1, date);
+        Complaint complaint1 = new Complaint("A", "Haifa", 1, 1, date);
+        Complaint complaint2 = new Complaint("B","Haifa", 1, 1, date);
+        Complaint complaint3 = new Complaint("C", "Tel Aviv",1, 1, date);
+        Complaint complaint4 = new Complaint("D", "Tel Aviv",1, 1, date);
+        Complaint complaint5 = new Complaint("E", "Jerusalem",1, 1, date);
+        Complaint complaint6 = new Complaint("F", "Jerusalem",1, 1, date);
         complaint3.setResponse("OK");
         complaints.add(complaint1);
         complaints.add(complaint2);
@@ -151,16 +156,22 @@ public class ComplaintsController {
         complaints.add(complaint5);
         complaints.add(complaint6);
         Collections.reverse(complaints);
-        paginator = new Paginator<>(complaints, pageSize);
-        renderPage();
+        ComplaintsListEvent event = new ComplaintsListEvent(complaints);
+        initComplaints(event);
     }
 
     @Subscribe
     public void initComplaints(ComplaintsListEvent event){
         List<Complaint> complaints = event.getComplaints();
         Collections.reverse(complaints);
-        this.complaints = complaints;
-        paginator = new Paginator<>(complaints, pageSize);
+        String shop = SimpleClient.getUser().getShop();
+        if(SimpleClient.getRole().startsWith("worker") && !shop.equals("all chain")){
+            this.complaints = filterComplaints(complaints, shop);
+        }
+        else{
+            this.complaints = complaints;
+        }
+        paginator = new Paginator<>(this.complaints, pageSize);
         renderPage();
     }
 
@@ -182,6 +193,12 @@ public class ComplaintsController {
 
     private void renderPage(){
         List<Complaint> pageItems = paginator.getCurrentPageItems();
+        if(pageItems.isEmpty()){
+            Platform.runLater(()->complaintsEmpty.setVisible(true));
+        }
+        else{
+            Platform.runLater(()->complaintsEmpty.setVisible(false));
+        }
         String accountType = SimpleClient.getRole();
         if(accountType.startsWith("worker")){
            Platform.runLater(() -> title.setText("complaints"));
@@ -216,6 +233,7 @@ public class ComplaintsController {
         Platform.runLater(()->acceptCheckBoxes[i].setVisible(false));
         Platform.runLater(()->responses[i].setEditable(false));
         Platform.runLater(()->acceptedLabels[i].setVisible(false));
+        Platform.runLater(()->statusLabels[i].setVisible(false));
     }
 
 
@@ -282,6 +300,17 @@ public class ComplaintsController {
                 }
             }
         }
+    }
+
+
+    private List<Complaint> filterComplaints(List<Complaint> complaints, String shop){
+        List<Complaint> filteredComplaints = new ArrayList<>();
+        for (Complaint complaint : complaints) {
+            if (complaint.getShop().equals(shop)) {
+                filteredComplaints.add(complaint);
+            }
+        }
+        return filteredComplaints;
     }
 
 

@@ -12,6 +12,9 @@ import java.nio.file.Paths;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+
 
 public class DatabaseManager {
     private static Connection dbConnection;
@@ -52,13 +55,12 @@ public class DatabaseManager {
             if (rs.next()) {
                 String userId = rs.getString("personalId");
                 String creditId = rs.getString("creditId");
-                String userType = rs.getString("userType");
                 String role = rs.getString("role");
                 String password = rs.getString("password");
 
-                System.out.print(userId + " "+ creditId + " "+ userType + " ");
+                System.out.print(userId + " "+ creditId + " " + " ");
 
-                return new ConnectedUser(username,password, userId, creditId, role,userType);
+                return new ConnectedUser(username,password, userId, creditId, role);
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -96,10 +98,9 @@ public class DatabaseManager {
                 String personalId = rs.getString("personalId");
                 String creditId = rs.getString("creditId");
                 String role = rs.getString("role");
-                String userType = rs.getString("userType");
 
-                System.out.printf("🧑 ID: %d | Username: %s | Password: %s | PersonalID: %s | CreditID: %s | Type: %s | role: %s%n",
-                        id, username, password, personalId, creditId, userType, role);
+                System.out.printf("🧑 ID: %d | Username: %s | Password: %s | PersonalID: %s | CreditID: %s | role: %s%n",
+                        id, username, password, personalId, creditId, role);
             }
 
         } catch (SQLException e) {
@@ -110,15 +111,14 @@ public class DatabaseManager {
 
 
 
-    public static boolean createUser(String username, String password, String personalId, String creditId, String role, String userType) {
-        String query = "INSERT INTO Users (Username, password, personalId, creditId, role, userType) VALUES (?, ?, ?, ?, ?, ?)";
+    public static boolean createUser(String username, String password, String personalId, String creditId, String role) {
+        String query = "INSERT INTO Users (Username, password, personalId, creditId, role) VALUES (?, ?, ?, ?, ?)";
         try (PreparedStatement stmt = dbConnection.prepareStatement(query)) {
             stmt.setString(1, username);
             stmt.setString(2, password);
             stmt.setString(3, personalId);
             stmt.setString(4, creditId);
             stmt.setString(5, role);
-            stmt.setString(6, userType);
             stmt.executeUpdate();
             return true;
         } catch (SQLException e) {
@@ -153,7 +153,7 @@ public class DatabaseManager {
             while (rs.next()) {
                 Path imagePath = Paths.get("images/" + rs.getString("name") + ".jpg");
                 byte[] image = Files.readAllBytes(imagePath);
-                Product item = new Product(rs.getInt("id"), rs.getString("name"), rs.getString("type"), rs.getString("description"), rs.getDouble("price"), image);
+                Product item = new Product(rs.getInt("id"), rs.getString("name"), rs.getString("type"), rs.getString("description"), rs.getDouble("price"), image, rs.getString("shop"));
                 items.add(item);
             }
             //added only for testing the pages mechanism in the catalog - these items are not in the database and therefore exception is raised trying to get their details
@@ -161,7 +161,7 @@ public class DatabaseManager {
             for(int i = 0; i < 100; i++) {
                 Path imagePath = Paths.get("images/tulip.jpg");
                 byte[] image = Files.readAllBytes(imagePath);
-                Product item = new Product(6+i, names[i%11], names[i%11], names[i%11], 6+i, image);
+                Product item = new Product(6+i, names[i%11], names[i%11], names[i%11], 6+i, image, names[i%11]);
                 items.add(item);
             }
             ProductListEvent event = new ProductListEvent(items);
@@ -179,7 +179,7 @@ public class DatabaseManager {
             if (rs.next()) {
                 Path imagePath = Paths.get("images/" + rs.getString("name") + ".jpg");
                 byte[] image = Files.readAllBytes(imagePath);
-                Product item = new Product(rs.getInt("id"), rs.getString("name"), rs.getString("type"), rs.getString("description"), rs.getDouble("price"), image);
+                Product item = new Product(rs.getInt("id"), rs.getString("name"), rs.getString("type"), rs.getString("description"), rs.getDouble("price"), image, rs.getString("shop"));
                 return item;
             }
         } catch (Exception e) {
@@ -207,5 +207,49 @@ public class DatabaseManager {
         return null;
 
     }
+
+    public static Integer getUserDbId(String username) {
+        String sql = "SELECT id FROM Users WHERE username = ?";
+        try (PreparedStatement ps = dbConnection.prepareStatement(sql)) {
+            ps.setString(1, username);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) return rs.getInt("id");
+        } catch (SQLException e) { e.printStackTrace(); }
+        return null;
+    }
+
+    private static final DateTimeFormatter ISO = DateTimeFormatter.ISO_LOCAL_DATE;
+
+    public static boolean upsertSubscription(int userId, LocalDate start, LocalDate end) {
+        String sql = "INSERT INTO Subscriptions(user_id,start_date,end_date) VALUES(?,?,?) " +
+                "ON CONFLICT(user_id) DO UPDATE SET start_date=excluded.start_date, end_date=excluded.end_date";
+        try (PreparedStatement ps = dbConnection.prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            ps.setString(2, start.format(ISO));
+            ps.setString(3, end.format(ISO));
+            ps.executeUpdate();
+            return true;
+        } catch (SQLException e) { e.printStackTrace(); return false; }
+    }
+
+    public static void addSubscriptionSale(LocalDate date) {
+        String sql = "INSERT INTO SubscriptionSales(sale_date) VALUES(?)";
+        try (PreparedStatement ps = dbConnection.prepareStatement(sql)) {
+            ps.setString(1, date.format(ISO));
+            ps.executeUpdate();
+        } catch (SQLException e) { e.printStackTrace(); }
+    }
+
+    public static List<Integer> getSubscriptionsExpiringOn(LocalDate date) {
+        String sql = "SELECT user_id FROM Subscriptions WHERE end_date = ?";
+        List<Integer> ids = new ArrayList<>();
+        try (PreparedStatement ps = dbConnection.prepareStatement(sql)) {
+            ps.setString(1, date.format(ISO));
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) ids.add(rs.getInt("user_id"));
+        } catch (SQLException e) { e.printStackTrace(); }
+        return ids;
+    }
+
 
 }
