@@ -12,7 +12,7 @@ public class Product extends BaseProduct{
     public String shop;
 
 
-    public Product(int id, String name, String type, String description, double price, byte[] image) {
+    public Product(int id, String name, String type, String description, double price, byte[] image, String shop) {
         super(type);
         this.id = id;
         this.name = name;
@@ -20,6 +20,6 @@ public class Product extends BaseProduct{
         this.price = price;
         this.image = image;
         this.sale = 0;
-        this.shop = "all chain";
+        this.shop = shop;
     }
 }

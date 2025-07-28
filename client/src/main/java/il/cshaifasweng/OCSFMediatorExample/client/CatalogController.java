@@ -49,6 +49,10 @@ public class CatalogController {
     private Label statusLabel;
 
     @FXML
+    private Label emptyCatalog;
+
+
+    @FXML
     private TextArea txt1;
 
     @FXML
@@ -229,14 +233,6 @@ public class CatalogController {
             e.printStackTrace();
         }
 
-        //for shops to be not empty
-        List<String> shops = new ArrayList<>();
-        shops.add("shop1");
-        shops.add("shop2");
-        shops.add("shop3");
-        ShopsListEvent event = new ShopsListEvent(shops);
-        initShops(event);
-
     }
 
     private String getDetails(Product product){
@@ -250,13 +246,27 @@ public class CatalogController {
 
 
 
-    @Subscribe
-    public void initShops(ShopsListEvent event){
-        List<String> shops = event.getShops();
-        CatalogController.shops = shops;
-        Platform.runLater(()->shopsFilter.getItems().add("all chain"));
-        for(String shop : shops){
-            Platform.runLater(()->shopsFilter.getItems().add(shop));
+    public void initShops(){
+        Set<String> shopsSet = new LinkedHashSet<>();
+        for(Product p : products){
+            if(!p.shop.equals("all chain")) {
+                shopsSet.add(p.shop);
+            }
+        }
+        Platform.runLater(()->shopsFilter.getItems().addAll(shopsSet));
+        shops = new ArrayList<>(shopsSet);
+        if(SimpleClient.getUser() != null) {
+            String shop = SimpleClient.getUser().getShop();
+            if(!shop.equals("all chain")){
+                Platform.runLater(()->shopsFilter.setVisible(false));
+                Platform.runLater(()->filterButton.setLayoutX(176));
+            }
+            else{
+                shop = shops.get(0);
+            }
+            String finalShop = shop;
+            Platform.runLater(()-> shopsFilter.getSelectionModel().select(finalShop));
+            Platform.runLater(()-> filter(new ActionEvent()));
         }
     }
 
@@ -270,26 +280,14 @@ public class CatalogController {
         isSalePressed = new boolean[products.size()];
         int pageSize = 6;
         paginator = new Paginator<>(products, pageSize);
-        if(SimpleClient.getUser() != null && SimpleClient.getUser().getAccountType().startsWith("shop")){
-            String shop = SimpleClient.getUser().getAccountType().substring(14);
-            for(int i=0; i<products.size(); i++){
-                if(!products.get(i).shop.equals(shop) && !products.get(i).shop.equals("all chain")){
-                    paginator.changeShowProducts(i, false);
-                }
-                Platform.runLater(()->shopsFilter.setVisible(false));
-                Platform.runLater(()->filterButton.setLayoutX(176));
-
-            }
-        }
         renderPage();
         Platform.runLater(()->typesFilter.getItems().add("all items"));
         Set<String> types = new HashSet<>();
         for(Product p : products){
             types.add(p.type);
         }
-        for(String type : types){
-            Platform.runLater(()->typesFilter.getItems().add(type));
-        }
+        Platform.runLater(()->typesFilter.getItems().addAll(types));
+        initShops();
     }
 
 
@@ -319,6 +317,7 @@ public class CatalogController {
 
     @FXML
     void toMenu(ActionEvent event) {
+        SimpleClient.setLastShop(shopsFilter.getSelectionModel().getSelectedItem());
         App.switchScreen("menu");
     }
 
@@ -389,6 +388,10 @@ public class CatalogController {
         else if(chosenShop == null){
             chosenShop = "all chain";
         }
+        String currentCartShop = getCartShop();
+        if(!currentCartShop.equals("all chain") && !currentCartShop.equals(chosenShop)){
+            SimpleClient.clearCart();
+        }
         for(int i = 0; i < products.size(); i++){
             if((products.get(i).type.equals(chosenType) || chosenType.equals("all items")) && (products.get(i).shop.equals(chosenShop) || products.get(i).shop.equals("all chain"))){
                paginator.changeShowProducts(i, true);
@@ -427,6 +430,12 @@ public class CatalogController {
 
     public void renderPage(){
         List<Product> pageItems = paginator.getCurrentPageItems();
+        if(pageItems.isEmpty()){
+            Platform.runLater(()->emptyCatalog.setVisible(true));
+        }
+        else{
+            Platform.runLater(()->emptyCatalog.setVisible(false));
+        }
         for(int i=0; i<buttons.length; i++){
             if(i<pageItems.size()){
                 int finalI = i;
@@ -454,4 +463,15 @@ public class CatalogController {
         Platform.runLater(()->images[index].setVisible(value));
     }
 
+    private String getCartShop(){
+       for(BaseProduct baseProduct: SimpleClient.getCart().keySet()){
+           if(baseProduct instanceof Product){
+               Product product = (Product) baseProduct;
+               if(!product.shop.equals("all chain")){
+                   return product.shop;
+               }
+           }
+       }
+       return "all chain";
+    }
 }

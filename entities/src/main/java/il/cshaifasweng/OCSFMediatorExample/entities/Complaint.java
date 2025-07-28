@@ -5,6 +5,7 @@ import java.time.LocalDate;
 
 public class Complaint implements Serializable {
     private String complaint;
+    private String shop;
     private int orderId;
     private int customerId;
     private int complaintId;
@@ -12,8 +13,9 @@ public class Complaint implements Serializable {
     private LocalDate date;
     private boolean accepted;
 
-    public Complaint(String complaint, int orderId, int customerId, LocalDate date){
+    public Complaint(String complaint, String shop, int orderId, int customerId, LocalDate date){
         this.complaint = complaint;
+        this.shop = shop;
         this.orderId = orderId;
         this.customerId = customerId;
         this.complaintId = -1;
@@ -57,4 +59,9 @@ public class Complaint implements Serializable {
     public void setAccepted(boolean accepted){
         this.accepted = accepted;
     }
+
+    public String getShop(){
+        return shop;
+    }
 }
+

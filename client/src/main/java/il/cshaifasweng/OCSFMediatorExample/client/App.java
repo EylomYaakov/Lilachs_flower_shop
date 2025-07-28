@@ -33,7 +33,7 @@ public class App extends Application {
         appStage = stage;
         client = SimpleClient.getClient();
         client.openConnection();
-        scene = new Scene(loadFXML("catalog"));
+        scene = new Scene(loadFXML("menu"));
         stage.setScene(scene);
         stage.show();
 

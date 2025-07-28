@@ -20,7 +20,7 @@
       <DatePicker fx:id="endDate" layoutX="102.0" layoutY="118.0" prefHeight="26.0" prefWidth="152.0" />
       <Label layoutX="15.0" layoutY="161.0" text="report type:" />
       <ComboBox fx:id="reportTypes" layoutX="103.0" layoutY="157.0" prefWidth="150.0" />
-      <Label layoutX="15.0" layoutY="192.0" text="shop:" />
+      <Label fx:id="shopLabel" layoutX="15.0" layoutY="192.0" text="shop:" />
       <ComboBox fx:id="shopsList" layoutX="103.0" layoutY="188.0" prefWidth="150.0" />
       <Button layoutX="17.0" layoutY="235.0" mnemonicParsing="false" onAction="#createReport" prefHeight="26.0" prefWidth="158.0" text="create report" />
       <Button layoutX="19.0" layoutY="14.0" mnemonicParsing="false" onAction="#toMenu" prefHeight="26.0" prefWidth="81.0" text="menu" />

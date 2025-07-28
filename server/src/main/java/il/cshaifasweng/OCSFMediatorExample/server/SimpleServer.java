@@ -136,15 +136,14 @@ public class SimpleServer extends AbstractServer {
 			String password = user.getPassword();
 			String personalId = user.getUserID();
 			String creditId = user.getCreditCard();
-			String role = user.getRole();
-			String userType = user.getAccountType(); // can contain spaces like "chain account"
+			String role = user.getRole();// can contain spaces like "chain account"
 			boolean userExists = DatabaseManager.userExists(username);
 			if (userExists) {
 				event = new SignUpEvent("USERNAME_TAKEN");
 				System.out.println("USERNAME_TAKEN");
 			}
 			else {
-				boolean created = DatabaseManager.createUser(username, password, personalId, creditId, role, userType);
+				boolean created = DatabaseManager.createUser(username, password, personalId, creditId, role);
 				if (created) {
 					ConnectedUser newUser = DatabaseManager.getUser(username);
 					ConnectedList.add(newUser);

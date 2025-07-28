@@ -41,5 +41,10 @@
       <Label fx:id="acceptedLabel1" layoutX="39.0" layoutY="150.0" prefHeight="17.0" prefWidth="137.0" text="Label" visible="false" />
       <Label fx:id="acceptedLabel2" layoutX="39.0" layoutY="245.0" prefHeight="17.0" prefWidth="137.0" text="Label" visible="false" />
       <Label fx:id="acceptedLabel3" layoutX="39.0" layoutY="340.0" prefHeight="17.0" prefWidth="137.0" text="Label" visible="false" />
+      <Label fx:id="complaintsEmpty" alignment="CENTER" layoutX="151.0" layoutY="181.0" prefHeight="66.0" prefWidth="361.0" text="no complaints" visible="false">
+         <font>
+            <Font size="24.0" />
+         </font>
+      </Label>
    </children>
 </AnchorPane>

@@ -19,8 +19,8 @@
       <Button fx:id="subscriptionButton" layoutX="230.0" layoutY="281.0" mnemonicParsing="false" onAction="#buySubscription" prefHeight="37.0" prefWidth="114.0" text="buy subscription" visible="false" />
       <Label fx:id="subscriptionStatus" layoutX="220.0" layoutY="334.0" text="subscribed successfully!" visible="false" />
       <Button fx:id="addItemButton" layoutX="230.0" layoutY="131.0" mnemonicParsing="false" onAction="#toAddItem" prefHeight="37.0" prefWidth="114.0" text="add item" />
-      <Button fx:id="WorkerComplaintsButton" layoutX="230.0" layoutY="176.0" mnemonicParsing="false" onAction="#toComplaints" prefHeight="37.0" prefWidth="114.0" text="complaints" />
-      <Button fx:id="createReportButton" layoutX="230.0" layoutY="219.0" mnemonicParsing="false" onAction="#toCreateReport" prefHeight="37.0" prefWidth="114.0" text="create report" />
-      <Button fx:id="usersButton" layoutX="230.0" layoutY="263.0" mnemonicParsing="false" onAction="#toUsers" prefHeight="37.0" prefWidth="114.0" text="users" />
+      <Button fx:id="workerComplaintsButton" layoutX="230.0" layoutY="176.0" mnemonicParsing="false" onAction="#toComplaints" prefHeight="37.0" prefWidth="114.0" text="complaints" visible="false" />
+      <Button fx:id="createReportButton" layoutX="230.0" layoutY="219.0" mnemonicParsing="false" onAction="#toCreateReport" prefHeight="37.0" prefWidth="114.0" text="create report" visible="false" />
+      <Button fx:id="usersButton" layoutX="230.0" layoutY="263.0" mnemonicParsing="false" onAction="#toUsers" prefHeight="37.0" prefWidth="114.0" text="users" visible="false" />
    </children>
 </AnchorPane>

@@ -52,13 +52,12 @@ public class DatabaseManager {
             if (rs.next()) {
                 String userId = rs.getString("personalId");
                 String creditId = rs.getString("creditId");
-                String userType = rs.getString("userType");
                 String role = rs.getString("role");
                 String password = rs.getString("password");
 
-                System.out.print(userId + " "+ creditId + " "+ userType + " ");
+                System.out.print(userId + " "+ creditId + " " + " ");
 
-                return new ConnectedUser(username,password, userId, creditId, role,userType);
+                return new ConnectedUser(username,password, userId, creditId, role);
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -96,10 +95,9 @@ public class DatabaseManager {
                 String personalId = rs.getString("personalId");
                 String creditId = rs.getString("creditId");
                 String role = rs.getString("role");
-                String userType = rs.getString("userType");
 
-                System.out.printf("🧑 ID: %d | Username: %s | Password: %s | PersonalID: %s | CreditID: %s | Type: %s | role: %s%n",
-                        id, username, password, personalId, creditId, userType, role);
+                System.out.printf("🧑 ID: %d | Username: %s | Password: %s | PersonalID: %s | CreditID: %s | role: %s%n",
+                        id, username, password, personalId, creditId, role);
             }
 
         } catch (SQLException e) {
@@ -110,15 +108,14 @@ public class DatabaseManager {
 
 
 
-    public static boolean createUser(String username, String password, String personalId, String creditId, String role, String userType) {
-        String query = "INSERT INTO Users (Username, password, personalId, creditId, role, userType) VALUES (?, ?, ?, ?, ?, ?)";
+    public static boolean createUser(String username, String password, String personalId, String creditId, String role) {
+        String query = "INSERT INTO Users (Username, password, personalId, creditId, role) VALUES (?, ?, ?, ?, ?)";
         try (PreparedStatement stmt = dbConnection.prepareStatement(query)) {
             stmt.setString(1, username);
             stmt.setString(2, password);
             stmt.setString(3, personalId);
             stmt.setString(4, creditId);
             stmt.setString(5, role);
-            stmt.setString(6, userType);
             stmt.executeUpdate();
             return true;
         } catch (SQLException e) {
@@ -153,7 +150,7 @@ public class DatabaseManager {
             while (rs.next()) {
                 Path imagePath = Paths.get("images/" + rs.getString("name") + ".jpg");
                 byte[] image = Files.readAllBytes(imagePath);
-                Product item = new Product(rs.getInt("id"), rs.getString("name"), rs.getString("type"), rs.getString("description"), rs.getDouble("price"), image);
+                Product item = new Product(rs.getInt("id"), rs.getString("name"), rs.getString("type"), rs.getString("description"), rs.getDouble("price"), image, rs.getString("shop"));
                 items.add(item);
             }
             //added only for testing the pages mechanism in the catalog - these items are not in the database and therefore exception is raised trying to get their details
@@ -161,7 +158,7 @@ public class DatabaseManager {
             for(int i = 0; i < 100; i++) {
                 Path imagePath = Paths.get("images/tulip.jpg");
                 byte[] image = Files.readAllBytes(imagePath);
-                Product item = new Product(6+i, names[i%11], names[i%11], names[i%11], 6+i, image);
+                Product item = new Product(6+i, names[i%11], names[i%11], names[i%11], 6+i, image, names[i%11]);
                 items.add(item);
             }
             ProductListEvent event = new ProductListEvent(items);
@@ -179,7 +176,7 @@ public class DatabaseManager {
             if (rs.next()) {
                 Path imagePath = Paths.get("images/" + rs.getString("name") + ".jpg");
                 byte[] image = Files.readAllBytes(imagePath);
-                Product item = new Product(rs.getInt("id"), rs.getString("name"), rs.getString("type"), rs.getString("description"), rs.getDouble("price"), image);
+                Product item = new Product(rs.getInt("id"), rs.getString("name"), rs.getString("type"), rs.getString("description"), rs.getDouble("price"), image, rs.getString("shop"));
                 return item;
             }
         } catch (Exception e) {

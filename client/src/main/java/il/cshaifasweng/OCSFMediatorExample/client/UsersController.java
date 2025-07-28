@@ -10,6 +10,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 
 import java.io.IOException;
@@ -99,6 +100,9 @@ public class UsersController {
     private Label usernameStatus2;
 
 
+    @FXML
+    private Label usersEmpty;
+
 
     private Label[][] labels;
     private Button[][] buttons;
@@ -125,8 +129,9 @@ public class UsersController {
         passwordStatusLabels = new Label[] {passwordStatus1, passwordStatus2};
         roleStatusLabels = new Label[] {roleStatus1, roleStatus2};
         changeUsername = new boolean[usernames.length];
+        EventBus.getDefault().register(this);
         for(ComboBox<String> role : roles) {
-            role.getItems().addAll("customer", "worker");
+           initRolesFilter(role);
         }
         try{
             SimpleClient.getClient().sendToServer("GET_USERS");
@@ -136,26 +141,32 @@ public class UsersController {
         }
         //only for users to be not empty
         users = new ArrayList<>();
-        ConnectedUser user1 = new ConnectedUser("Eylom", "12345678", "1", "1", "worker", "all chain");
-        ConnectedUser user2 = new ConnectedUser("Ofek", "Aa1234", "2", "2", "customer", "all chain");
-        ConnectedUser user3 = new ConnectedUser("Ariel", "a123451", "3", "2", "worker", "all chain");
-        ConnectedUser user4 = new ConnectedUser("Hodaya", "1234567", "4", "2", "customer", "all chain");
-        ConnectedUser user5 = new ConnectedUser("Mike", "123456", "5", "2", "worker", "all chain");
+        ConnectedUser user1 = new ConnectedUser("Eylom", "12345678", "1", "1", "worker");
+        ConnectedUser user2 = new ConnectedUser("Ofek", "Aa1234", "2", "2", "shop account:Haifa");
+        ConnectedUser user3 = new ConnectedUser("Ariel", "a123451", "3", "2", "worker");
+        ConnectedUser user4 = new ConnectedUser("Hodaya", "1234567", "4", "2", "all chain");
+        ConnectedUser user5 = new ConnectedUser("Mike", "123456", "5", "2", "worker");
         users.add(user1);
         users.add(user2);
         users.add(user3);
         users.add(user4);
         users.add(user5);
-        paginator = new Paginator<>(users, pageSize);
-        renderPage();
+        UsersListEvent event = new UsersListEvent(users);
+        initUsers(event);
     }
 
 
     @Subscribe
     public void initUsers(UsersListEvent event) {
         List<ConnectedUser> users = event.getUsers();
-        this.users = users;
-        paginator = new Paginator<>(users, pageSize);
+        String shop = SimpleClient.getUser().getShop();
+        if(!shop.equals("all chain")){
+            this.users = filterUsers(users, shop);
+        }
+        else {
+            this.users = users;
+        }
+        paginator = new Paginator<>(this.users, pageSize);
         renderPage();
     }
 
@@ -185,7 +196,7 @@ public class UsersController {
                 Platform.runLater(()->passwordStatusLabels[finalI].setText("password changed!"));
                 Platform.runLater(()->passwordStatusLabels[finalI].setStyle(""));
                 try{
-                    SimpleClient.getClient().sendToServer(user);
+                    SimpleClient.getClient().sendToServer(new ChangeUserDetailsEvent(user, "password"));
                 }
                 catch(Exception e){
                     e.printStackTrace();
@@ -203,13 +214,13 @@ public class UsersController {
             if(buttons[i][roleIndex] == source) {
                 int finalI = i;
                 ConnectedUser user = users.get(paginator.getCurrentIndex()-paginator.getCurrentPageSize()+i);
-                if(roles[i].getSelectionModel().getSelectedItem().equals(user.getRole())) {
+                if(roles[i].getSelectionModel().getSelectedItem().equals(getRole(user.getRole()))) {
                     return;
                 }
-                user.setRole(roles[i].getSelectionModel().getSelectedItem());
+                user.setRole(getRoleDescription(roles[i].getSelectionModel().getSelectedItem()));
                 Platform.runLater(()->roleStatusLabels[finalI].setText("role changed!"));
                 try{
-                    SimpleClient.getClient().sendToServer(user);
+                    SimpleClient.getClient().sendToServer(new ChangeUserDetailsEvent(user, "role"));
                 }
                 catch(Exception e){
                     e.printStackTrace();
@@ -233,7 +244,7 @@ public class UsersController {
                 user.setUsername(usernames[i].getText());
                 changeUsername[i] = true;
                 try{
-                    SimpleClient.getClient().sendToServer(user);
+                    SimpleClient.getClient().sendToServer(new ChangeUserDetailsEvent(user, "username"));
                 }
                 catch(Exception e){
                     e.printStackTrace();
@@ -244,7 +255,7 @@ public class UsersController {
     }
 
     @Subscribe
-    public void changeUsernameAttempt(ChangeUserDetailsEvent event) {
+    public void changeUsernameAttempt(ChangeUsernameEvent event) {
         for(int i=0; i<changeUsername.length; i++) {
             if(changeUsername[i]) {
                 int finalI = i;
@@ -274,9 +285,14 @@ public class UsersController {
 
     public void renderPage() {
         List<ConnectedUser> pageItems = paginator.getCurrentPageItems();
+        if(pageItems.isEmpty()) {
+            Platform.runLater(()->usersEmpty.setVisible(true));
+        }
+        else{
+            Platform.runLater(()->usersEmpty.setVisible(false));
+        }
         for(int i=0; i<usernames.length; i++){
             if(i<pageItems.size()){
-                int finalI = i;
                 setUserVisibility(i,true);
                 renderUser(i);
             }
@@ -309,7 +325,82 @@ public class UsersController {
         ConnectedUser user = users.get(paginator.getCurrentIndex()-paginator.getCurrentPageSize()+index);
         Platform.runLater(()->usernames[index].setText(user.getUsername()));
         Platform.runLater(()->passwords[index].setText(user.getPassword()));
-        Platform.runLater(()->roles[index].getSelectionModel().select(user.getRole()));
+        Platform.runLater(()->roles[index].getSelectionModel().select(getRoleDescription(user.getRole())));
     }
+
+    private List<ConnectedUser> filterUsers(List<ConnectedUser> users, String shop){
+        List<ConnectedUser> filteredUsers = new ArrayList<>();
+        for (ConnectedUser user : users) {
+            if (user.getShop().equals(shop) || user.getRole().equals("subscription") || user.getRole().equals("all chain")) {
+                filteredUsers.add(user);
+            }
+        }
+        return filteredUsers;
+    }
+
+    private void initRolesFilter(ComboBox<String> roles){
+        List<String> shops = CatalogController.getShops();
+        Platform.runLater(()->roles.getItems().addAll("user chain account", "user subscription account"));
+        for(String shop : shops){
+            Platform.runLater(()->roles.getItems().add("user shop account:"+ shop));
+        }
+        String managerShop = SimpleClient.getUser().getShop();
+        if(managerShop.equals("all chain")){
+            for(String shop : shops){
+                Platform.runLater(()->roles.getItems().add(shop + " shop manager"));
+            }
+            Platform.runLater(()->roles.getItems().addAll("chain worker", "chain manager"));
+        }
+        else{
+            Platform.runLater(()->roles.getItems().add(managerShop + " shop manager"));
+        }
+        Platform.runLater(()->roles.setStyle("-fx-font: 12 System;"));
+    }
+
+    private String getRoleDescription(String role){
+        if(role.startsWith("shop account")){
+            return "customer " + role;
+        }
+        if(role.equals("chain account")){
+            return "customer chain account";
+        }
+        if(role.equals("subscription")){
+            return "customer subscription account";
+        }
+        if(role.equals("worker")){
+            return "chain worker";
+        }
+        if(role.equals("worker:customer service")){
+            return "customer service worker";
+        }
+        if(role.startsWith("worker:manager:shop")){
+            return role.split(":", 4)[3] + " shop manager";
+        }
+        return "chain manager";
+    }
+
+    private String getRole(String roleDescription){
+        if(roleDescription.startsWith("customer shop account")){
+            return roleDescription.substring(5);
+        }
+        if(roleDescription.equals("customer chain account")){
+            return "chain account";
+        }
+        if(roleDescription.equals("customer subscription account")){
+            return "subscription";
+        }
+        if(roleDescription.equals("chain worker")){
+            return "worker";
+        }
+        if(roleDescription.equals("customer service worker")){
+            return "worker:customer service";
+        }
+        if(roleDescription.endsWith("shop manager")){
+            return "worker:manager:shop:"+ roleDescription.substring(0, roleDescription.indexOf(" shop manager"));
+        }
+        return "worker:manager";
+    }
+
+
 
 }

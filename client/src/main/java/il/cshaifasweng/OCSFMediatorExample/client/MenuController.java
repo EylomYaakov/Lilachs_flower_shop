@@ -22,7 +22,7 @@ public class MenuController {
     private Button userComplaintsButton;
 
     @FXML
-    private Button WorkerComplaintsButton;
+    private Button workerComplaintsButton;
 
     @FXML
     private Button createReportButton;
@@ -45,13 +45,17 @@ public class MenuController {
         String role = SimpleClient.getRole();
         if(!role.startsWith("worker")){
             setUserVisibility(true);
-            setWorkerVisibility(false);
-            if(SimpleClient.getUser().getAccountType().equals("subscription")){
+            Platform.runLater(()->addItemButton.setVisible(false));
+            if(SimpleClient.getRole().equals("subscription")){
                 Platform.runLater(()->subscriptionButton.setVisible(false));
             }
         }
-        else if(!role.startsWith("worker:manager")){
-            Platform.runLater(()->usersButton.setVisible(false));
+        else if(role.equals("worker:customer service") || role.startsWith("worker:manager")){
+            Platform.runLater(()->workerComplaintsButton.setVisible(true));
+        }
+        if(role.startsWith("worker:manager")){
+            Platform.runLater(()->createReportButton.setVisible(true));
+            Platform.runLater(()->usersButton.setVisible(true));
         }
 
     }
@@ -59,11 +63,12 @@ public class MenuController {
     @FXML
     void buySubscription(ActionEvent event) {
         ConnectedUser user = SimpleClient.getUser();
-        user.setAccountType("subscription");
+        user.setRole("subscription");
         Platform.runLater(()->subscriptionStatus.setVisible(true));
         Platform.runLater(()->subscriptionStatus.setStyle("-fx-text-fill: green;"));
+        Platform.runLater(()->subscriptionButton.setVisible(false));
         try{
-            SimpleClient.getClient().sendToServer("SUBSCRIBED:" + SimpleClient.getUser().getUsername());
+            SimpleClient.getClient().sendToServer("SUBSCRIBED:" + SimpleClient.getId());
         }
         catch(Exception e){
             e.printStackTrace();
@@ -111,12 +116,4 @@ public class MenuController {
         Platform.runLater(()->ordersButton.setVisible(visible));
         Platform.runLater(()->subscriptionButton.setVisible(visible));
     }
-
-    private void setWorkerVisibility(boolean visible){
-        Platform.runLater(()->addItemButton.setVisible(visible));
-        Platform.runLater(()->WorkerComplaintsButton.setVisible(visible));
-        Platform.runLater(()->createReportButton.setVisible(visible));
-        Platform.runLater(()->usersButton.setVisible(visible));
-    }
-
 }

@@ -22,6 +22,16 @@ public class SimpleClient extends AbstractClient {
     private int lastItemId;
     private static Map<BaseProduct, Integer> cart = new LinkedHashMap<>();
     private static int accountId;
+    private static String lastShop;
+
+
+    public static void setLastShop(String shop) {
+        lastShop = shop;
+    }
+
+    public static String getLastShop() {
+        return lastShop;
+    }
 
     public static int getId(){
         return accountId;
@@ -29,6 +39,10 @@ public class SimpleClient extends AbstractClient {
 
     public static Map<BaseProduct, Integer> getCart(){
         return cart;
+    }
+
+    public static void clearCart(){
+        cart.clear();
     }
 
     public static void addToCart(Product product, int amount){
@@ -47,8 +61,9 @@ public class SimpleClient extends AbstractClient {
         if(user != null){
             return user.getRole();
         }
-        return "worker:manager";
+        return getUser().getRole();
     }
+
 
     public static void setUser(ConnectedUser user) {
         SimpleClient.user = user;
@@ -62,7 +77,7 @@ public class SimpleClient extends AbstractClient {
 
     public static ConnectedUser getUser() {
         if(user == null){
-            ConnectedUser user = new ConnectedUser("a", "a", "a", "a", "customer", "subscription");
+            ConnectedUser user = new ConnectedUser("a", "a", "a", "a", "subscription");
             return user;
         }
         return user;
@@ -118,10 +133,6 @@ public class SimpleClient extends AbstractClient {
             ChangeUserDetailsEvent event = (ChangeUserDetailsEvent) msg;
             EventBus.getDefault().post(event);
         }
-        else if(msg instanceof BaseProductsListEvent){
-            BaseProductsListEvent event = (BaseProductsListEvent) msg;
-            EventBus.getDefault().post(event);
-        }
         else if(msg instanceof AllOrdersEvent){
             AllOrdersEvent event = (AllOrdersEvent) msg;
             EventBus.getDefault().post(event);
@@ -136,6 +147,17 @@ public class SimpleClient extends AbstractClient {
         }
         else if(msg instanceof ConnectedUser) {
             user = (ConnectedUser) msg;
+        }
+        else if(msg instanceof ChangeUsernameEvent){
+            ChangeUsernameEvent event = (ChangeUsernameEvent) msg;
+            EventBus.getDefault().post(event);
+        }
+        else if(msg instanceof SubscriptionDatesListEvent){
+            SubscriptionDatesListEvent event = (SubscriptionDatesListEvent) msg;
+            EventBus.getDefault().post(event);
+        }
+        else if(msg instanceof Integer){
+            accountId = (Integer) msg;
         }
     }
 }

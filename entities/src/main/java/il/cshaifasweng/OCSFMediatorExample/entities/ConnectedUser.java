@@ -6,17 +6,15 @@ public class ConnectedUser implements Serializable{
     String Username;
     String UserID;
     String creditId;
-    String userType;
     String password;
     String role;
 
-    public ConnectedUser(String username, String password, String UserId, String creditId, String role, String userType) {
+    public ConnectedUser(String username, String password, String UserId, String creditId, String role) {
         this.Username=username;
         this.password=password;
         this.UserID=UserId;
         this.creditId=creditId;
         this.role=role;
-        this.userType=userType;
     }
 
 
@@ -40,10 +38,6 @@ public class ConnectedUser implements Serializable{
         return role;
     }
 
-    public String getAccountType() {
-        return userType;
-    }
-
     public void setUsername(String username) {
         Username = username;
     }
@@ -52,11 +46,18 @@ public class ConnectedUser implements Serializable{
         this.password = password;
     }
 
-    public void setAccountType(String accountType) {
-        this.userType = accountType;
-    }
 
     public void setRole(String role) {
         this.role = role;
+    }
+
+    public String getShop(){
+        if(role.startsWith("worker:manager:shop:")){
+            return role.split(":", 4)[3];
+        }
+        else if(role.startsWith("shop account:")){
+            return role.split(":", 2)[1];
+        }
+        return "all chain";
     }
 }

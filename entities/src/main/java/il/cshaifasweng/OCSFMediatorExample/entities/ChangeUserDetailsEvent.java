@@ -2,14 +2,19 @@ package il.cshaifasweng.OCSFMediatorExample.entities;
 
 import java.io.Serializable;
 public class ChangeUserDetailsEvent implements Serializable {
-    private final String status;
+    private final ConnectedUser user;
+    private final String changed;
 
-    public ChangeUserDetailsEvent(String status) {
-        this.status = status;
+    public ChangeUserDetailsEvent(ConnectedUser user, String changed) {
+        this.user = user;
+        this.changed = changed;
     }
 
-    public String getStatus() {
-        return status;
+    public ConnectedUser getUser() {
+        return user;
     }
 
+    public String getChanged() {
+        return changed;
+    }
 }

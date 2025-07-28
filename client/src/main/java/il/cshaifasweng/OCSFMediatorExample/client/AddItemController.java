@@ -42,16 +42,13 @@ public class AddItemController {
 
     @FXML
     public void initialize() {
-        //List<String> shops = CatalogController.getShops();
-        Platform.runLater(()-> shopsFilter.getItems().add("all chain"));
-//        for(String shop : shops) {
-//            shopsFilter.getItems().add(shop);
-//        }
+        Utils.initShopsFilter(shopsFilter);
+
     }
 
 
     @FXML
-    void addItem(ActionEvent event) {
+    void addItem(ActionEvent    event) {
         String productName = name.getText();
         String productDescription = description.getText();
         String productImagePath = imagePath.getText();
@@ -79,7 +76,7 @@ public class AddItemController {
             e.printStackTrace();
         }
         //server should give an actual id
-        Product product = new Product(-1 ,productName, productType, productDescription, productPriceDouble, image);
+        Product product = new Product(-1 ,productName, productType, productDescription, productPriceDouble, image, productShop);
 
         try {
             SimpleClient.getClient().sendToServer(product);
