@@ -36,7 +36,6 @@ public class SimpleServer extends AbstractServer {
 
 			String text = (String) msg;
 			System.out.println(text);
-
 			System.out.println("Database users: ");
 			DatabaseManager.printAllUsers();
 			System.out.println("Connected users: ");
@@ -46,11 +45,12 @@ public class SimpleServer extends AbstractServer {
 						"Username = " + cU.getUsername() );
 			}
 
-			if (text.startsWith("GET_CATALOG")) {
+			if (text.equals("GET_CATALOG")){
 				// Client requested the full catalog
 				SubscribedClient exists = findClient(client);
 				if (exists == null) {
 					SubscribedClient connection = new SubscribedClient(client);
+					System.out.println(connection.getUsername());
 					SubscribersList.add(connection);
 				}
 				databaseManager.sendCatalog(client);
@@ -89,7 +89,7 @@ public class SimpleServer extends AbstractServer {
 				}
 
 			}
-			if (text.startsWith("LOGIN:")) {
+			else if (text.startsWith("LOGIN:")) {
 				LoginEvent event;
 				Boolean response = handleLogin(text);
 				String username = extractUsername(text);
@@ -121,6 +121,34 @@ public class SimpleServer extends AbstractServer {
 						e.printStackTrace();
 					}
 				}
+
+			else if (text.startsWith("LOGOUT:")) {
+				String username = extractUsername(text);
+				ConnectedUser user = DatabaseManager.getUser(username);
+
+				boolean removed = ConnectedList.removeIf(u -> u.getUsername().equals(username));
+
+				SubscribedClient subscribedClient = findClient(client);
+				if (subscribedClient != null) {
+					subscribedClient.setUsername(null); // איפוס המשתמש
+				}
+
+				LogoutEvent event;
+				if (removed) {
+					System.out.println("LOGOUT_OK");
+					event = new LogoutEvent("LOGOUT_OK");
+				} else {
+					System.out.println("LOGOUT_NOT_FOUND");
+					event = new LogoutEvent("LOGOUT_NOT_FOUND");
+				}
+
+				try {
+					client.sendToClient(event);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+
 
 			else {
 					// Unknown message received
