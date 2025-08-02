@@ -61,7 +61,7 @@ public class SimpleClient extends AbstractClient {
         if(user != null){
             return user.getRole();
         }
-        return getUser().getRole();
+        return "";
     }
 
 

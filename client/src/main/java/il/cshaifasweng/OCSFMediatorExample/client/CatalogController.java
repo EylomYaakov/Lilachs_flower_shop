@@ -393,7 +393,7 @@ public class CatalogController {
             SimpleClient.clearCart();
         }
         for(int i = 0; i < products.size(); i++){
-            if((products.get(i).type.equals(chosenType) || chosenType.equals("all items")) && (products.get(i).shop.equals(chosenShop) || products.get(i).shop.equals("all chain"))){
+            if((products.get(i).type.equals(chosenType) || chosenType.equals("all items")) && (products.get(i).shop.equals(chosenShop) || chosenShop.equals("all chain"))){
                paginator.changeShowProducts(i, true);
             }
             else{
