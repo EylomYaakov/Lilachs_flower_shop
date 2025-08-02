@@ -39,6 +39,21 @@ public class DatabaseInitializer {
 
             System.out.println("📦 E1.");
 
+            stmt.executeUpdate("""
+                CREATE TABLE IF NOT EXISTS Subscriptions (
+                    user_id   INTEGER PRIMARY KEY,      -- משתמש יחיד למנוי (ON CONFLICT יעבוד)
+                    start_date TEXT NOT NULL,           -- yyyy-MM-dd
+                    end_date   TEXT NOT NULL,
+                    FOREIGN KEY(user_id) REFERENCES Users(id)
+                );
+            """);
+
+            stmt.executeUpdate("""
+                CREATE TABLE IF NOT EXISTS SubscriptionSales (
+                    sale_date TEXT NOT NULL             -- כל שורה = הרשמת מנוי (100₪)
+                );
+            """);
+
             ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM Users");
             if (rs.next() && rs.getInt(1) == 0) {
                 stmt.executeUpdate("""

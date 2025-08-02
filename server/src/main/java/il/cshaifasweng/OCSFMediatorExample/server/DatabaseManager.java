@@ -12,6 +12,9 @@ import java.nio.file.Paths;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+
 
 public class DatabaseManager {
     private static Connection dbConnection;
@@ -204,5 +207,49 @@ public class DatabaseManager {
         return null;
 
     }
+
+    public static Integer getUserDbId(String username) {
+        String sql = "SELECT id FROM Users WHERE username = ?";
+        try (PreparedStatement ps = dbConnection.prepareStatement(sql)) {
+            ps.setString(1, username);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) return rs.getInt("id");
+        } catch (SQLException e) { e.printStackTrace(); }
+        return null;
+    }
+
+    private static final DateTimeFormatter ISO = DateTimeFormatter.ISO_LOCAL_DATE;
+
+    public static boolean upsertSubscription(int userId, LocalDate start, LocalDate end) {
+        String sql = "INSERT INTO Subscriptions(user_id,start_date,end_date) VALUES(?,?,?) " +
+                "ON CONFLICT(user_id) DO UPDATE SET start_date=excluded.start_date, end_date=excluded.end_date";
+        try (PreparedStatement ps = dbConnection.prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            ps.setString(2, start.format(ISO));
+            ps.setString(3, end.format(ISO));
+            ps.executeUpdate();
+            return true;
+        } catch (SQLException e) { e.printStackTrace(); return false; }
+    }
+
+    public static void addSubscriptionSale(LocalDate date) {
+        String sql = "INSERT INTO SubscriptionSales(sale_date) VALUES(?)";
+        try (PreparedStatement ps = dbConnection.prepareStatement(sql)) {
+            ps.setString(1, date.format(ISO));
+            ps.executeUpdate();
+        } catch (SQLException e) { e.printStackTrace(); }
+    }
+
+    public static List<Integer> getSubscriptionsExpiringOn(LocalDate date) {
+        String sql = "SELECT user_id FROM Subscriptions WHERE end_date = ?";
+        List<Integer> ids = new ArrayList<>();
+        try (PreparedStatement ps = dbConnection.prepareStatement(sql)) {
+            ps.setString(1, date.format(ISO));
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) ids.add(rs.getInt("user_id"));
+        } catch (SQLException e) { e.printStackTrace(); }
+        return ids;
+    }
+
 
 }
