@@ -28,7 +28,7 @@ public class SimpleServer extends AbstractServer {
 			e.printStackTrace();
 		}
 		DatabaseManager.connect(); // Connect using DatabaseManager
-		DatabaseInitializer.initializeDatabase();
+		//DatabaseInitializer.initializeDatabase();
 
 	}
 
@@ -198,7 +198,32 @@ public class SimpleServer extends AbstractServer {
 					}
 				}
 			}
+			else if (text.startsWith("REMOVE_ITEM:")) {
+				try {
+					int productId = Integer.parseInt(text.substring("REMOVE_ITEM:".length()).trim());
+					System.out.println("🗑️ Request to remove product ID: " + productId);
 
+					boolean success = DatabaseManager.deleteProductById(productId);
+
+					if (success) {
+						System.out.println("✅ Product removed from catalog.");
+						client.sendToClient("ITEM_REMOVED:" + productId); // אפשר לשלוח אישור ללקוח
+					} else {
+						System.out.println("❌ Failed to remove product with ID: " + productId);
+						client.sendToClient("REMOVE_FAILED:" + productId);
+					}
+
+				} catch (NumberFormatException e) {
+					System.err.println("❌ Invalid ID format in REMOVE_ITEM message: " + text);
+					try {
+						client.sendToClient("INVALID_REMOVE_FORMAT");
+					} catch (IOException ioException) {
+						ioException.printStackTrace();
+					}
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
 
 
 			else {
@@ -249,24 +274,46 @@ public class SimpleServer extends AbstractServer {
 
 		}
 		else if(msg instanceof Product) {
+
 			Product product = (Product)msg;
-			System.out.println("📦 Received new product: " + product.getName());
+			if(product.getId()==-1) {
+				System.out.println("📦 Received new product: " + product.getName());
 
-			// הכנס למסד והחזר ID
-			int newProductId = DatabaseManager.insertProduct(product);
+				// הכנס למסד והחזר ID
+				int newProductId = DatabaseManager.insertProduct(product);
 
-			if (newProductId != -1) {
-				System.out.println("✅ Product inserted with ID: " + newProductId);
+				if (newProductId != -1) {
+					System.out.println("✅ Product inserted with ID: " + newProductId);
 
-				// אופציונלי: לעדכן את המוצר עם ה־ID החדש ולשלוח חזרה ללקוח
-				product.setId(newProductId);
-				try {
-					client.sendToClient(product); // או הודעה מסוג ProductAddedEvent אם יש לך
-				} catch (IOException e) {
-					e.printStackTrace();
+					// אופציונלי: לעדכן את המוצר עם ה־ID החדש ולשלוח חזרה ללקוח
+					product.setId(newProductId);
+					try {
+						client.sendToClient(product); // או הודעה מסוג ProductAddedEvent אם יש לך
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				} else {
+					System.out.println("❌ Failed to insert product");
 				}
-			} else {
-				System.out.println("❌ Failed to insert product");
+			}
+			else{
+
+				System.out.println("✏️ Received update for product ID " + product.getId());
+
+				boolean success = DatabaseManager.updateProduct(product);
+				if (success) {
+					System.out.println("✅ Product updated successfully.");
+					try {
+						client.sendToClient(product); // או שליחת אישור אחר
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				} else {
+					System.out.println("❌ Failed to update product with ID " + product.getId());
+				}
+
+
+
 			}
 
 

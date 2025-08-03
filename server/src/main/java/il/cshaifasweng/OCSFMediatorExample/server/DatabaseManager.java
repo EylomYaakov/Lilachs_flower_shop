@@ -151,7 +151,7 @@ public class DatabaseManager {
     }
 
     public static int insertProduct(Product product) {
-        String sql = "INSERT INTO catalog (type, name, description, price, shop) VALUES (?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO catalog (type, name, description, price, shop, image) VALUES (?, ?, ?, ?, ?, ?)";
 
         try (PreparedStatement ps = dbConnection.prepareStatement(sql)) {
             ps.setString(1, product.getType());
@@ -159,6 +159,8 @@ public class DatabaseManager {
             ps.setString(3, product.getDescription());
             ps.setDouble(4, product.getPrice());
             ps.setString(5, product.getShop());
+            ps.setBytes(6, product.getImage()); // הוספת התמונה כאן
+
             ps.executeUpdate();
 
             // Retrieve the last inserted ID
@@ -166,19 +168,53 @@ public class DatabaseManager {
                  ResultSet rs = stmt.executeQuery("SELECT last_insert_rowid();")) {
                 if (rs.next()) {
                     int newId = rs.getInt(1);
-                    product.setId(newId); // אם יש setId
+                    product.setId(newId); // רק אם יש setId
                     System.out.println("✅ Product inserted with ID: " + newId);
                     return newId;
                 }
             }
 
-
         } catch (SQLException e) {
             System.err.println("❌ Failed to insert product into catalog");
             e.printStackTrace();
-            return -1;
         }
+
         return -1;
+    }
+
+    public static boolean updateProduct(Product product) {
+        String sql = "UPDATE catalog SET type = ?, name = ?, description = ?, price = ?, shop = ?, image = ? WHERE id = ?";
+
+        try (PreparedStatement ps = dbConnection.prepareStatement(sql)) {
+            ps.setString(1, product.getType());
+            ps.setString(2, product.getName());
+            ps.setString(3, product.getDescription());
+            ps.setDouble(4, product.getPrice());
+            ps.setString(5, product.getShop());
+            ps.setBytes(6, product.getImage()); // assuming getImage returns byte[]
+            ps.setInt(7, product.getId());
+
+            int affected = ps.executeUpdate();
+            return affected > 0;
+        } catch (SQLException e) {
+            System.err.println("❌ Failed to update product with ID: " + product.getId());
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public static boolean deleteProductById(int id) {
+        String sql = "DELETE FROM catalog WHERE id = ?";
+
+        try (PreparedStatement ps = dbConnection.prepareStatement(sql)) {
+            ps.setInt(1, id);
+            int affected = ps.executeUpdate();
+            return affected > 0;
+        } catch (SQLException e) {
+            System.err.println("❌ Failed to delete product with ID: " + id);
+            e.printStackTrace();
+            return false;
+        }
     }
 
 
