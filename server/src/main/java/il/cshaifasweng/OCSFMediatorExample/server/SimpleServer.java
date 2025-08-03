@@ -1,16 +1,22 @@
 package il.cshaifasweng.OCSFMediatorExample.server;
-
+import il.cshaifasweng.OCSFMediatorExample.server.DatabaseManager;
 import il.cshaifasweng.OCSFMediatorExample.entities.*;
 import il.cshaifasweng.OCSFMediatorExample.server.ocsf.AbstractServer;
 import il.cshaifasweng.OCSFMediatorExample.server.ocsf.ConnectionToClient;
 import il.cshaifasweng.OCSFMediatorExample.server.ocsf.SubscribedClient;
 import java.io.IOException;
+import java.time.Duration;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+
 
 public class SimpleServer extends AbstractServer {
 
@@ -18,6 +24,9 @@ public class SimpleServer extends AbstractServer {
 	private static ArrayList<SubscribedClient> SubscribersList = new ArrayList<>();
 	private static Map<Integer,ConnectedUser> ConnectedList = new HashMap<>() ;
 	DatabaseManager databaseManager = new DatabaseManager();
+	private static final Map<Integer, Double> originalPrices = new HashMap<>();
+	private static final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+
 
 	public SimpleServer(int port) {
 		super(port);
@@ -28,7 +37,7 @@ public class SimpleServer extends AbstractServer {
 			e.printStackTrace();
 		}
 		DatabaseManager.connect(); // Connect using DatabaseManager
-		//DatabaseInitializer.initializeDatabase();
+		DatabaseInitializer.initializeDatabase();
 
 	}
 
@@ -51,7 +60,7 @@ public class SimpleServer extends AbstractServer {
 					expiredSubscriptionCheck(cU);
 				}
 			}
-
+			DatabaseManager.printAllSales();
 			DatabaseManager.printAllSubscriptionsAndSales();
 
 			if (text.equals("GET_CATALOG")){
@@ -115,7 +124,6 @@ public class SimpleServer extends AbstractServer {
 						SubscribedClient subscribedClient = findClient(client);
 						subscribedClient.setUsername(username);
 						ConnectedList.put(user.getId(),user);
-						System.out.println("googed in id:" + user.getId());
 						System.out.println("LOGIN_SUCCESS");
 						int id=  DatabaseManager.getId(user.getUsername());
 
@@ -177,7 +185,7 @@ public class SimpleServer extends AbstractServer {
 						if (success) {
 							System.out.println("✅ Subscription recorded for user id: " + userId);
 							System.out.println("username");
-							System.out.println("📋 Connected Users:");
+							System.out.println(" Connected Users:");
 							for (Map.Entry<Integer, ConnectedUser> entry : ConnectedList.entrySet()) {
 								int id = entry.getKey();
 								String username = entry.getValue().getUsername();
@@ -201,13 +209,13 @@ public class SimpleServer extends AbstractServer {
 			else if (text.startsWith("REMOVE_ITEM:")) {
 				try {
 					int productId = Integer.parseInt(text.substring("REMOVE_ITEM:".length()).trim());
-					System.out.println("🗑️ Request to remove product ID: " + productId);
+					System.out.println(" Request to remove product ID: " + productId);
 
 					boolean success = DatabaseManager.deleteProductById(productId);
 
 					if (success) {
 						System.out.println("✅ Product removed from catalog.");
-						client.sendToClient("ITEM_REMOVED:" + productId); // אפשר לשלוח אישור ללקוח
+						client.sendToClient("ITEM_REMOVED:" + productId); //
 					} else {
 						System.out.println("❌ Failed to remove product with ID: " + productId);
 						client.sendToClient("REMOVE_FAILED:" + productId);
@@ -277,7 +285,7 @@ public class SimpleServer extends AbstractServer {
 
 			Product product = (Product)msg;
 			if(product.getId()==-1) {
-				System.out.println("📦 Received new product: " + product.getName());
+				System.out.println(" Received new product: " + product.getName());
 
 				// הכנס למסד והחזר ID
 				int newProductId = DatabaseManager.insertProduct(product);
@@ -298,13 +306,13 @@ public class SimpleServer extends AbstractServer {
 			}
 			else{
 
-				System.out.println("✏️ Received update for product ID " + product.getId());
+				System.out.println(" Received update for product ID " + product.getId());
 
 				boolean success = DatabaseManager.updateProduct(product);
 				if (success) {
 					System.out.println("✅ Product updated successfully.");
 					try {
-						client.sendToClient(product); // או שליחת אישור אחר
+						client.sendToClient(product);
 					} catch (IOException e) {
 						e.printStackTrace();
 					}
@@ -319,7 +327,16 @@ public class SimpleServer extends AbstractServer {
 
 
 		}
+		else if (msg instanceof Sale) {
+			Sale sale = (Sale) msg;
+			System.out.println("📦 Products in this sale server side:");
+			for (Product p : sale.getProducts()) {
+				System.out.printf("   🪴 ID: %d | Name: %s | Price: %.2f%n", p.getId(), p.getName(), p.getPrice());
+			}
 
+			DatabaseManager.insertSale(sale);
+			System.out.println(" Sale processed and scheduled.");
+		}
 
 		else
 			System.out.println("!! Unknown message format received: object");
@@ -328,7 +345,7 @@ public class SimpleServer extends AbstractServer {
 
 
 	private void expiredSubscriptionCheck(ConnectedUser cU) {
-		String dateStr = cU.getSignUpDate(); // נגיד: "02/08/2023"
+		String dateStr = cU.getSignUpDate();
 		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
 		try {
@@ -337,9 +354,7 @@ public class SimpleServer extends AbstractServer {
 
 			if (signUpDate.plusYears(1).isBefore(today)) {
 				System.out.println("❌ Subscription expired for: " + cU.getUsername());
-				//  למחוק מנויים, לבטל הרשאות וכו'
-
-				cU.setRole("chain account");
+				//  לcancel sub and make normal user				cU.setRole("chain account");
 				DatabaseManager.updateUserField(cU.getUsername(), "role", "chain account");
 
 			} else {
@@ -395,9 +410,6 @@ public class SimpleServer extends AbstractServer {
 				e1.printStackTrace();
 			}
 		}
-
-
-
 
 		private void sendItem (ConnectionToClient client,int id){
 			Product product = DatabaseManager.getItem(client, id);

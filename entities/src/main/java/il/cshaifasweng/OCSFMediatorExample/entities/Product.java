@@ -55,4 +55,7 @@ public class Product extends BaseProduct{
     public void setId(int newProductId) {
         this.id = newProductId;
     }
+
+    public void setPrice(double price) {
+    }
 }

@@ -26,11 +26,15 @@ public class DatabaseInitializer {
         try (Connection conn = DriverManager.getConnection(DB_URL);
 
             Statement stmt = conn.createStatement()) {
-            String sql = "DROP TABLE IF EXISTS catalog";
+            String sql = "DROP TABLE IF EXISTS SaleProducts";
 
             stmt.executeUpdate(sql);
                 System.out.println("✅ Users table deleted successfully.");
 
+            sql = "DROP TABLE IF EXISTS catalog";
+
+            stmt.executeUpdate(sql);
+            System.out.println("✅ Users table deleted successfully.");
 
             // Create the catalog table if it doesn't exist
             stmt.executeUpdate("""
@@ -45,7 +49,31 @@ public class DatabaseInitializer {
                 );
             """);
             System.out.println("📦 E1.");
+            stmt.executeUpdate("""
+            
+                    CREATE TABLE IF NOT EXISTS Sales (
+                                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        sale_amount INTEGER NOT NULL,
+                        end_time TEXT NOT NULL
+                        );
+            
+            """);
 
+
+            System.out.println("📦 E1.");
+            stmt.executeUpdate("""
+    CREATE TABLE IF NOT EXISTS SaleProducts (
+        sale_id INTEGER,
+        product_id INTEGER,
+        original_price DOUBLE NOT NULL,
+        FOREIGN KEY (sale_id) REFERENCES Sales(id),
+        FOREIGN KEY (product_id) REFERENCES catalog(id)
+    );
+""");
+
+
+
+            System.out.println("📦 E4");
             // Create the catalog table if it doesn't exist
             stmt.executeUpdate("""
                 CREATE TABLE IF NOT EXISTS Users (
@@ -111,6 +139,7 @@ public class DatabaseInitializer {
             }*/
 
             insertCatalogWithImages(conn);
+
 
 
 

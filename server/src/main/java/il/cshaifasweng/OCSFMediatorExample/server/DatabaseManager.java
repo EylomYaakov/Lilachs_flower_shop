@@ -1,23 +1,25 @@
 package il.cshaifasweng.OCSFMediatorExample.server;
 
-import il.cshaifasweng.OCSFMediatorExample.entities.ChangePriceEvent;
-import il.cshaifasweng.OCSFMediatorExample.entities.ConnectedUser;
-import il.cshaifasweng.OCSFMediatorExample.entities.Product;
-import il.cshaifasweng.OCSFMediatorExample.entities.ProductListEvent;
+import il.cshaifasweng.OCSFMediatorExample.entities.*;
 import il.cshaifasweng.OCSFMediatorExample.server.ocsf.ConnectionToClient;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.*;
+import java.time.Duration;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class DatabaseManager {
     private static Connection dbConnection;
+    private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
     public static void connect() {
         try {
@@ -60,9 +62,9 @@ public class DatabaseManager {
                 String password = rs.getString("password");
                 String date = rs.getString("signUpDate");
 
-                System.out.print("id: "+id+"not id: " +userId + " "+ creditId + " " + " ");
+                System.out.print("id: " + id + "not id: " + userId + " " + creditId + " " + " ");
 
-                return new ConnectedUser(id,username,password, userId, creditId, role,date);
+                return new ConnectedUser(id, username, password, userId, creditId, role, date);
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -131,8 +133,7 @@ public class DatabaseManager {
     }
 
 
-
-    public static boolean createUser(String username, String password, String personalId, String creditId, String role,String date) {
+    public static boolean createUser(String username, String password, String personalId, String creditId, String role, String date) {
         String query = "INSERT INTO Users (Username, password, personalId, creditId, role,signUpDate) VALUES (?, ?, ?, ?, ?,?)";
         try (PreparedStatement stmt = dbConnection.prepareStatement(query)) {
             stmt.setString(1, username);
@@ -215,6 +216,241 @@ public class DatabaseManager {
             e.printStackTrace();
             return false;
         }
+
+    }
+
+
+    public static void insertSale(Sale sale) {
+        String sql = "INSERT INTO sales (sale_Amount, end_time) VALUES (?, ?)";
+
+        try (PreparedStatement ps = dbConnection.prepareStatement(sql)) {
+            ps.setInt(1, sale.getSaleAmount());
+            ps.setString(2, sale.getEnd().toString());
+            ps.executeUpdate();
+
+            // Get the generated sale ID
+            int saleId = -1;
+            try (Statement stmt = dbConnection.createStatement();
+                 ResultSet rs = stmt.executeQuery("SELECT last_insert_rowid();")) {
+                if (rs.next()) {
+                    saleId = rs.getInt(1);
+                }
+            }
+
+            System.out.println("🎉 Sale inserted with ID: " + saleId);
+
+            // INSERT product links and update prices
+            String insertSaleProductSql = "INSERT INTO SaleProducts (sale_id, product_id, original_price) VALUES (?, ?, ?)";
+            PreparedStatement insertSaleProductStmt = dbConnection.prepareStatement(insertSaleProductSql);
+            System.out.println("📦 Products in this sale:");
+            for (Product p : sale.getProducts()) {
+                System.out.printf("   🪴 ID: %d | Name: %s | Price: %.2f%n", p.getId(), p.getName(), p.getPrice());
+            }
+
+            for (Product p : sale.getProducts()) {
+                double originalPrice = p.getPrice();
+                double discountedPrice = originalPrice * (100 - sale.getSaleAmount()) / 100.0;
+
+                // 1️⃣ שמירת המחיר המקורי בטבלת הקישור
+                insertSaleProductStmt.setInt(1, saleId);
+                insertSaleProductStmt.setInt(2, p.getId());
+                insertSaleProductStmt.setDouble(3, originalPrice);
+                insertSaleProductStmt.executeUpdate();
+
+                // 2️⃣ עדכון המחיר בהנחה ב־catalog
+                Product discounted = new Product(
+                        p.getId(),
+                        p.getName(),
+                        p.getType(),
+                        p.getDescription(),
+                        discountedPrice,
+                        p.getImage(),
+                        p.getShop()
+                );
+
+                boolean success = updateProduct(discounted);
+                if (success) {
+                    System.out.println("✅ Updated product " + p.getName() + " with discount");
+                } else {
+                    System.out.println("❌ Failed to update product " + p.getName());
+                }
+            }
+
+            // סיום
+            insertSaleProductStmt.close();
+
+            // תזמון סיום המבצע
+            scheduleSaleReversion(saleId, sale.getEnd());
+
+        } catch (SQLException e) {
+            System.err.println("❌ Failed to insert sale");
+            e.printStackTrace();
+        }
+    }
+
+
+   /* public static void revertSale(int saleId) {
+        String productIdsSql = "SELECT product_id FROM sale_products WHERE sale_id = ?";
+        String deleteLinkSql = "DELETE FROM sale_products WHERE sale_id = ?";
+
+        try (PreparedStatement ps = dbConnection.prepareStatement(productIdsSql)) {
+            ps.setInt(1, saleId);
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                int productId = rs.getInt("product_id");
+
+                Product original = getOriginalProduct(productId); // נניח שאת שומרת את original_price
+                if (original != null) {
+                    updateProduct(original);
+                    System.out.println("↩️ Reverted price for product ID: " + productId);
+                }
+            }
+
+            // מחק קישורים מהטבלה
+            try (PreparedStatement deleteStmt = dbConnection.prepareStatement(deleteLinkSql)) {
+                deleteStmt.setInt(1, saleId);
+                deleteStmt.executeUpdate();
+            }
+
+        } catch (SQLException e) {
+            System.err.println("❌ Failed to revert sale " + saleId);
+            e.printStackTrace();
+        }
+    }*/
+
+    public static void printAllSales() {
+        String salesSql = "SELECT id, sale_Amount, end_time FROM sales";
+        String productsSql = "SELECT * FROM catalog c " +
+                "JOIN SaleProducts sp ON c.id = sp.product_id " +
+                "WHERE sp.sale_id = ?";
+
+        try (PreparedStatement productStmt = dbConnection.prepareStatement(productsSql);
+             Statement saleStmt = dbConnection.createStatement();
+             ResultSet saleRs = saleStmt.executeQuery(salesSql)) {
+
+            while (saleRs.next()) {
+                int saleId = saleRs.getInt("id");
+                int saleAmount = saleRs.getInt("sale_Amount");
+                String endTime = saleRs.getString("end_time");
+
+                System.out.println("🔖 Sale ID: " + saleId);
+                System.out.println("   Discount: " + saleAmount + "%");
+                System.out.println("   Ends at: " + endTime);
+                System.out.println("   Products in sale:");
+
+                // עכשיו נשלוף את המוצרים של המבצע הזה
+                productStmt.setInt(1, saleId);
+                try (ResultSet productRs = productStmt.executeQuery()) {
+                    boolean hasProducts = false;
+                    while (productRs.next()) {
+                        hasProducts = true;
+                        int productId = productRs.getInt("id");
+                        String name = productRs.getString("name");
+                        double price = productRs.getDouble("price");
+                        System.out.println("      🪴 ID: " + productId + " | Name: " + name + " | Price: " + price);
+                    }
+
+                    if (!hasProducts) {
+                        System.out.println("      (no products in sale)");
+                    }
+                }
+            }
+
+        } catch (SQLException e) {
+            System.err.println("❌ Failed to print sales");
+            e.printStackTrace();
+        }
+    }
+
+
+    private static void scheduleSaleReversion(int saleId, LocalDateTime endTime) {
+        long delayMillis = Duration.between(LocalDateTime.now(), endTime).toMillis();
+
+        ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+        scheduler.schedule(() -> {
+            try {
+                PreparedStatement selectStmt = dbConnection.prepareStatement(
+                        "SELECT product_id, original_price FROM SaleProducts WHERE sale_id = ?"
+                );
+                selectStmt.setInt(1, saleId);
+                ResultSet rs = selectStmt.executeQuery();
+
+                while (rs.next()) {
+                    int productId = rs.getInt("product_id");
+                    double originalPrice = rs.getDouble("original_price");
+
+                    PreparedStatement updateStmt = dbConnection.prepareStatement(
+                            "UPDATE catalog SET price = ? WHERE id = ?"
+                    );
+                    updateStmt.setDouble(1, originalPrice);
+                    updateStmt.setInt(2, productId);
+                    updateStmt.executeUpdate();
+                    updateStmt.close();
+                }
+
+                rs.close();
+                selectStmt.close();
+
+                System.out.println("🔁 Sale ID " + saleId + " ended, prices restored.");
+
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+
+            scheduler.shutdown();
+        }, delayMillis, TimeUnit.MILLISECONDS);
+    }
+
+    public static void insertSale1(Sale sale) {
+        String sql = "INSERT INTO sales (sale_Amount, end_time) VALUES (?, ?)";
+
+        try (PreparedStatement ps = dbConnection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            ps.setInt(1, sale.getSaleAmount());
+            ps.setString(2, sale.getEnd().toString()); // אפשר גם לשמור בפורמט Timestamp אם רוצים
+
+            ps.executeUpdate();
+
+            // Get the generated sale ID (SQLite-compatible way)
+            int saleId = -1;
+            try (Statement stmt = dbConnection.createStatement();
+                 ResultSet rs = stmt.executeQuery("SELECT last_insert_rowid();")) {
+                if (rs.next()) {
+                    saleId = rs.getInt(1);
+                }
+            }
+
+
+            System.out.println("🎉 Sale inserted with ID: " + saleId);
+
+            // Apply sale to each product
+            for (Product p : sale.getProducts()) {
+                double originalPrice = p.getPrice();
+                double discountedPrice = originalPrice * (100 - sale.getSaleAmount()) / 100.0;
+
+                // Create a copy of the product with updated price
+                Product discounted = new Product(
+                        p.getId(),
+                        p.getName(),
+                        p.getType(),
+                        p.getDescription(),
+                        discountedPrice,
+                        p.getImage(),
+                        p.getShop()
+                );
+
+                boolean success = updateProduct(discounted);
+                if (success) {
+                    System.out.println("✅ Updated product " + p.getName() + " with discount");
+                } else {
+                    System.out.println("❌ Failed to update product " + p.getName());
+                }
+            }
+
+        } catch (SQLException e) {
+            System.err.println("❌ Failed to insert sale");
+            e.printStackTrace();
+        }
     }
 
 
@@ -263,35 +499,6 @@ public class DatabaseManager {
         }
     }
 
-    public static void sendCatalog1(ConnectionToClient client){
-        try {
-            Statement stmt = dbConnection.createStatement();
-
-            printFullCatalog();
-
-            ResultSet rs = stmt.executeQuery("SELECT * FROM catalog");
-
-            List<Product> items = new ArrayList<>();
-            while (rs.next()) {
-                Path imagePath = Paths.get("images/" + rs.getString("name") + ".jpg");
-                byte[] image = Files.readAllBytes(imagePath);
-                Product item = new Product(rs.getInt("id"), rs.getString("name"), rs.getString("type"), rs.getString("description"), rs.getDouble("price"), image, rs.getString("shop"));
-                items.add(item);
-            }
-            //added only for testing the pages mechanism in the catalog - these items are not in the database and therefore exception is raised trying to get their details
-            String[] names = {"a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "q"};
-            for(int i = 0; i < 100; i++) {
-                Path imagePath = Paths.get("images/tulip.jpg");
-                byte[] image = Files.readAllBytes(imagePath);
-                Product item = new Product(6+i, names[i%11], names[i%11], names[i%11], 6+i, image, names[i%11]);
-                items.add(item);
-            }
-            ProductListEvent event = new ProductListEvent(items);
-            client.sendToClient(event);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
     public static void sendCatalog(ConnectionToClient client){
         try {
             Statement stmt = dbConnection.createStatement();
@@ -457,6 +664,8 @@ public class DatabaseManager {
             e.printStackTrace();
         }
     }
+
+
 
 
 }
