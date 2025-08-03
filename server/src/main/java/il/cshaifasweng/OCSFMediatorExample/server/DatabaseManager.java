@@ -12,7 +12,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -453,6 +455,64 @@ public class DatabaseManager {
         }
     }
 
+    public static List<Order> getOrdersByCustomerId(int customerId) {
+        List<Order> orders = new ArrayList<>();
+
+        String orderSql = "SELECT * FROM orders WHERE customer_id = ?";
+        String itemsSql = "SELECT product_id, quantity FROM OrderItems WHERE order_id = ?";
+
+        try (PreparedStatement orderStmt = dbConnection.prepareStatement(orderSql)) {
+            orderStmt.setInt(1, customerId);
+            ResultSet orderRs = orderStmt.executeQuery();
+
+            while (orderRs.next()) {
+                int orderId = orderRs.getInt("id");
+                String greetingCard = orderRs.getString("greeting_card");
+                String address = orderRs.getString("address");
+                String phone = orderRs.getString("phone_number");
+                String name = orderRs.getString("recipient_name");
+                LocalDateTime deliveryTime = LocalDateTime.parse(orderRs.getString("delivery_time"));
+                LocalDate orderDate = LocalDate.parse(orderRs.getString("order_date"));
+                double price = orderRs.getDouble("total_price");
+                boolean cancelled = orderRs.getBoolean("cancelled");
+                boolean complained = orderRs.getBoolean("complained");
+                double refund = orderRs.getDouble("refund");
+
+                // items in order
+                Map<BaseProduct, Integer> products = new HashMap<>();
+                try (PreparedStatement itemsStmt = dbConnection.prepareStatement(itemsSql)) {
+                    itemsStmt.setInt(1, orderId);
+                    ResultSet itemsRs = itemsStmt.executeQuery();
+
+                    while (itemsRs.next()) {
+                        int productId = itemsRs.getInt("product_id");
+                        int quantity = itemsRs.getInt("quantity");
+
+                        Product product = getItem(productId);
+                        if (product != null) {
+                            products.put(product, quantity);
+                        }
+                    }
+                }
+
+                Order order = new Order(products, greetingCard, address, phone, name,
+                        deliveryTime, orderDate, price, customerId);
+                order.setId(orderId);
+                order.setCancelled(cancelled);
+                order.setComplained(complained);
+                order.setRefund(refund);
+
+                orders.add(order);
+            }
+
+        } catch (SQLException e) {
+            System.err.println("❌ Failed to retrieve orders for customer ID: " + customerId);
+            e.printStackTrace();
+        }
+
+        return orders;
+    }
+
 
 
     public boolean checkCredentials (String username, String password){
@@ -535,7 +595,7 @@ public class DatabaseManager {
             e.printStackTrace();
         }
     }
-    public static Product getItem(ConnectionToClient client, int id){
+    public static Product getItem( int id){
         try {
             PreparedStatement stmt = dbConnection.prepareStatement("SELECT * FROM catalog WHERE id = ?");
             stmt.setInt(1, id);
@@ -558,7 +618,7 @@ public class DatabaseManager {
             stmt.setDouble(1, price);
             stmt.setInt(2, id);
             stmt.executeUpdate();
-            Product updatedProduct = getItem(client, id);
+            Product updatedProduct = getItem(id);
             ChangePriceEvent event = new ChangePriceEvent(updatedProduct);
 
             // Send updated catalog
@@ -665,6 +725,189 @@ public class DatabaseManager {
         }
     }
 
+
+    public static int insertOrder(Order order) {
+        String insertOrderSql = """
+        INSERT INTO Orders (
+            customer_id, greeting_card, address, phone_number, recipient_name,
+            delivery_time, order_date, total_price, shop, cancelled, complained, refund
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+    """;
+
+        String insertItemSql = """
+        INSERT INTO OrderItems (order_id, product_id, quantity)
+        VALUES (?, ?, ?);
+    """;
+
+        try (PreparedStatement orderStmt = dbConnection.prepareStatement(insertOrderSql);
+             PreparedStatement itemStmt = dbConnection.prepareStatement(insertItemSql)) {
+
+            // add the orderi itself
+            orderStmt.setInt(1, order.getCustomerId());
+            orderStmt.setString(2, order.getGreetingCard());
+            orderStmt.setString(3, order.getAddress());
+            orderStmt.setString(4, order.getPhoneNumber());
+            orderStmt.setString(5, order.getName());
+            orderStmt.setString(6, order.getDeliveryTime().toString());
+            orderStmt.setString(7, order.getOrderDate().toString());
+            orderStmt.setDouble(8, order.getPrice());
+            orderStmt.setString(9, order.getShop());
+            orderStmt.setBoolean(10, order.isCancelled());
+            orderStmt.setBoolean(11, order.isComplained());
+            orderStmt.setDouble(12, order.getRefund());
+
+            orderStmt.executeUpdate();
+
+            // get the id of the new order
+            int orderId = -1;
+            try (Statement stmt = dbConnection.createStatement();
+                 ResultSet rs = stmt.executeQuery("SELECT last_insert_rowid();")) {
+                if (rs.next()) {
+                    orderId = rs.getInt(1);
+                    order.setId(orderId);
+                }
+            }
+
+            // add items to order
+            for (Map.Entry<BaseProduct, Integer> entry : order.getProducts().entrySet()) {
+                if (!(entry.getKey() instanceof Product)) continue;
+
+                Product product = (Product) entry.getKey();
+                int productId = product.getId();
+                int quantity = entry.getValue();
+
+                itemStmt.setInt(1, orderId);
+                itemStmt.setInt(2, productId);
+                itemStmt.setInt(3, quantity);
+                itemStmt.executeUpdate();
+            }
+
+            System.out.println("🧾 Order inserted with ID: " + orderId);
+            return orderId;
+
+        } catch (SQLException e) {
+            System.err.println("❌ Failed to insert order");
+            e.printStackTrace();
+            return -1;
+        }
+    }
+
+
+    public static void printAllOrders() {
+        String ordersSql = "SELECT * FROM Orders";
+        String itemsSql = "SELECT product_id, quantity FROM OrderItems WHERE order_id = ?";
+
+        try (Statement orderStmt = dbConnection.createStatement();
+             ResultSet ordersRs = orderStmt.executeQuery(ordersSql)) {
+
+            while (ordersRs.next()) {
+                int orderId = ordersRs.getInt("id");
+                int customerId = ordersRs.getInt("customer_id");
+                String recipientName = ordersRs.getString("recipient_name");
+                String address = ordersRs.getString("address");
+                String phone = ordersRs.getString("phone_number");
+                String greeting = ordersRs.getString("greeting_card");
+                String delivery = ordersRs.getString("delivery_time");
+                String orderDate = ordersRs.getString("order_date");
+                String shop = ordersRs.getString("shop");
+                double total = ordersRs.getDouble("total_price");
+                boolean cancelled = ordersRs.getBoolean("cancelled");
+                boolean complained = ordersRs.getBoolean("complained");
+                double refund = ordersRs.getDouble("refund");
+
+                System.out.println("🧾 Order ID: " + orderId);
+                System.out.println("   Customer ID: " + customerId);
+                System.out.println("   Recipient: " + recipientName);
+                System.out.println("   Address: " + address);
+                System.out.println("   Phone: " + phone);
+                System.out.println("   Greeting: " + greeting);
+                System.out.println("   Delivery Time: " + delivery);
+                System.out.println("   Order Date: " + orderDate);
+                System.out.println("   Shop: " + shop);
+                System.out.println("   Total Price: " + total);
+                System.out.println("   Cancelled: " + cancelled);
+                System.out.println("   Complained: " + complained);
+                System.out.println("   Refund: " + refund);
+
+                // show the items
+                try (PreparedStatement itemStmt = dbConnection.prepareStatement(itemsSql)) {
+                    itemStmt.setInt(1, orderId);
+                    try (ResultSet itemsRs = itemStmt.executeQuery()) {
+                        System.out.println("   📦 Products:");
+                        while (itemsRs.next()) {
+                            int productId = itemsRs.getInt("product_id");
+                            int quantity = itemsRs.getInt("quantity");
+                            System.out.println("      🔸 Product ID: " + productId + " | Quantity: " + quantity);
+                        }
+                    }
+                }
+
+                System.out.println();
+            }
+
+        } catch (SQLException e) {
+            System.err.println("❌ Failed to print orders");
+            e.printStackTrace();
+        }
+    }
+
+    public static Order getOrderById(int orderId) {
+        String orderSql = "SELECT * FROM orders WHERE id = ?";
+        String itemsSql = "SELECT product_id, quantity FROM OrderItems WHERE order_id = ?";
+
+        try (PreparedStatement orderStmt = dbConnection.prepareStatement(orderSql)) {
+            orderStmt.setInt(1, orderId);
+            ResultSet orderRs = orderStmt.executeQuery();
+
+            if (!orderRs.next()) {
+                return null; // לא קיימת הזמנה עם מזהה כזה
+            }
+
+            // קריאה לפרטי ההזמנה
+            String greetingCard = orderRs.getString("greeting_card");
+            String address = orderRs.getString("address");
+            String phone = orderRs.getString("phone_number");
+            String name = orderRs.getString("customer_name");
+            LocalDateTime deliveryTime = LocalDateTime.parse(orderRs.getString("delivery_time"));
+            LocalDate orderDate = LocalDate.parse(orderRs.getString("order_date"));
+            double price = orderRs.getDouble("price");
+            int customerId = orderRs.getInt("customer_id");
+            boolean cancelled = orderRs.getBoolean("cancelled");
+            boolean complained = orderRs.getBoolean("complained");
+            double refund = orderRs.getDouble("refund");
+
+            // קריאה לפרטי הפריטים
+            Map<BaseProduct, Integer> products = new HashMap<>();
+            try (PreparedStatement itemsStmt = dbConnection.prepareStatement(itemsSql)) {
+                itemsStmt.setInt(1, orderId);
+                ResultSet itemsRs = itemsStmt.executeQuery();
+
+                while (itemsRs.next()) {
+                    int productId = itemsRs.getInt("product_id");
+                    int quantity = itemsRs.getInt("quantity");
+
+                    Product product = getItem(productId); // שליפת פריט לפי מזהה
+                    if (product != null) {
+                        products.put(product, quantity);
+                    }
+                }
+            }
+
+            // create object (temp)
+            Order order = new Order(products, greetingCard, address, phone, name,
+                    deliveryTime, orderDate, price, customerId);
+            order.setId(orderId);
+            order.setRefund(refund);
+            order.setCancelled(cancelled);
+            order.setComplained(complained);
+
+            return order;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
 
 
 

@@ -12,6 +12,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.Executors;
@@ -61,7 +62,7 @@ public class SimpleServer extends AbstractServer {
 				}
 			}
 			DatabaseManager.printAllSales();
-			DatabaseManager.printAllSubscriptionsAndSales();
+			DatabaseManager.printAllOrders();
 
 			if (text.equals("GET_CATALOG")){
 				// Client requested the full catalog
@@ -232,6 +233,24 @@ public class SimpleServer extends AbstractServer {
 					e.printStackTrace();
 				}
 			}
+			else if (text.startsWith("GET_ORDERS:")) {
+				try {
+					int customerId = Integer.parseInt(text.substring("GET_ORDERS:".length()).trim());
+					List<Order> orders = DatabaseManager.getOrdersByCustomerId(customerId);
+
+					System.out.println("📦 Found " + orders.size() + " orders for customer ID " + customerId);
+					for (Order order : orders) {
+						System.out.println("🔖 Order ID: " + order.getId());
+					}
+
+					OrdersListEvent response = new OrdersListEvent(orders);
+					client.sendToClient(response);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+
+
 
 
 			else {
@@ -337,6 +356,11 @@ public class SimpleServer extends AbstractServer {
 			DatabaseManager.insertSale(sale);
 			System.out.println(" Sale processed and scheduled.");
 		}
+		else if(msg instanceof Order)
+		{
+			DatabaseManager.insertOrder((Order)msg);
+			System.out.println(" Order processed and scheduled.");
+		}
 
 		else
 			System.out.println("!! Unknown message format received: object");
@@ -412,7 +436,7 @@ public class SimpleServer extends AbstractServer {
 		}
 
 		private void sendItem (ConnectionToClient client,int id){
-			Product product = DatabaseManager.getItem(client, id);
+			Product product = DatabaseManager.getItem(id);
 			InitDescriptionEvent event = new InitDescriptionEvent(product);
 			try {
 				client.sendToClient(event);

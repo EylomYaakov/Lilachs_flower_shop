@@ -26,16 +26,16 @@ public class DatabaseInitializer {
         try (Connection conn = DriverManager.getConnection(DB_URL);
 
             Statement stmt = conn.createStatement()) {
-            String sql = "DROP TABLE IF EXISTS SaleProducts";
+            /*String sql = "DROP TABLE IF EXISTS OrderItems";
 
             stmt.executeUpdate(sql);
                 System.out.println("✅ Users table deleted successfully.");
 
-            sql = "DROP TABLE IF EXISTS catalog";
+            sql = "DROP TABLE IF EXISTS Orders";
 
             stmt.executeUpdate(sql);
             System.out.println("✅ Users table deleted successfully.");
-
+*/
             // Create the catalog table if it doesn't exist
             stmt.executeUpdate("""
                 CREATE TABLE IF NOT EXISTS catalog (
@@ -104,6 +104,35 @@ public class DatabaseInitializer {
                 );
             """);
 
+            stmt.executeUpdate("""
+    CREATE TABLE IF NOT EXISTS Orders (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        customer_id INTEGER NOT NULL,
+        greeting_card TEXT,
+        address TEXT,
+        phone_number TEXT,
+        recipient_name TEXT,
+        delivery_time TEXT,
+        order_date TEXT,
+        total_price REAL,
+        shop TEXT,
+        cancelled BOOLEAN,
+        complained BOOLEAN,
+        refund REAL
+    );
+""");
+
+            stmt.executeUpdate("""
+    CREATE TABLE IF NOT EXISTS OrderItems (
+        order_id INTEGER,
+        product_id INTEGER,
+        quantity INTEGER,
+        FOREIGN KEY(order_id) REFERENCES Orders(id),
+        FOREIGN KEY(product_id) REFERENCES catalog(id)
+    );
+""");
+
+
             ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM Users");
             if (rs.next() && rs.getInt(1) == 0) {
                 stmt.executeUpdate("""
@@ -138,7 +167,7 @@ public class DatabaseInitializer {
                 System.out.println("📦 Catalog already initialized.");
             }*/
 
-            insertCatalogWithImages(conn);
+            //insertCatalogWithImages(conn);
 
 
 
