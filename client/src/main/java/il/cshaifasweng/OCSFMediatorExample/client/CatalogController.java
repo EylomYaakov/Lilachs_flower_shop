@@ -359,7 +359,7 @@ public class CatalogController {
             case "Days" -> LocalDateTime.now().plusDays(timeAmount);
             default -> LocalDateTime.now();
         };
-        Sale sale = new Sale(products, discountAmount, saleEnd);
+        Sale sale = new Sale(saleProducts, discountAmount, saleEnd);
         try{
             SimpleClient.getClient().sendToServer(sale);
             statusLabel.setText("Sale started!");
