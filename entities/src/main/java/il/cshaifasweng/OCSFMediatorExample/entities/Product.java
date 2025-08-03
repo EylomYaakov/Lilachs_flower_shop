@@ -24,7 +24,35 @@ public class Product extends BaseProduct{
     }
 
 
+    public int getId() {
+        return id;
+    }
+
     public String getName() {
         return name;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public double getPrice() {
+        return price;
+    }
+
+    public byte[] getImage() {
+        return image;
+    }
+
+    public String getShop() {
+        return shop;
+    }
+
+    public void setId(int newProductId) {
+        this.id = newProductId;
     }
 }

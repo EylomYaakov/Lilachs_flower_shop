@@ -247,7 +247,7 @@ public class SimpleServer extends AbstractServer {
 				e.printStackTrace();
 			}
 
-		}/*
+		}
 		else if(msg instanceof Product) {
 			Product product = (Product)msg;
 			System.out.println("📦 Received new product: " + product.getName());
@@ -272,7 +272,7 @@ public class SimpleServer extends AbstractServer {
 
 
 		}
-		*/
+
 
 		else
 			System.out.println("!! Unknown message format received: object");

@@ -150,6 +150,39 @@ public class DatabaseManager {
 
     }
 
+    public static int insertProduct(Product product) {
+        String sql = "INSERT INTO catalog (type, name, description, price, shop) VALUES (?, ?, ?, ?, ?)";
+
+        try (PreparedStatement ps = dbConnection.prepareStatement(sql)) {
+            ps.setString(1, product.getType());
+            ps.setString(2, product.getName());
+            ps.setString(3, product.getDescription());
+            ps.setDouble(4, product.getPrice());
+            ps.setString(5, product.getShop());
+            ps.executeUpdate();
+
+            // Retrieve the last inserted ID
+            try (Statement stmt = dbConnection.createStatement();
+                 ResultSet rs = stmt.executeQuery("SELECT last_insert_rowid();")) {
+                if (rs.next()) {
+                    int newId = rs.getInt(1);
+                    product.setId(newId); // אם יש setId
+                    System.out.println("✅ Product inserted with ID: " + newId);
+                    return newId;
+                }
+            }
+
+
+        } catch (SQLException e) {
+            System.err.println("❌ Failed to insert product into catalog");
+            e.printStackTrace();
+            return -1;
+        }
+        return -1;
+    }
+
+
+
     public boolean checkCredentials (String username, String password){
         String query = "SELECT * FROM Users WHERE username = ? AND password = ?";
 
@@ -165,10 +198,41 @@ public class DatabaseManager {
             return false;
         }
     }
+    public static void printFullCatalog() {
+        String sql = "SELECT id, type, name, description, price, shop FROM catalog";
 
-    public static void sendCatalog(ConnectionToClient client){
+        try (Statement stmt = dbConnection.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+
+            System.out.println("📦 Catalog contents:");
+            while (rs.next()) {
+                int id = rs.getInt("id");
+                String type = rs.getString("type");
+                String name = rs.getString("name");
+                String description = rs.getString("description");
+                double price = rs.getDouble("price");
+                String shop = rs.getString("shop");
+
+                System.out.println("🪴 ID: " + id +
+                        " | Type: " + type +
+                        " | Name: " + name +
+                        " | Description: " + description +
+                        " | Price: " + price +
+                        " | Shop: " + shop);
+            }
+
+        } catch (SQLException e) {
+            System.err.println("❌ Failed to print catalog");
+            e.printStackTrace();
+        }
+    }
+
+    public static void sendCatalog1(ConnectionToClient client){
         try {
             Statement stmt = dbConnection.createStatement();
+
+            printFullCatalog();
+
             ResultSet rs = stmt.executeQuery("SELECT * FROM catalog");
 
             List<Product> items = new ArrayList<>();
@@ -192,7 +256,42 @@ public class DatabaseManager {
             e.printStackTrace();
         }
     }
+    public static void sendCatalog(ConnectionToClient client){
+        try {
+            Statement stmt = dbConnection.createStatement();
 
+            printFullCatalog();
+
+            ResultSet rs = stmt.executeQuery("SELECT * FROM catalog");
+
+            List<Product> items = new ArrayList<>();
+            while (rs.next()) {
+                byte[] image = rs.getBytes("image");  // 🔹 קרא את התמונה מה-BLOB
+                Product item = new Product(
+                        rs.getInt("id"),
+                        rs.getString("name"),
+                        rs.getString("type"),
+                        rs.getString("description"),
+                        rs.getDouble("price"),
+                        image,
+                        rs.getString("shop")
+                );
+                items.add(item);
+            }
+            //added only for testing the pages mechanism in the catalog - these items are not in the database and therefore exception is raised trying to get their details
+            String[] names = {"a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "q"};
+            for(int i = 0; i < 100; i++) {
+                Path imagePath = Paths.get("images/tulip.jpg");
+                byte[] image = Files.readAllBytes(imagePath);
+                Product item = new Product(6+i, names[i%11], names[i%11], names[i%11], 6+i, image, names[i%11]);
+                items.add(item);
+            }
+            ProductListEvent event = new ProductListEvent(items);
+            client.sendToClient(event);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
     public static Product getItem(ConnectionToClient client, int id){
         try {
             PreparedStatement stmt = dbConnection.prepareStatement("SELECT * FROM catalog WHERE id = ?");
