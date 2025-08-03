@@ -156,7 +156,7 @@ public class OrdersController {
         for(int i = 0; i < sendComplaintButtons.length; i++){
             if(source == sendComplaintButtons[i]){
                 String customerComplaint = complaints[i].getText();
-                Order order  = orders.get(paginator.getCurrentIndex()-paginator.getCurrentPageSize()+i);
+                Order order  = paginator.getItem(i);
                 order.setComplained(true);
                 if(!customerComplaint.isEmpty()){
                     try{
@@ -243,7 +243,7 @@ public class OrdersController {
     }
 
     private void cancelOrder(int index){
-        Order order = orders.get(paginator.getCurrentIndex()-paginator.getCurrentPageSize()+index);
+        Order order = paginator.getItem(index);
         order.setCancelled(true);
         int id = order.getId();
         try{

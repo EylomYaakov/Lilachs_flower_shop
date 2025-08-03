@@ -23,6 +23,33 @@ public class Paginator<T>{
 
     }
 
+
+    private int pageStartIndex(){
+        int itemCount = 0;
+        for(int i=currentIndex-1; i>=0; i--){
+            if(productsToShow[i]){
+                itemCount++;
+            }
+            if(itemCount == pageSize){
+                return i;
+            }
+        }
+        return 0;
+    }
+
+    public T getItem(int i){
+        int count = 0;
+        for(int j =pageStartIndex(); j<items.size(); j++){
+            if(productsToShow[j]){
+                count++;
+            }
+            if(count == i+1){
+                return items.get(j);
+            }
+        }
+        return null;
+    }
+
     public void addItem(T item) {
         items.add(item);
         productsToShow = new boolean[items.size()];
@@ -84,6 +111,7 @@ public class Paginator<T>{
     public boolean getShowProducts(int index){
         return productsToShow[index];
     }
+
 
     public void prevPage(){
         int itemCount = 0;

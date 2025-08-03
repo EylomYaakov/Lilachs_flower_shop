@@ -183,7 +183,7 @@ public class UsersController {
             if(buttons[i][passwordIndex] == source) {
                 int finalI = i;
                 String password = passwords[i].getText();
-                ConnectedUser user = users.get(paginator.getCurrentIndex()-paginator.getCurrentPageSize()+i);
+                ConnectedUser user = paginator.getItem(i);
                 if(password.equals(user.getPassword())) {
                     return;
                 }
@@ -213,7 +213,7 @@ public class UsersController {
         for(int i=0; i<roles.length; i++) {
             if(buttons[i][roleIndex] == source) {
                 int finalI = i;
-                ConnectedUser user = users.get(paginator.getCurrentIndex()-paginator.getCurrentPageSize()+i);
+                ConnectedUser user = paginator.getItem(i);
                 if(roles[i].getSelectionModel().getSelectedItem().equals(getRole(user.getRole()))) {
                     return;
                 }
@@ -237,7 +237,7 @@ public class UsersController {
         for(int i=0; i<roles.length; i++) {
             if(buttons[i][usernameIndex] == source) {
                 int finalI = i;
-                ConnectedUser user = users.get(paginator.getCurrentIndex()-paginator.getCurrentPageSize()+i);
+                ConnectedUser user = paginator.getItem(i);
                 if(usernames[i].getText().equals(user.getUsername())){
                     return;
                 }
@@ -322,7 +322,7 @@ public class UsersController {
     }
 
     private void renderUser(int index){
-        ConnectedUser user = users.get(paginator.getCurrentIndex()-paginator.getCurrentPageSize()+index);
+        ConnectedUser user =paginator.getItem(index);
         Platform.runLater(()->usernames[index].setText(user.getUsername()));
         Platform.runLater(()->passwords[index].setText(user.getPassword()));
         Platform.runLater(()->roles[index].getSelectionModel().select(getRoleDescription(user.getRole())));

@@ -160,11 +160,11 @@ public class CatalogController {
                 else{
                     if(clicked.getStyle().startsWith("-fx-border-color: red")){
                         clicked.setStyle("");
-                        saleProducts.remove(products.get(currentIndex-currentPageSize+i));
+                        saleProducts.remove(paginator.getItem(i));
                         isSalePressed[currentIndex-currentPageSize+i] = false;
                     }
                     else {
-                        saleProducts.add(products.get(currentIndex-currentPageSize+i));
+                        saleProducts.add(paginator.getItem(i));
                         clicked.setStyle("-fx-border-color: red; -fx-border-width: 2px; -fx-border-radius: 5px;");
                         isSalePressed[currentIndex-currentPageSize+i] = true;
                     }

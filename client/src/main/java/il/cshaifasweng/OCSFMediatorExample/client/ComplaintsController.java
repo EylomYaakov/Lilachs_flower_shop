@@ -207,7 +207,7 @@ public class ComplaintsController {
             if(i<pageItems.size()){
                 int finalI = i;
                 setComplaintVisibility(i,true);
-                Complaint complaint = complaints.get(paginator.getCurrentIndex() - paginator.getCurrentPageSize() + i);
+                Complaint complaint = paginator.getItem(i);
                 Platform.runLater(() -> complaintTexts[finalI].setText(complaint.getComplaint()));
                 if(accountType.startsWith("worker")){
                     renderResponseWorker(i, complaint);
@@ -283,7 +283,7 @@ public class ComplaintsController {
                 Platform.runLater(()->statusLabels[finalI].setVisible(true));
                 Platform.runLater(()->acceptedLabels[finalI].setVisible(true));
                 Platform.runLater(()->acceptCheckBoxes[finalI].setVisible(false));
-                Complaint complaint = complaints.get(paginator.getCurrentIndex() - paginator.getCurrentPageSize()+ i);
+                Complaint complaint = paginator.getItem(i);
                 complaint.setResponse(response);
                 if(acceptCheckBoxes[finalI].isSelected()){
                     complaint.setAccepted(true);

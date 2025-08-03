@@ -179,8 +179,7 @@ public class CartController {
     }
 
     private BaseProduct getProduct(int index){
-        List<BaseProduct> products = new ArrayList<>(cart.keySet());
-        return products.get(paginator.getCurrentIndex()-paginator.getCurrentPageSize()+index);
+        return paginator.getItem(index);
     }
 
     private void spinnerChanged(Spinner<Integer> source, int newValue){
