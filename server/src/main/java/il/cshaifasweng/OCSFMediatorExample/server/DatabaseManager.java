@@ -53,14 +53,16 @@ public class DatabaseManager {
             ResultSet rs = stmt.executeQuery();
 
             if (rs.next()) {
+                int id = rs.getInt("id");
                 String userId = rs.getString("personalId");
                 String creditId = rs.getString("creditId");
                 String role = rs.getString("role");
                 String password = rs.getString("password");
+                String date = rs.getString("signUpDate");
 
-                System.out.print(userId + " "+ creditId + " " + " ");
+                System.out.print("id: "+id+"not id: " +userId + " "+ creditId + " " + " ");
 
-                return new ConnectedUser(username,password, userId, creditId, role);
+                return new ConnectedUser(id,username,password, userId, creditId, role,date);
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -68,6 +70,25 @@ public class DatabaseManager {
 
         return null; // User not found or error occurred
 
+    }
+
+    public static int getId(String username) {
+        String query = "SELECT id FROM Users WHERE username = ?";
+
+        try (PreparedStatement stmt = dbConnection.prepareStatement(query)) {
+            stmt.setString(1, username);
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                return rs.getInt("id");
+            } else {
+                System.err.println("⚠️ No user found with username: " + username);
+                return -1; // או לזרוק חריגה, לפי הסגנון שלך
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return -1; // או לזרוק חריגה
+        }
     }
 
 
@@ -111,14 +132,15 @@ public class DatabaseManager {
 
 
 
-    public static boolean createUser(String username, String password, String personalId, String creditId, String role) {
-        String query = "INSERT INTO Users (Username, password, personalId, creditId, role) VALUES (?, ?, ?, ?, ?)";
+    public static boolean createUser(String username, String password, String personalId, String creditId, String role,String date) {
+        String query = "INSERT INTO Users (Username, password, personalId, creditId, role,signUpDate) VALUES (?, ?, ?, ?, ?,?)";
         try (PreparedStatement stmt = dbConnection.prepareStatement(query)) {
             stmt.setString(1, username);
             stmt.setString(2, password);
             stmt.setString(3, personalId);
             stmt.setString(4, creditId);
             stmt.setString(5, role);
+            stmt.setString(6, date);
             stmt.executeUpdate();
             return true;
         } catch (SQLException e) {
@@ -207,6 +229,19 @@ public class DatabaseManager {
         return null;
 
     }
+    public static void updateUserField(String username, String fieldName, String newValue) {
+        String sql = "UPDATE Users SET " + fieldName + " = ? WHERE username = ?";
+
+        try (PreparedStatement stmt = dbConnection.prepareStatement(sql)) {
+            stmt.setString(1, newValue);
+            stmt.setString(2, username);
+            stmt.executeUpdate();
+            System.out.println("✅ Updated " + fieldName + " for user " + username);
+        } catch (SQLException e) {
+            System.err.println("❌ Failed to update " + fieldName + " for user " + username);
+            e.printStackTrace();
+        }
+    }
 
     public static Integer getUserDbId(String username) {
         String sql = "SELECT id FROM Users WHERE username = ?";
@@ -249,6 +284,43 @@ public class DatabaseManager {
             while (rs.next()) ids.add(rs.getInt("user_id"));
         } catch (SQLException e) { e.printStackTrace(); }
         return ids;
+    }
+
+    public static void printAllSubscriptionsAndSales() {
+        System.out.println("📋 Subscriptions:");
+        String subscriptionQuery = "SELECT user_id, start_date, end_date FROM Subscriptions";
+
+        try (PreparedStatement ps = dbConnection.prepareStatement(subscriptionQuery);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                int userId = rs.getInt("user_id");
+                String start = rs.getString("start_date");
+                String end = rs.getString("end_date");
+
+                System.out.printf("🧑 User ID: %d | Start: %s | End: %s%n", userId, start, end);
+            }
+
+        } catch (SQLException e) {
+            System.err.println("❌ Error reading Subscriptions table");
+            e.printStackTrace();
+        }
+
+        System.out.println("\n📊 Subscription Sales:");
+        String salesQuery = "SELECT sale_date FROM SubscriptionSales";
+
+        try (PreparedStatement ps = dbConnection.prepareStatement(salesQuery);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                String date = rs.getString("sale_date");
+                System.out.println("📅 Sale Date: " + date);
+            }
+
+        } catch (SQLException e) {
+            System.err.println("❌ Error reading SubscriptionSales table");
+            e.printStackTrace();
+        }
     }
 
 

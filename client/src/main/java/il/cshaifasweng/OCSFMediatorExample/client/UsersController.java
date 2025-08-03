@@ -140,7 +140,7 @@ public class UsersController {
             e.printStackTrace();
         }
         //only for users to be not empty
-        users = new ArrayList<>();
+       /* users = new ArrayList<>();
         ConnectedUser user1 = new ConnectedUser("Eylom", "12345678", "1", "1", "worker");
         ConnectedUser user2 = new ConnectedUser("Ofek", "Aa1234", "2", "2", "shop account:Haifa");
         ConnectedUser user3 = new ConnectedUser("Ariel", "a123451", "3", "2", "worker");
@@ -152,7 +152,7 @@ public class UsersController {
         users.add(user4);
         users.add(user5);
         UsersListEvent event = new UsersListEvent(users);
-        initUsers(event);
+        initUsers(event);*/
     }
 
 

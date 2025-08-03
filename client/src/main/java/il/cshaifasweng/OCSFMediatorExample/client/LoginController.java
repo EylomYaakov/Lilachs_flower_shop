@@ -61,6 +61,8 @@ public class LoginController {
         if(status.startsWith("LOGIN_SUCCESS")){
             Platform.runLater(()->username.setText(""));
             Platform.runLater(()->password.setText(""));
+            SimpleClient.setUser(event.getConnectedUser());
+            SimpleClient.setId(event.getId());
             App.switchScreen("menu");
         }
         else if(status.startsWith("Already logged in")){

@@ -37,6 +37,10 @@ public class SimpleClient extends AbstractClient {
         return accountId;
     }
 
+    public static void setId(int id) {
+        accountId = id;
+    }
+
     public static Map<BaseProduct, Integer> getCart(){
         return cart;
     }

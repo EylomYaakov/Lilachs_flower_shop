@@ -6,12 +6,29 @@ public class DatabaseInitializer {
 
     private static final String DB_URL = "jdbc:sqlite:plantshop.db";
 
+    public static void deleteUsersTable() {
+        String sql = "DROP TABLE IF EXISTS Users";
+
+        try (Connection conn = DriverManager.getConnection(DB_URL);
+            Statement stmt = conn.createStatement()) {
+            stmt.executeUpdate(sql);
+            System.out.println("✅ Users table deleted successfully.");
+        } catch (SQLException e) {
+            System.err.println("❌ Failed to delete Users table:");
+            e.printStackTrace();
+        }
+    }
+
     public static void initializeDatabase() {
         try (Connection conn = DriverManager.getConnection(DB_URL);
-             Statement stmt = conn.createStatement()) {
 
+            Statement stmt = conn.createStatement()) {
+            /*String sql = "DROP TABLE IF EXISTS Users";
 
+            stmt.executeUpdate(sql);
+                System.out.println("✅ Users table deleted successfully.");
 
+*/
             // Create the catalog table if it doesn't exist
             stmt.executeUpdate("""
                 CREATE TABLE IF NOT EXISTS catalog (
@@ -33,7 +50,8 @@ public class DatabaseInitializer {
                     password TEXT NOT NULL,
                     personalId TEXT NOT NULL,
                     creditId TEXT NOT NULL,
-                    role TEXT NOT NULL
+                    role TEXT NOT NULL,
+                    signUpDate TEXT NOT NULL
                 );
             """);
 
@@ -57,9 +75,9 @@ public class DatabaseInitializer {
             ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM Users");
             if (rs.next() && rs.getInt(1) == 0) {
                 stmt.executeUpdate("""
-                    INSERT INTO Users (Username, password, personalId, creditId, role) VALUES
-                    ('Ariel', '@A1', '12345678','10','worker:manager'),
-                    ('Amit', '@A1', '12345678','10', 'worker');
+                    INSERT INTO Users (Username, password, personalId, creditId, role,signUpDate) VALUES
+                    ('Ariel', '@A1', '12345678','10','worker:manager','~'),
+                    ('Amit', '@A1', '12345678','10', 'worker','~');
                     """);
                 System.out.println("🌱 Users initialized with demo data.");
             } else {

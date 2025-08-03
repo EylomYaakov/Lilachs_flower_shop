@@ -22,4 +22,9 @@ public class Product extends BaseProduct{
         this.sale = 0;
         this.shop = shop;
     }
+
+
+    public String getName() {
+        return name;
+    }
 }

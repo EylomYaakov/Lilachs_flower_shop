@@ -3,18 +3,22 @@ package il.cshaifasweng.OCSFMediatorExample.entities;
 import java.io.Serializable;
 
 public class ConnectedUser implements Serializable{
+    int id;
     String Username;
     String UserID;
     String creditId;
     String password;
     String role;
+    String signUpDate;
 
-    public ConnectedUser(String username, String password, String UserId, String creditId, String role) {
+    public ConnectedUser(int id, String username, String password, String UserId, String creditId, String role, String signUpDate) {
+        this.id = id;
         this.Username=username;
         this.password=password;
         this.UserID=UserId;
         this.creditId=creditId;
         this.role=role;
+        this.signUpDate=signUpDate;
     }
 
 
@@ -50,6 +54,13 @@ public class ConnectedUser implements Serializable{
     public void setRole(String role) {
         this.role = role;
     }
+
+    public String getSignUpDate() {
+        return signUpDate;
+    }
+
+
+    public int getId() {return id;}
 
     public String getShop(){
         if(role.startsWith("worker:manager:shop:")){

@@ -9,6 +9,8 @@ import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 
 import java.io.IOException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -93,8 +95,13 @@ public class SignUpController {
             if(accountType.startsWith("shop")){
                 accountType = accountType.substring(14);
             }
-            ConnectedUser newUser = new ConnectedUser(username.getText(), password.getText(), idField.getId(), creditCard.getText(), accountType);
+            LocalDate today = LocalDate.now();
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
+            String formattedDate = today.format(formatter);
+            ConnectedUser newUser = new ConnectedUser(-1,username.getText(), password.getText(), idField.getId(), creditCard.getText(), accountType,formattedDate);
             SimpleClient.setUser(newUser);
+            Platform.runLater(()-> statusLabel.setText("valid"));
             try {
                 SimpleClient.getClient().sendToServer(newUser);
                 App.switchScreen("menu");
@@ -115,7 +122,9 @@ public class SignUpController {
         String status = event.getStatus();
         if(status.startsWith("SIGN_SUCCESS")){
             try {
-                SimpleClient.getClient().setRole("customer");
+                SimpleClient.setUser(event.getConnectedUser());
+                SimpleClient.setId(event.getId());
+                SimpleClient.getClient().setRole(event.getConnectedUser().getRole());
                 Platform.runLater(()-> statusLabel.setText("sign up successfully"));
 
             }
