@@ -2,6 +2,7 @@ package il.cshaifasweng.OCSFMediatorExample.server;
 
 import il.cshaifasweng.OCSFMediatorExample.entities.*;
 import il.cshaifasweng.OCSFMediatorExample.server.ocsf.ConnectionToClient;
+import il.cshaifasweng.OCSFMediatorExample.server.ocsf.SubscribedClient;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -253,13 +254,13 @@ public class DatabaseManager {
                 double originalPrice = p.getPrice();
                 double discountedPrice = originalPrice * (100 - sale.getSaleAmount()) / 100.0;
 
-                // 1️⃣ שמירת המחיר המקורי בטבלת הקישור
+                // Save original prices
                 insertSaleProductStmt.setInt(1, saleId);
                 insertSaleProductStmt.setInt(2, p.getId());
                 insertSaleProductStmt.setDouble(3, originalPrice);
                 insertSaleProductStmt.executeUpdate();
 
-                // 2️⃣ עדכון המחיר בהנחה ב־catalog
+                // update catalog items
                 Product discounted = new Product(
                         p.getId(),
                         p.getName(),
@@ -278,10 +279,10 @@ public class DatabaseManager {
                 }
             }
 
-            // סיום
+            // end
             insertSaleProductStmt.close();
 
-            // תזמון סיום המבצע
+            // schedual sale reversion
             scheduleSaleReversion(saleId, sale.getEnd());
 
         } catch (SQLException e) {
@@ -289,37 +290,6 @@ public class DatabaseManager {
             e.printStackTrace();
         }
     }
-
-
-   /* public static void revertSale(int saleId) {
-        String productIdsSql = "SELECT product_id FROM sale_products WHERE sale_id = ?";
-        String deleteLinkSql = "DELETE FROM sale_products WHERE sale_id = ?";
-
-        try (PreparedStatement ps = dbConnection.prepareStatement(productIdsSql)) {
-            ps.setInt(1, saleId);
-            ResultSet rs = ps.executeQuery();
-
-            while (rs.next()) {
-                int productId = rs.getInt("product_id");
-
-                Product original = getOriginalProduct(productId); // נניח שאת שומרת את original_price
-                if (original != null) {
-                    updateProduct(original);
-                    System.out.println("↩️ Reverted price for product ID: " + productId);
-                }
-            }
-
-            // מחק קישורים מהטבלה
-            try (PreparedStatement deleteStmt = dbConnection.prepareStatement(deleteLinkSql)) {
-                deleteStmt.setInt(1, saleId);
-                deleteStmt.executeUpdate();
-            }
-
-        } catch (SQLException e) {
-            System.err.println("❌ Failed to revert sale " + saleId);
-            e.printStackTrace();
-        }
-    }*/
 
     public static void printAllSales() {
         String salesSql = "SELECT id, sale_Amount, end_time FROM sales";
@@ -366,6 +336,45 @@ public class DatabaseManager {
     }
 
 
+    private static void scheduleSaleReversion1(int saleId, LocalDateTime endTime) {
+        long delayMillis = Duration.between(LocalDateTime.now(), endTime).toMillis();
+
+        ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+        scheduler.schedule(() -> {
+            try {
+                PreparedStatement selectStmt = dbConnection.prepareStatement(
+                        "SELECT product_id, original_price FROM SaleProducts WHERE sale_id = ?"
+                );
+                selectStmt.setInt(1, saleId);
+                ResultSet rs = selectStmt.executeQuery();
+
+                while (rs.next()) {
+                    int productId = rs.getInt("product_id");
+                    double originalPrice = rs.getDouble("original_price");
+
+                    PreparedStatement updateStmt = dbConnection.prepareStatement(
+                            "UPDATE catalog SET price = ? WHERE id = ?"
+                    );
+                    updateStmt.setDouble(1, originalPrice);
+                    updateStmt.setInt(2, productId);
+                    updateStmt.executeUpdate();
+                    updateStmt.close();
+                }
+
+                rs.close();
+                selectStmt.close();
+
+                System.out.println("🔁 Sale ID " + saleId + " ended, prices restored.");
+
+
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+
+            scheduler.shutdown();
+        }, delayMillis, TimeUnit.MILLISECONDS);
+    }
+
     private static void scheduleSaleReversion(int saleId, LocalDateTime endTime) {
         long delayMillis = Duration.between(LocalDateTime.now(), endTime).toMillis();
 
@@ -396,6 +405,8 @@ public class DatabaseManager {
 
                 System.out.println("🔁 Sale ID " + saleId + " ended, prices restored.");
 
+                sendCatalogToAllUsers();
+
             } catch (SQLException e) {
                 e.printStackTrace();
             }
@@ -404,55 +415,20 @@ public class DatabaseManager {
         }, delayMillis, TimeUnit.MILLISECONDS);
     }
 
-    public static void insertSale1(Sale sale) {
-        String sql = "INSERT INTO sales (sale_Amount, end_time) VALUES (?, ?)";
 
-        try (PreparedStatement ps = dbConnection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-            ps.setInt(1, sale.getSaleAmount());
-            ps.setString(2, sale.getEnd().toString()); // אפשר גם לשמור בפורמט Timestamp אם רוצים
+    private static void sendCatalogToAllUsers()
+    {
 
-            ps.executeUpdate();
-
-            // Get the generated sale ID (SQLite-compatible way)
-            int saleId = -1;
-            try (Statement stmt = dbConnection.createStatement();
-                 ResultSet rs = stmt.executeQuery("SELECT last_insert_rowid();")) {
-                if (rs.next()) {
-                    saleId = rs.getInt(1);
-                }
+        // look for all subscribed clients to send updated catalog
+        ArrayList<SubscribedClient> users = SimpleServer.getAllConnectedUsers();
+        for (SubscribedClient user : users) {
+            ConnectionToClient client = user.getClient();
+            if (client != null ) {
+                System.out.println("📤 Sending updated catalog to client ID: " + client.getId());
+                sendCatalog(client);
             }
-
-
-            System.out.println("🎉 Sale inserted with ID: " + saleId);
-
-            // Apply sale to each product
-            for (Product p : sale.getProducts()) {
-                double originalPrice = p.getPrice();
-                double discountedPrice = originalPrice * (100 - sale.getSaleAmount()) / 100.0;
-
-                // Create a copy of the product with updated price
-                Product discounted = new Product(
-                        p.getId(),
-                        p.getName(),
-                        p.getType(),
-                        p.getDescription(),
-                        discountedPrice,
-                        p.getImage(),
-                        p.getShop()
-                );
-
-                boolean success = updateProduct(discounted);
-                if (success) {
-                    System.out.println("✅ Updated product " + p.getName() + " with discount");
-                } else {
-                    System.out.println("❌ Failed to update product " + p.getName());
-                }
-            }
-
-        } catch (SQLException e) {
-            System.err.println("❌ Failed to insert sale");
-            e.printStackTrace();
         }
+
     }
 
     public static List<Order> getOrdersByCustomerId(int customerId) {
@@ -513,6 +489,119 @@ public class DatabaseManager {
         return orders;
     }
 
+    public static boolean cancelOrder(int orderId) {
+        String sql = "UPDATE orders SET cancelled = 1 WHERE id = ?";
+
+        try (PreparedStatement ps = dbConnection.prepareStatement(sql)) {
+            ps.setInt(1, orderId);
+            int affectedRows = ps.executeUpdate();
+
+            return affectedRows > 0;
+        } catch (SQLException e) {
+            System.err.println("❌ Failed to cancel order ID: " + orderId);
+            e.printStackTrace();
+            return false;
+        }
+    }
+    public static void revertExpiredSales() {
+        String selectSalesSql = "SELECT id, end_time FROM sales";
+        String selectProductsSql = "SELECT product_id, original_price FROM SaleProducts WHERE sale_id = ?";
+        String updateProductSql = "UPDATE catalog SET price = ? WHERE id = ?";
+
+        try (
+                PreparedStatement selectSalesStmt = dbConnection.prepareStatement(selectSalesSql);
+                ResultSet salesRs = selectSalesStmt.executeQuery()
+        ) {
+            LocalDateTime now = LocalDateTime.now();
+            System.out.println("🔍 Checking for expired sales to revert...");
+
+            while (salesRs.next()) {
+                int saleId = salesRs.getInt("id");
+                String endTimeStr = salesRs.getString("end_time");
+                System.out.println("⏱ Sale ID " + saleId + " ends at (raw): " + endTimeStr);
+
+                // Parse the string to LocalDateTime (adjusting format if needed)
+                LocalDateTime endTime;
+                try {
+                    endTime = LocalDateTime.parse(endTimeStr); // assume it's ISO format
+                } catch (Exception e) {
+                    System.err.println("❌ Failed to parse end_time for sale " + saleId + ": " + e.getMessage());
+                    continue;
+                }
+
+                if (endTime.isBefore(now)) {
+                    System.out.println("⚠️ Sale ID " + saleId + " is expired. Reverting prices...");
+
+                    try (PreparedStatement selectProductsStmt = dbConnection.prepareStatement(selectProductsSql)) {
+                        selectProductsStmt.setInt(1, saleId);
+                        ResultSet productRs = selectProductsStmt.executeQuery();
+
+                        while (productRs.next()) {
+                            int productId = productRs.getInt("product_id");
+                            double originalPrice = productRs.getDouble("original_price");
+
+                            try (PreparedStatement updateStmt = dbConnection.prepareStatement(updateProductSql)) {
+                                updateStmt.setDouble(1, originalPrice);
+                                updateStmt.setInt(2, productId);
+                                updateStmt.executeUpdate();
+
+                                System.out.println("↩️ Restored product ID " + productId + " to price: " + originalPrice);
+                            }
+                        }
+
+                        productRs.close();
+                    }
+
+                    System.out.println("✅ Sale ID " + saleId + " reverted.");
+                }
+            }
+
+        } catch (SQLException e) {
+            System.err.println("❌ Error while reverting expired sales:");
+            e.printStackTrace();
+        }
+    }
+
+
+
+    private static void revertSaleNow(int saleId) {
+        try {
+            PreparedStatement selectStmt = dbConnection.prepareStatement(
+                    "SELECT product_id, original_price FROM saleproducts WHERE sale_id = ?"
+            );
+            selectStmt.setInt(1, saleId);
+            ResultSet rs = selectStmt.executeQuery();
+
+            while (rs.next()) {
+                int productId = rs.getInt("product_id");
+                double originalPrice = rs.getDouble("original_price");
+
+                PreparedStatement updateStmt = dbConnection.prepareStatement(
+                        "UPDATE catalog SET price = ? WHERE id = ?"
+                );
+                updateStmt.setDouble(1, originalPrice);
+                updateStmt.setInt(2, productId);
+                updateStmt.executeUpdate();
+                updateStmt.close();
+            }
+
+            rs.close();
+            selectStmt.close();
+
+            // מחיקת רשומות מהטבלה כדי לא לעדכן שוב
+            PreparedStatement deleteStmt = dbConnection.prepareStatement(
+                    "DELETE FROM saleproducts WHERE sale_id = ?"
+            );
+            deleteStmt.setInt(1, saleId);
+            deleteStmt.executeUpdate();
+            deleteStmt.close();
+
+            System.out.println("🔁 Reverted sale ID " + saleId + " due to server restart.");
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
 
 
     public boolean checkCredentials (String username, String password){

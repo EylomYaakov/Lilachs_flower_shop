@@ -38,8 +38,15 @@ public class SimpleServer extends AbstractServer {
 			e.printStackTrace();
 		}
 		DatabaseManager.connect(); // Connect using DatabaseManager
-		DatabaseInitializer.initializeDatabase();
+		//DatabaseInitializer.initializeDatabase();
+		DatabaseManager.revertExpiredSales();
 
+
+	}
+
+	public static ArrayList<SubscribedClient> getAllConnectedUsers()
+	{
+		return SubscribersList;
 	}
 
 
@@ -61,18 +68,13 @@ public class SimpleServer extends AbstractServer {
 					expiredSubscriptionCheck(cU);
 				}
 			}
+
 			DatabaseManager.printAllSales();
 			DatabaseManager.printAllOrders();
 
 			if (text.equals("GET_CATALOG")){
-				// Client requested the full catalog
-				SubscribedClient exists = findClient(client);
-				if (exists == null) {
-					SubscribedClient connection = new SubscribedClient(client);
-					System.out.println(connection.getUsername());
-					SubscribersList.add(connection);
-				}
-				databaseManager.sendCatalog(client);
+				sendCatalogToClient(client);
+
 
 			} else if (text.startsWith("GET_ITEM")) {
 				// Format: GET_ITEM:<id>
@@ -124,6 +126,7 @@ public class SimpleServer extends AbstractServer {
 						ConnectedUser user = DatabaseManager.getUser(username);
 						SubscribedClient subscribedClient = findClient(client);
 						subscribedClient.setUsername(username);
+						SubscribersList.add(subscribedClient);
 						ConnectedList.put(user.getId(),user);
 						System.out.println("LOGIN_SUCCESS");
 						int id=  DatabaseManager.getId(user.getUsername());
@@ -249,6 +252,28 @@ public class SimpleServer extends AbstractServer {
 					e.printStackTrace();
 				}
 			}
+			else if (text.startsWith("CANCEL_ORDER:")) {
+				try {
+					int orderId = Integer.parseInt(text.substring("CANCEL_ORDER:".length()).trim());
+					boolean success = DatabaseManager.cancelOrder(orderId);
+
+					if (success) {
+						System.out.println("🛑 Order ID " + orderId + " has been cancelled.");
+						client.sendToClient("CANCEL_SUCCESS:" + orderId);
+					} else {
+						System.out.println("❌ Failed to cancel order ID " + orderId);
+						client.sendToClient("CANCEL_FAILED:" + orderId);
+					}
+				} catch (Exception e) {
+					e.printStackTrace();
+					try {
+						client.sendToClient("CANCEL_FAILED:ERROR");
+					} catch (IOException ex) {
+						ex.printStackTrace();
+					}
+				}
+			}
+
 
 
 
@@ -350,12 +375,15 @@ public class SimpleServer extends AbstractServer {
 			Sale sale = (Sale) msg;
 			System.out.println("📦 Products in this sale server side:");
 			for (Product p : sale.getProducts()) {
-				System.out.printf("   🪴 ID: %d | Name: %s | Price: %.2f%n", p.getId(), p.getName(), p.getPrice());
+				System.out.printf(" 🪴 ID: %d | Name: %s | Price: %.2f%n", p.getId(), p.getName(), p.getPrice());
 			}
 
 			DatabaseManager.insertSale(sale);
 			System.out.println(" Sale processed and scheduled.");
+			sendCatalogToClient(client);
+
 		}
+
 		else if(msg instanceof Order)
 		{
 			DatabaseManager.insertOrder((Order)msg);
@@ -366,6 +394,17 @@ public class SimpleServer extends AbstractServer {
 			System.out.println("!! Unknown message format received: object");
 	}
 
+
+	private void sendCatalogToClient(ConnectionToClient client)
+	{
+		SubscribedClient exists = findClient(client);
+		if (exists == null) {
+			SubscribedClient connection = new SubscribedClient(client);
+			System.out.println(connection.getUsername());
+			SubscribersList.add(connection);
+		}
+		databaseManager.sendCatalog(client);
+	}
 
 
 	private void expiredSubscriptionCheck(ConnectedUser cU) {
