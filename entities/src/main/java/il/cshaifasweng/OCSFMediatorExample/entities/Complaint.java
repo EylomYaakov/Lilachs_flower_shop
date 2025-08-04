@@ -63,5 +63,9 @@ public class Complaint implements Serializable {
     public String getShop(){
         return shop;
     }
+
+    public void setComplaintId(int generatedId) {
+        this.complaintId=generatedId;
+    }
 }
 

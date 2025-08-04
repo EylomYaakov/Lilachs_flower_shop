@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 
 public class SimpleServer extends AbstractServer {
@@ -38,7 +39,7 @@ public class SimpleServer extends AbstractServer {
 		}
 		DatabaseManager.connect(); // Connect using DatabaseManager
 		DatabaseInitializer.initializeDatabase(); // initalize tables/or reset
-		DatabaseManager.revertExpiredSales(); // find sales and end if needed todo: delete sales after expiration
+		DatabaseManager.revertExpiredSales(); // find sales and end if needed
 
 
 	}
@@ -50,7 +51,7 @@ public class SimpleServer extends AbstractServer {
 
 
 	@Override
-	protected void handleMessageFromClient(Object msg, ConnectionToClient client) {
+	protected void handleMessageFromClient(Object msg, ConnectionToClient client) throws IOException {
 		/// prints for control - server side ************************
 
 		System.out.println("Database users: ");
@@ -78,7 +79,7 @@ public class SimpleServer extends AbstractServer {
 			System.out.println(text);
 
 
-			if (text.equals("GET_CATALOG")){
+			if (text.equals("GET_CATALOG")) {
 				sendCatalogToClient(client);
 
 			}
@@ -97,13 +98,11 @@ public class SimpleServer extends AbstractServer {
 				if (parts.length == 3) {
 					int id = Integer.parseInt(parts[1]);
 					double newPrice = Double.parseDouble(parts[2]);
-					ChangePriceEvent event =DatabaseManager.updatePrice(client, id, newPrice);
+					ChangePriceEvent event = DatabaseManager.updatePrice(client, id, newPrice);
 					sendToAllClients(event);
 				}
 
-			}
-
-			else if (text.startsWith("REMOVE_ITEM:")) {
+			} else if (text.startsWith("REMOVE_ITEM:")) {
 				// Format: REMOVE_ITEM:<id>
 
 				try {
@@ -136,23 +135,33 @@ public class SimpleServer extends AbstractServer {
 				}
 			}
 			/// client / uer related ****
-			else if (text.startsWith("remove client")) {// from prototype - needs update todo; update
+			else if (text.equals("GET_USERS")) {
+				try {
+					List<ConnectedUser> users = DatabaseManager.getAllUsers(); // שלוף את כל המשתמשים מהדאטאבייס
+					UsersListEvent event = new UsersListEvent(users);           // צור את האירוע לשליחה
+					client.sendToClient(event);                                 // שלח ללקוח
+					System.out.println("👥 Sent " + users.size() + " users to client.");
+				} catch (Exception e) {
+					System.err.println("❌ Failed to get users:");
+					e.printStackTrace();
+				}
+			} else if (text.startsWith("remove client")) {// from prototype - needs update
 				SubscribedClient toRemove = findClient(client);
+				System.out.println(toRemove.getUsername());
 				if (toRemove != null) {
 					SubscribersList.remove(toRemove);
-					if(!toRemove.getUsername().equals("~"))
-						for (ConnectedUser cU : ConnectedList.values()) {
-							if (cU.getUsername().equals(toRemove.getUsername())) {
-								ConnectedUser userToRemove = cU;
-								ConnectedList.remove(userToRemove);
+					if (!toRemove.getUsername().equals("~"))
+						System.out.println(toRemove.getUsername());
+					for (ConnectedUser cU : ConnectedList.values()) {
+						if (cU.getUsername().equals(toRemove.getUsername())) {
+							ConnectedList.remove(cU.getId());
 
-								break;
-							}
+							break;
 						}
+					}
 				}
 
-			}
-			else if (text.startsWith("LOGIN:")) {
+			} else if (text.startsWith("LOGIN:")) {
 				// Format: LOGIN:<username>:<password>
 				LoginEvent event;
 				//func to ceck credentials and dup
@@ -165,37 +174,37 @@ public class SimpleServer extends AbstractServer {
 					System.out.println(alreadyConnected);
 					System.out.println(ConnectedList.size());
 
-					//if user is'nt already conected (other screen)
+					//if user isn't already conected (other screen)
 					if (!alreadyConnected) {
-						ConnectedUser user = DatabaseManager.getUser(username);
+						ConnectedUser user = DatabaseManager.getUserByUsername(username);
 						SubscribedClient subscribedClient = findClient(client);
 						subscribedClient.setUsername(username);
 						SubscribersList.add(subscribedClient);
-						ConnectedList.put(user.getId(),user);
+						ConnectedList.put(user.getId(), user);
 						System.out.println("LOGIN_SUCCESS");
-						int id=  DatabaseManager.getId(user.getUsername());
+						int id = DatabaseManager.getId(user.getUsername());
 
 
-						event = new LoginEvent("LOGIN_SUCCESS",user,id);
+						event = new LoginEvent("LOGIN_SUCCESS", user, id);
 					} else {
 						event = new LoginEvent("Already logged in");
 					}
-				}
-				else {
+				} else {
 
-					 event = new LoginEvent("LOGIN_FAIL");
+					event = new LoginEvent("LOGIN_FAIL");
 				}
 				try {
 					client.sendToClient(event);
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
+				} catch (IOException e) {
+					e.printStackTrace();
 				}
+			}
+
 
 			else if (text.startsWith("LOGOUT:")) {
 				// Format: LOGOUT:<username>
 				String username = extractUsername(text);
-				ConnectedUser user = DatabaseManager.getUser(username);
+				ConnectedUser user = DatabaseManager.getUserByUsername(username);
 
 				ConnectedUser removedUser = ConnectedList.remove(user.getId());
 				boolean removed = (removedUser != null);
@@ -221,6 +230,7 @@ public class SimpleServer extends AbstractServer {
 					e.printStackTrace();
 				}
 			}
+			/// subscription related ****
 			else if (text.startsWith("SUBSCRIBED:")) {
 				// Format: SUBSCRIBED:<id>
 
@@ -255,6 +265,20 @@ public class SimpleServer extends AbstractServer {
 						System.out.println("❌ Invalid user id in SUBSCRIBE message: " + text);
 						e.printStackTrace();
 					}
+				}
+			}
+			else if(text.startsWith("GET_SUBSCRIPTION__DATES"))
+			{
+				try {
+					List<LocalDate> subscriptionDates = DatabaseManager.getAllSubscriptionPurchaseDates();
+					List<LocalDateTime> dateTimeList = convertToDateTimes(subscriptionDates);
+					SubscriptionDatesListEvent event = new SubscriptionDatesListEvent(dateTimeList);
+
+					client.sendToClient(event);
+					System.out.println("📅 Sent " + subscriptionDates.size() + " subscription dates");
+
+				} catch (IOException e) {
+					e.printStackTrace();
 				}
 			}
 			/// orders related ***
@@ -296,6 +320,19 @@ public class SimpleServer extends AbstractServer {
 					e.printStackTrace();
 				}
 			}
+			else if (text.equals("GET_ALL_ORDERS")) {
+				try {
+					List<Order> orders = DatabaseManager.getAllOrders(); // פונקציה שצריך לממש אם לא קיימת
+					AllOrdersEvent event = new AllOrdersEvent(orders);
+
+					System.out.println("📦 Sending " + orders.size() + " orders to client.");
+					client.sendToClient(event);
+				} catch (Exception e) {
+					System.err.println("❌ Failed to fetch and send orders:");
+					e.printStackTrace();
+				}
+			}
+
 			/// Complaint related:
 			else if (text.startsWith("GET_COMPLAINTS:")) {
 				// Format: GET_COMPLAINTS:<id>
@@ -306,20 +343,48 @@ public class SimpleServer extends AbstractServer {
 					ComplaintsListEvent event = new ComplaintsListEvent(complaints);
 
 					System.out.println("📨 Sending " + complaints.size() + " complaints for customer ID " + customerId);
-					//client.sendToClient(event); todo: fix complaints (null complain?)
+
+					client.sendToClient(event);
 
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
 
 			}
-			else {
-					// Unknown message received ( but is text)
-					System.out.println("!! Unknown message format received: " + text);
+			else if (text.startsWith("GET_COMPLAINTS")) {
+				// Format: GET_COMPLAINTS - if its GET_COMPLAINTS:<id> it would have been caught in last if statement (:)
+				try {
+					List<Complaint> complaints = DatabaseManager.getAllComplaints();
+					ComplaintsListEvent event = new ComplaintsListEvent(complaints);
+
+					System.out.println("📨 Sending ALL complaints (" + complaints.size() + " total)");
+
+					client.sendToClient(event);
+
+				} catch (Exception e) {
+					e.printStackTrace();
 				}
 
+			} else if (text.startsWith("GET_ALL_COMPLAINTS")) {
+				try {
+					List<Complaint> complaints = DatabaseManager.getAllComplaints();
+					AllComplaintsEvent event = new AllComplaintsEvent(complaints);
+
+					System.out.println("📨 Sending ALL complaints (" + complaints.size() + " total)");
+
+					client.sendToClient(event);
+
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+
+			} else {
+					// Unknown message received ( but is text)
+					System.out.println("!! Unknown message format received: " + text);
+			}
+
 		}
-		/// obj is'nt text - obj events (entities)
+		/// obj isn't text - obj events (entities)
 		else if(msg instanceof ConnectedUser) {
 			/// if msg id of ConnectedUser object - signup event
 			//gather details from client
@@ -343,7 +408,7 @@ public class SimpleServer extends AbstractServer {
 				//create user in database
 				boolean created = DatabaseManager.createUser(username, password, personalId, creditId, role,formattedDate);
 				if (created) {
-					ConnectedUser newUser = DatabaseManager.getUser(username);
+					ConnectedUser newUser = DatabaseManager.getUserByUsername(username);
 					//ad to active list
 					ConnectedList.put(newUser.getId(),newUser);
 					id=  DatabaseManager.getId(newUser.getUsername());
@@ -441,18 +506,94 @@ public class SimpleServer extends AbstractServer {
 		else if (msg instanceof Complaint)
 		{
 			///  if msg is of item COMPLAINT
-			Complaint complaint = (Complaint)msg;
-			boolean success = DatabaseManager.insertComplaint(complaint);
-			if (success) {
-				System.out.println("✅ Complaint saved for customer " + complaint.getCustomerId());
-			} else {
-				System.out.println("❌ Complaint insert failed.");
+			Complaint complaint = (Complaint) msg;
+			if(complaint.getComplaintId()==-1) {//complaint is new, add to db
+
+				int newComplaintId = DatabaseManager.insertComplaint(complaint);
+				if (newComplaintId != -1) {
+					System.out.println("✅ Complaint saved for customer " + complaint.getCustomerId());
+					complaint.setComplaintId(newComplaintId);
+					try {
+						client.sendToClient(complaint); // send back to client
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+
+				} else {
+					System.out.println("❌ Complaint insert failed.");
+				}
+			}
+			else {//complaint is existing and recieving
+				DatabaseManager.updateComplaintResponse(complaint);
+
 			}
 		}
+		else if (msg instanceof ChangeUserDetailsEvent) {
+			ChangeUserDetailsEvent event = (ChangeUserDetailsEvent) msg;
+			ConnectedUser updatedUser = event.getUser();
+			String changedField = event.getChanged();
+
+			try {
+				ConnectedUser originalUser = DatabaseManager.getUserByID(updatedUser.getId());
+				if (originalUser == null) {
+					client.sendToClient(new ChangeUsernameEvent("User not found in database."));
+					return;
+				}
+
+				// בדיקת שינוי שם משתמש
+				if (changedField.equalsIgnoreCase("username") &&
+						!originalUser.getUsername().equals(updatedUser.getUsername())) {
+
+					// Check if some OTHER user has this username
+					boolean isUsernameTaken = DatabaseManager.userExists(updatedUser.getUsername());
+
+					if (isUsernameTaken) {
+						client.sendToClient(new ChangeUsernameEvent("Username already taken."));
+						return;
+					}
+				}
+
+
+				boolean success = DatabaseManager.updateUserDetails(updatedUser, changedField);
+				System.out.println("changedField: " + changedField);//todo: fix roles mismatch
+				if (success) {
+					client.sendToClient(new ChangeUsernameEvent("SUCCESS"));
+					if (changedField.equalsIgnoreCase("role")) {
+						String oldRole = originalUser.getRole();
+						String newRole = updatedUser.getRole();
+
+						if (!oldRole.equalsIgnoreCase("subscription") &&
+								newRole.equalsIgnoreCase("subscription")) {
+
+							System.out.println("ℹ️ Role changed to 'subscription' but no purchase recorded.");
+						}
+					}
+
+				} else {
+					client.sendToClient(new ChangeUsernameEvent("Failed to update user."));
+				}
+
+			} catch (Exception e) {
+				e.printStackTrace();
+				try {
+					client.sendToClient(new ChangeUsernameEvent("Internal server error."));
+				} catch (IOException ex) {
+					ex.printStackTrace();
+				}
+			}
+		}
+
 		else
 			System.out.println("!! Unknown message format received: object");
 	}
 
+
+
+	public static List<LocalDateTime> convertToDateTimes(List<LocalDate> dates) {
+		return dates.stream()
+				.map(date -> date.atStartOfDay()) // Converts to 00:00
+				.collect(Collectors.toList());
+	}
 
 	//Catalog funcs ************************************
 	private void sendCatalogToClient(ConnectionToClient client)

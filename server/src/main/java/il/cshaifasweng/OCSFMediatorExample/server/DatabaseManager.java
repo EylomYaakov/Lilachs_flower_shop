@@ -277,7 +277,7 @@ public class DatabaseManager {
     }
 
 
-    public static ConnectedUser getUser(String username) {
+    public static ConnectedUser getUserByUsername(String username) {
         String query = "SELECT * FROM Users WHERE username = ?";
 
         try (PreparedStatement stmt = dbConnection.prepareStatement(query)) {
@@ -303,6 +303,36 @@ public class DatabaseManager {
         return null; // User not found or error occurred
 
     }
+
+
+    public static ConnectedUser getUserByID(int id) {
+        String query = "SELECT * FROM Users WHERE id = ?";
+
+        try (PreparedStatement stmt = dbConnection.prepareStatement(query)) {
+            stmt.setInt(1, id);
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                id = rs.getInt("id");
+                String username = rs.getString("username");
+                String userId = rs.getString("personalId");
+                String creditId = rs.getString("creditId");
+                String role = rs.getString("role");
+                String password = rs.getString("password");
+                String date = rs.getString("signUpDate");
+
+                System.out.print("id: " + id + "not id: " + userId + " " + creditId + " " + " ");
+
+                return new ConnectedUser(id, username, password, userId, creditId, role, date);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return null; // User not found or error occurred
+
+    }
+
 
     public static int getId(String username) {
         String query = "SELECT id FROM Users WHERE username = ?";
@@ -371,6 +401,63 @@ public class DatabaseManager {
         }
 
     }
+
+
+    public static List<ConnectedUser> getAllUsers() {
+        List<ConnectedUser> users = new ArrayList<>();
+        String sql = "SELECT * FROM Users";
+
+        try (Statement stmt = dbConnection.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+
+            while (rs.next()) {
+                ConnectedUser user = new ConnectedUser(
+                        rs.getInt("id"),
+                        rs.getString("Username"),
+                        rs.getString("password"),
+                        rs.getString("personalId"),
+                        rs.getString("creditId"),
+                        rs.getString("role"),
+                        rs.getString("signUpDate")
+                );
+                users.add(user);
+                System.out.println(user.getRole());
+            }
+
+        } catch (SQLException e) {
+            System.err.println("❌ Error fetching users from DB:");
+            e.printStackTrace();
+        }
+
+        return users;
+    }
+
+    public static boolean updateUserDetails(ConnectedUser user, String changedField) {
+        String sql = """
+        UPDATE Users SET Username = ?, password = ?, personalId = ?, creditId = ?, role = ?, signUpDate = ?
+        WHERE id = ?
+    """;
+
+        try (PreparedStatement stmt = dbConnection.prepareStatement(sql)) {
+            stmt.setString(1, user.getUsername());
+            stmt.setString(2, user.getPassword());
+            stmt.setString(3, user.getUserID());
+            stmt.setString(4, user.getCreditCard());
+            stmt.setString(5, user.getRole());
+            stmt.setString(6, user.getSignUpDate());
+            stmt.setInt(7, user.getId());
+
+            int affectedRows = stmt.executeUpdate();
+            return affectedRows > 0;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+
+
 
     public boolean checkCredentials (String username, String password){
         String query = "SELECT * FROM Users WHERE username = ? AND password = ?";
@@ -567,6 +654,26 @@ public class DatabaseManager {
         } catch (SQLException e) { e.printStackTrace(); }
         return ids;
     }
+    public static List<LocalDate> getAllSubscriptionPurchaseDates() {
+        List<LocalDate> purchaseDates = new ArrayList<>();
+        String sql = "SELECT end_date FROM Subscriptions";
+
+        try (Statement stmt = dbConnection.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+
+            while (rs.next()) {
+                LocalDate endDate = LocalDate.parse(rs.getString("end_date"));
+                LocalDate purchaseDate = endDate.minusYears(1); // חיסור שנה
+                purchaseDates.add(purchaseDate);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return purchaseDates;
+    }
+
 
     /// ORDER HANDLING**************************************
 
@@ -627,6 +734,50 @@ public class DatabaseManager {
 
         return orders;
     }
+
+    public static List<Order> getAllOrders() {
+        List<Order> orders = new ArrayList<>();
+        String sql = "SELECT * FROM orders";
+
+        try (PreparedStatement ps = dbConnection.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                int id = rs.getInt("id");
+                String greetingCard = rs.getString("greeting_card");
+                String address = rs.getString("address");
+                String phone = rs.getString("phone_number");
+                String name = rs.getString("customer_name");
+                LocalDateTime deliveryTime = LocalDateTime.parse(rs.getString("delivery_time"));
+                LocalDate orderDate = LocalDate.parse(rs.getString("order_date"));
+                double price = rs.getDouble("price");
+                int customerId = rs.getInt("customer_id");
+                boolean cancelled = rs.getBoolean("cancelled");
+                boolean complained = rs.getBoolean("complained");
+                double refund = rs.getDouble("refund");
+                String shop = rs.getString("shop");
+
+                // נניח שאין צורך לשלוף מוצרים כרגע (אפשר לעדכן אחר כך)
+                Order order = new Order(Map.of(), greetingCard, address, phone, name, deliveryTime, orderDate, price, customerId);
+                order.setId(id);
+                order.setCancelled(cancelled);
+                order.setRefund(refund);
+                order.setComplained(complained);
+                order.setShop(shop);
+
+                orders.add(order);
+            }
+
+        } catch (SQLException e) {
+            System.err.println("❌ Error fetching orders:");
+            e.printStackTrace();
+        }
+
+        return orders;
+    }
+
+
+
 
     public static boolean cancelOrder(int orderId) {
         String sql = "UPDATE orders SET cancelled = 1 WHERE id = ?";
@@ -844,6 +995,8 @@ public class DatabaseManager {
         String selectSalesSql = "SELECT id, end_time FROM sales";
         String selectProductsSql = "SELECT product_id, original_price FROM SaleProducts WHERE sale_id = ?";
         String updateProductSql = "UPDATE catalog SET price = ? WHERE id = ?";
+        String deleteSaleProductsSql = "DELETE FROM SaleProducts WHERE sale_id = ?";
+        String deleteSaleSql = "DELETE FROM sales WHERE id = ?";
 
         try (
                 PreparedStatement selectSalesStmt = dbConnection.prepareStatement(selectSalesSql);
@@ -890,6 +1043,20 @@ public class DatabaseManager {
                     }
 
                     System.out.println("✅ Sale ID " + saleId + " reverted.");
+
+                    // Delete from SaleProducts
+                    try (PreparedStatement deleteSaleProductsStmt = dbConnection.prepareStatement(deleteSaleProductsSql)) {
+                        deleteSaleProductsStmt.setInt(1, saleId);
+                        deleteSaleProductsStmt.executeUpdate();
+                    }
+
+                    // Delete from Sales
+                    try (PreparedStatement deleteSaleStmt = dbConnection.prepareStatement(deleteSaleSql)) {
+                        deleteSaleStmt.setInt(1, saleId);
+                        deleteSaleStmt.executeUpdate();
+                    }
+
+                    System.out.println("🗑️ Sale ID " + saleId + " deleted after reversion.");
                 }
             }
 
@@ -984,13 +1151,15 @@ public class DatabaseManager {
 
     /// COMPLAINT HANDLING *************************************
 
-    public static boolean insertComplaint(Complaint complaint) {
-        String sql = """
+    public static int insertComplaint(Complaint complaint) {
+        int generatedId=-1;
+
+        String insertSql = """
         INSERT INTO complaints (complaint, shop, order_id, customer_id, response, date, accepted)
         VALUES (?, ?, ?, ?, ?, ?, ?)
     """;
 
-        try (PreparedStatement ps = dbConnection.prepareStatement(sql)) {
+        try (PreparedStatement ps = dbConnection.prepareStatement(insertSql)) {
             ps.setString(1, complaint.getComplaint());
             ps.setString(2, complaint.getShop());
             ps.setInt(3, complaint.getOrderId());
@@ -998,11 +1167,19 @@ public class DatabaseManager {
             ps.setString(5, complaint.getResponse());
             ps.setString(6, complaint.getDate().toString());
             ps.setInt(7, complaint.getAccepted() ? 1 : 0);
-
             int affected = ps.executeUpdate();
+
             if (affected > 0) {
-                System.out.println("📩 Complaint inserted for order ID: " + complaint.getOrderId());
-                return true;
+                // קבל את ה-id האחרון שהוזן
+                try (Statement stmt = dbConnection.createStatement();
+                     ResultSet rs = stmt.executeQuery("SELECT last_insert_rowid()")) {
+                    if (rs.next()) {
+                        generatedId = rs.getInt(1);
+                        complaint.setComplaintId(generatedId); // ודא שיש setter
+                        System.out.println("📩 Complaint inserted with ID: " + generatedId);
+                    }
+                }
+                return generatedId;
             }
 
         } catch (SQLException e) {
@@ -1010,8 +1187,10 @@ public class DatabaseManager {
             e.printStackTrace();
         }
 
-        return false;
+        return generatedId;
     }
+
+
 
 
 
@@ -1058,6 +1237,62 @@ public class DatabaseManager {
             System.err.println("⚠️ Failed to set complaintId manually");
         }
     }
+
+    public static boolean updateComplaintResponse(Complaint complaint) {
+        String sql = "UPDATE complaints SET response = ?, accepted = ? WHERE complaint_Id = ?";
+
+        try (PreparedStatement stmt = dbConnection.prepareStatement(sql)) {
+            stmt.setString(1, complaint.getResponse());
+            stmt.setBoolean(2, complaint.getAccepted());
+            stmt.setInt(3, complaint.getComplaintId());
+
+            int rowsUpdated = stmt.executeUpdate();
+
+            if (rowsUpdated > 0) {
+                System.out.println("✅ Complaint ID " + complaint.getComplaintId() + " updated successfully.");
+                return true;
+            } else {
+                System.out.println("⚠️ No complaint found with ID " + complaint.getComplaintId());
+                return false;
+            }
+
+        } catch (SQLException e) {
+            System.err.println("❌ Failed to update complaint:");
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public static List<Complaint> getAllComplaints() {
+        List<Complaint> complaints = new ArrayList<>();
+        String sql = "SELECT * FROM complaints";
+
+        try (PreparedStatement stmt = dbConnection.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+                Complaint complaint = new Complaint(
+                        rs.getString("complaint"),
+                        rs.getString("shop"),
+                        rs.getInt("order_Id"),
+                        rs.getInt("customer_Id"),
+                        LocalDate.parse(rs.getString("date"))
+                );
+                complaint.setResponse(rs.getString("response"));
+                complaint.setAccepted(rs.getBoolean("accepted"));
+                complaint.setComplaintId(rs.getInt("complaint_id"));
+                complaints.add(complaint);
+            }
+
+        } catch (SQLException e) {
+            System.err.println("❌ Failed to fetch all complaints:");
+            e.printStackTrace();
+        }
+
+        return complaints;
+    }
+
+
 
 
 

@@ -7,7 +7,7 @@ import java.util.List;
 public class SubscriptionDatesListEvent implements Serializable {
     List<LocalDateTime> SubscriptionDates;
 
-    SubscriptionDatesListEvent(List<LocalDateTime> subscriptionDates) {
+    public SubscriptionDatesListEvent(List<LocalDateTime> subscriptionDates) {
         SubscriptionDates = subscriptionDates;
     }
 

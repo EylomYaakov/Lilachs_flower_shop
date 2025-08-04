@@ -26,7 +26,11 @@ public class DatabaseInitializer {
         try (Connection conn = DriverManager.getConnection(DB_URL);
 
             Statement stmt = conn.createStatement()) {
-            String sql = """
+            String sql = "DROP TABLE IF EXISTS complaints";
+            stmt.executeUpdate(sql);
+
+
+            sql = """
         CREATE TABLE IF NOT EXISTS complaints (
             complaint_id INTEGER PRIMARY KEY AUTOINCREMENT,
             complaint TEXT NOT NULL,
