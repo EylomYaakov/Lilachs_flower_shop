@@ -4,6 +4,7 @@ import il.cshaifasweng.OCSFMediatorExample.entities.*;
 import il.cshaifasweng.OCSFMediatorExample.server.ocsf.ConnectionToClient;
 import il.cshaifasweng.OCSFMediatorExample.server.ocsf.SubscribedClient;
 
+import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -769,8 +770,7 @@ public class DatabaseManager {
     }
 
     /// SALE HANDLING******************
-    ///
-    ///
+
     public static void insertSale(Sale sale) {
         String sql = "INSERT INTO sales (sale_Amount, end_time) VALUES (?, ?)";
 
@@ -982,9 +982,82 @@ public class DatabaseManager {
         }, delayMillis, TimeUnit.MILLISECONDS);
     }
 
+    /// COMPLAINT HANDLING *************************************
+
+    public static boolean insertComplaint(Complaint complaint) {
+        String sql = """
+        INSERT INTO complaints (complaint, shop, order_id, customer_id, response, date, accepted)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    """;
+
+        try (PreparedStatement ps = dbConnection.prepareStatement(sql)) {
+            ps.setString(1, complaint.getComplaint());
+            ps.setString(2, complaint.getShop());
+            ps.setInt(3, complaint.getOrderId());
+            ps.setInt(4, complaint.getCustomerId());
+            ps.setString(5, complaint.getResponse());
+            ps.setString(6, complaint.getDate().toString());
+            ps.setInt(7, complaint.getAccepted() ? 1 : 0);
+
+            int affected = ps.executeUpdate();
+            if (affected > 0) {
+                System.out.println("📩 Complaint inserted for order ID: " + complaint.getOrderId());
+                return true;
+            }
+
+        } catch (SQLException e) {
+            System.err.println("❌ Failed to insert complaint.");
+            e.printStackTrace();
+        }
+
+        return false;
+    }
 
 
 
+    public static List<Complaint> getComplaintsByCustomerId(int customerId) {
+        List<Complaint> complaints = new ArrayList<>();
+
+        String sql = "SELECT * FROM complaints WHERE customer_Id = ?";
+
+        try (PreparedStatement stmt = dbConnection.prepareStatement(sql)) {
+            stmt.setInt(1, customerId);
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                Complaint complaint = new Complaint(
+                        rs.getString("complaint"),
+                        rs.getString("shop"),
+                        rs.getInt("order_Id"),
+                        rs.getInt("customer_Id"),
+                        LocalDate.parse(rs.getString("date"))
+                );
+
+                complaint.setResponse(rs.getString("response"));
+                complaint.setAccepted(rs.getBoolean("accepted"));
+                //complaintIdSafeSet(complaint, rs);
+
+                complaints.add(complaint);
+            }
+
+            rs.close();
+        } catch (SQLException e) {
+            System.err.println("❌ Failed to fetch complaints for customer ID " + customerId);
+            e.printStackTrace();
+        }
+
+        return complaints;
+    }
+
+    private static void complaintIdSafeSet(Complaint complaint, ResultSet rs) throws SQLException {
+        try {
+            Field field = Complaint.class.getDeclaredField("complaint_Id");
+            field.setAccessible(true);
+            field.setInt(complaint, rs.getInt("complaint_Id"));
+        } catch (Exception e) {
+            System.err.println("⚠️ Failed to set complaintId manually");
+        }
+    }
 
 
 

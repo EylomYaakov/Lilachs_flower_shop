@@ -37,8 +37,8 @@ public class SimpleServer extends AbstractServer {
 			e.printStackTrace();
 		}
 		DatabaseManager.connect(); // Connect using DatabaseManager
-		//DatabaseInitializer.initializeDatabase(); // initalize tables/or reset
-		DatabaseManager.revertExpiredSales(); // find sales and end if needed
+		DatabaseInitializer.initializeDatabase(); // initalize tables/or reset
+		DatabaseManager.revertExpiredSales(); // find sales and end if needed todo: delete sales after expiration
 
 
 	}
@@ -192,7 +192,8 @@ public class SimpleServer extends AbstractServer {
 					}
 				}
 
-			else if (text.startsWith("LOGOUT:")) {//from prototype needs update todo; update
+			else if (text.startsWith("LOGOUT:")) {
+				// Format: LOGOUT:<username>
 				String username = extractUsername(text);
 				ConnectedUser user = DatabaseManager.getUser(username);
 
@@ -294,6 +295,23 @@ public class SimpleServer extends AbstractServer {
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
+			}
+			/// Complaint related:
+			else if (text.startsWith("GET_COMPLAINTS:")) {
+				// Format: GET_COMPLAINTS:<id>
+				try {
+					int customerId = Integer.parseInt(text.substring("GET_COMPLAINTS:".length()).trim());
+
+					List<Complaint> complaints = DatabaseManager.getComplaintsByCustomerId(customerId);
+					ComplaintsListEvent event = new ComplaintsListEvent(complaints);
+
+					System.out.println("📨 Sending " + complaints.size() + " complaints for customer ID " + customerId);
+					//client.sendToClient(event); todo: fix complaints (null complain?)
+
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+
 			}
 			else {
 					// Unknown message received ( but is text)
@@ -414,6 +432,18 @@ public class SimpleServer extends AbstractServer {
 			System.out.println(" Order processed and scheduled.");
 		}
 
+
+		else if (msg instanceof Complaint)
+		{
+			///  if msg is of item COMPLAINT
+			Complaint complaint = (Complaint)msg;
+			boolean success = DatabaseManager.insertComplaint(complaint);
+			if (success) {
+				System.out.println("✅ Complaint saved for customer " + complaint.getCustomerId());
+			} else {
+				System.out.println("❌ Complaint insert failed.");
+			}
+		}
 		else
 			System.out.println("!! Unknown message format received: object");
 	}
