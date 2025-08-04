@@ -25,8 +25,7 @@ public class SimpleServer extends AbstractServer {
 	private static ArrayList<SubscribedClient> SubscribersList = new ArrayList<>();
 	private static Map<Integer,ConnectedUser> ConnectedList = new HashMap<>() ;
 	DatabaseManager databaseManager = new DatabaseManager();
-	private static final Map<Integer, Double> originalPrices = new HashMap<>();
-	private static final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+
 
 
 	public SimpleServer(int port) {
@@ -38,8 +37,8 @@ public class SimpleServer extends AbstractServer {
 			e.printStackTrace();
 		}
 		DatabaseManager.connect(); // Connect using DatabaseManager
-		//DatabaseInitializer.initializeDatabase();
-		DatabaseManager.revertExpiredSales();
+		//DatabaseInitializer.initializeDatabase(); // initalize tables/or reset
+		DatabaseManager.revertExpiredSales(); // find sales and end if needed
 
 
 	}
@@ -52,31 +51,39 @@ public class SimpleServer extends AbstractServer {
 
 	@Override
 	protected void handleMessageFromClient(Object msg, ConnectionToClient client) {
-		if(msg instanceof String) {
+		/// prints for control - server side ************************
+
+		System.out.println("Database users: ");
+		DatabaseManager.printAllUsers();
+		System.out.println("Connected users: ");
+
+		for (ConnectedUser cU : ConnectedList.values()) {
+			System.out.println("🟢 Connected: " +
+					"Username = " + cU.getUsername());
+
+			if (cU.getRole().equals("subscription")) {
+				expiredSubscriptionCheck(cU);
+			}
+		}
+
+		DatabaseManager.printAllSales();
+		DatabaseManager.printAllOrders();
+		/// end of control prints  *************************************
+
+
+		if(msg instanceof String) {/// if msg is string format
+
 
 			String text = (String) msg;
 			System.out.println(text);
-			System.out.println("Database users: ");
-			DatabaseManager.printAllUsers();
-			System.out.println("Connected users: ");
 
-			for (ConnectedUser cU : ConnectedList.values()) {
-				System.out.println("🟢 Connected: " +
-						"Username = " + cU.getUsername());
-
-				if (cU.getRole().equals("subscription")) {
-					expiredSubscriptionCheck(cU);
-				}
-			}
-
-			DatabaseManager.printAllSales();
-			DatabaseManager.printAllOrders();
 
 			if (text.equals("GET_CATALOG")){
 				sendCatalogToClient(client);
 
-
-			} else if (text.startsWith("GET_ITEM")) {
+			}
+			/// item related ***
+			else if (text.startsWith("GET_ITEM")) {
 				// Format: GET_ITEM:<id>
 				String[] parts = text.split(":");
 				if (parts.length == 2) {
@@ -94,7 +101,42 @@ public class SimpleServer extends AbstractServer {
 					sendToAllClients(event);
 				}
 
-			} else if (text.startsWith("remove client")) {
+			}
+
+			else if (text.startsWith("REMOVE_ITEM:")) {
+				// Format: REMOVE_ITEM:<id>
+
+				try {
+					//extract item id
+					int productId = Integer.parseInt(text.substring("REMOVE_ITEM:".length()).trim());
+					System.out.println(" Request to remove product ID: " + productId);
+
+
+					//remove from database
+					boolean success = DatabaseManager.deleteProductById(productId);
+
+					if (success) {
+						//send to client
+						System.out.println("✅ Product removed from catalog.");
+						client.sendToClient("ITEM_REMOVED:" + productId); //
+					} else {
+						System.out.println("❌ Failed to remove product with ID: " + productId);
+						client.sendToClient("REMOVE_FAILED:" + productId);
+					}
+
+				} catch (NumberFormatException e) {
+					System.err.println("❌ Invalid ID format in REMOVE_ITEM message: " + text);
+					try {
+						client.sendToClient("INVALID_REMOVE_FORMAT");
+					} catch (IOException ioException) {
+						ioException.printStackTrace();
+					}
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+			/// client / uer related ****
+			else if (text.startsWith("remove client")) {// from prototype - needs update todo; update
 				SubscribedClient toRemove = findClient(client);
 				if (toRemove != null) {
 					SubscribersList.remove(toRemove);
@@ -111,17 +153,19 @@ public class SimpleServer extends AbstractServer {
 
 			}
 			else if (text.startsWith("LOGIN:")) {
+				// Format: LOGIN:<username>:<password>
 				LoginEvent event;
+				//func to ceck credentials and dup
 				Boolean response = handleLogin(text);
 				String username = extractUsername(text);
 				System.out.println(response);
 				if (response) {
-					int userId = DatabaseManager.getId(username); // קחי את ה-id של המשתמש מה-DB
+					int userId = DatabaseManager.getId(username); // get id from DB
 					boolean alreadyConnected = ConnectedList.containsKey(userId);
 					System.out.println(alreadyConnected);
 					System.out.println(ConnectedList.size());
 
-
+					//if user is'nt already conected (other screen)
 					if (!alreadyConnected) {
 						ConnectedUser user = DatabaseManager.getUser(username);
 						SubscribedClient subscribedClient = findClient(client);
@@ -148,7 +192,7 @@ public class SimpleServer extends AbstractServer {
 					}
 				}
 
-			else if (text.startsWith("LOGOUT:")) {
+			else if (text.startsWith("LOGOUT:")) {//from prototype needs update todo; update
 				String username = extractUsername(text);
 				ConnectedUser user = DatabaseManager.getUser(username);
 
@@ -177,14 +221,16 @@ public class SimpleServer extends AbstractServer {
 				}
 			}
 			else if (text.startsWith("SUBSCRIBED:")) {
+				// Format: SUBSCRIBED:<id>
+
 				String[] parts = text.split(":");
 				if (parts.length == 2) {
 					try {
 						int userId = Integer.parseInt(parts[1]);
-
+						//calc end of subscription
 						LocalDate today = LocalDate.now();
 						LocalDate end = today.plusYears(1);
-
+						// ad to user and sub tables
 						boolean success = DatabaseManager.upsertSubscription(userId, today, end);
 						if (success) {
 							System.out.println("✅ Subscription recorded for user id: " + userId);
@@ -210,42 +256,21 @@ public class SimpleServer extends AbstractServer {
 					}
 				}
 			}
-			else if (text.startsWith("REMOVE_ITEM:")) {
-				try {
-					int productId = Integer.parseInt(text.substring("REMOVE_ITEM:".length()).trim());
-					System.out.println(" Request to remove product ID: " + productId);
-
-					boolean success = DatabaseManager.deleteProductById(productId);
-
-					if (success) {
-						System.out.println("✅ Product removed from catalog.");
-						client.sendToClient("ITEM_REMOVED:" + productId); //
-					} else {
-						System.out.println("❌ Failed to remove product with ID: " + productId);
-						client.sendToClient("REMOVE_FAILED:" + productId);
-					}
-
-				} catch (NumberFormatException e) {
-					System.err.println("❌ Invalid ID format in REMOVE_ITEM message: " + text);
-					try {
-						client.sendToClient("INVALID_REMOVE_FORMAT");
-					} catch (IOException ioException) {
-						ioException.printStackTrace();
-					}
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
+			/// orders related ***
 			else if (text.startsWith("GET_ORDERS:")) {
-				try {
+				// Format: GET_ORDERS:<id>
+
+				try {//try to find orders in database
+
 					int customerId = Integer.parseInt(text.substring("GET_ORDERS:".length()).trim());
+					//save in a list
 					List<Order> orders = DatabaseManager.getOrdersByCustomerId(customerId);
 
 					System.out.println("📦 Found " + orders.size() + " orders for customer ID " + customerId);
 					for (Order order : orders) {
 						System.out.println("🔖 Order ID: " + order.getId());
 					}
-
+					//make object order list to send to client
 					OrdersListEvent response = new OrdersListEvent(orders);
 					client.sendToClient(response);
 				} catch (Exception e) {
@@ -253,7 +278,9 @@ public class SimpleServer extends AbstractServer {
 				}
 			}
 			else if (text.startsWith("CANCEL_ORDER:")) {
-				try {
+				// Format: CANCEL_ORDER:<id>
+
+				try {//try to find order in database, change canceled to true, (no option to deleete from database)
 					int orderId = Integer.parseInt(text.substring("CANCEL_ORDER:".length()).trim());
 					boolean success = DatabaseManager.cancelOrder(orderId);
 
@@ -266,51 +293,49 @@ public class SimpleServer extends AbstractServer {
 					}
 				} catch (Exception e) {
 					e.printStackTrace();
-					try {
-						client.sendToClient("CANCEL_FAILED:ERROR");
-					} catch (IOException ex) {
-						ex.printStackTrace();
-					}
 				}
 			}
-
-
-
-
-
 			else {
-					// Unknown message received
+					// Unknown message received ( but is text)
 					System.out.println("!! Unknown message format received: " + text);
 				}
 
 		}
-
+		/// obj is'nt text - obj events (entities)
 		else if(msg instanceof ConnectedUser) {
+			/// if msg id of ConnectedUser object - signup event
+			//gather details from client
 			ConnectedUser user = (ConnectedUser)msg;
 			SignUpEvent event;
 			String username = user.getUsername();
 			String password = user.getPassword();
 			String personalId = user.getUserID();
 			String creditId = user.getCreditCard();
-			String role = user.getRole();// can contain spaces like "chain account"
+			String role = user.getRole();
 			String formattedDate=user.getSignUpDate();
+			//check if user already exists - no sign up allowed
 			boolean userExists = DatabaseManager.userExists(username);
 			int id=-1;
+			//response 1 - user exists
 			if (userExists) {
 				event = new SignUpEvent("USERNAME_TAKEN");
 				System.out.println("USERNAME_TAKEN");
 			}
 			else {
+				//create user in database
 				boolean created = DatabaseManager.createUser(username, password, personalId, creditId, role,formattedDate);
 				if (created) {
 					ConnectedUser newUser = DatabaseManager.getUser(username);
+					//ad to active list
 					ConnectedList.put(newUser.getId(),newUser);
 					id=  DatabaseManager.getId(newUser.getUsername());
+					//response 2 - sign up successfull
 					event = new SignUpEvent("SIGNUP_SUCCESS",newUser,id);
 					System.out.println("SIGNUP_SUCCESS");
-					if(role.equals("subscription"))
+					if(role.equals("subscription"))//if signed up as subscription add to subscription table
 						DatabaseManager.upsertSubscription(id, LocalDate.now(), LocalDate.now().plusYears(1));
 				} else {
+					//response 3- failure
 					event = new SignUpEvent("SIGNUP_FAILED");
 					System.out.println("SIGNUP_FAILED");
 
@@ -326,21 +351,21 @@ public class SimpleServer extends AbstractServer {
 
 		}
 		else if(msg instanceof Product) {
-
+			/// if msg is of item Product -either insert new/ alter existing
 			Product product = (Product)msg;
-			if(product.getId()==-1) {
+			if(product.getId()==-1) {/// if id=-1 = new product
 				System.out.println(" Received new product: " + product.getName());
 
-				// הכנס למסד והחזר ID
+				// insert product to catalog
 				int newProductId = DatabaseManager.insertProduct(product);
 
 				if (newProductId != -1) {
 					System.out.println("✅ Product inserted with ID: " + newProductId);
 
-					// אופציונלי: לעדכן את המוצר עם ה־ID החדש ולשלוח חזרה ללקוח
+					// add the new id given by database autoincrement
 					product.setId(newProductId);
 					try {
-						client.sendToClient(product); // או הודעה מסוג ProductAddedEvent אם יש לך
+						client.sendToClient(product); // send back to client
 					} catch (IOException e) {
 						e.printStackTrace();
 					}
@@ -354,7 +379,7 @@ public class SimpleServer extends AbstractServer {
 
 				boolean success = DatabaseManager.updateProduct(product);
 				if (success) {
-					System.out.println("✅ Product updated successfully.");
+					System.out.println(" Product updated successfully.");
 					try {
 						client.sendToClient(product);
 					} catch (IOException e) {
@@ -368,16 +393,14 @@ public class SimpleServer extends AbstractServer {
 
 			}
 
-
-
 		}
 		else if (msg instanceof Sale) {
+			/// if msg is of item SALE - insert the sale, discount the items, and send to all connected clients
 			Sale sale = (Sale) msg;
 			System.out.println("📦 Products in this sale server side:");
 			for (Product p : sale.getProducts()) {
 				System.out.printf(" 🪴 ID: %d | Name: %s | Price: %.2f%n", p.getId(), p.getName(), p.getPrice());
 			}
-
 			DatabaseManager.insertSale(sale);
 			System.out.println(" Sale processed and scheduled.");
 			sendCatalogToClient(client);
@@ -386,6 +409,7 @@ public class SimpleServer extends AbstractServer {
 
 		else if(msg instanceof Order)
 		{
+			/// if msg is of item ORDER - insert the order to databse, no need to update client
 			DatabaseManager.insertOrder((Order)msg);
 			System.out.println(" Order processed and scheduled.");
 		}
@@ -395,6 +419,7 @@ public class SimpleServer extends AbstractServer {
 	}
 
 
+	//Catalog funcs ************************************
 	private void sendCatalogToClient(ConnectionToClient client)
 	{
 		SubscribedClient exists = findClient(client);
@@ -406,6 +431,8 @@ public class SimpleServer extends AbstractServer {
 		databaseManager.sendCatalog(client);
 	}
 
+
+	//Client handeling ***
 
 	private void expiredSubscriptionCheck(ConnectedUser cU) {
 		String dateStr = cU.getSignUpDate();
@@ -432,10 +459,10 @@ public class SimpleServer extends AbstractServer {
 	private String extractUsername (String loginMsg){
 			String[] parts = loginMsg.split(":", 3);
 			return parts.length >= 2 ? parts[1] : "";
-		}
+	}
 
 
-		public Boolean handleLogin (String text){
+	public Boolean handleLogin (String text){
 			String[] parts = text.split(":", 3); // Split into 3 parts max
 			if (parts.length == 3) {
 				String username = parts[1];
@@ -447,34 +474,14 @@ public class SimpleServer extends AbstractServer {
 			} else {
 				return false;
 			}
-		}
+	}
 
 
 
-		public SubscribedClient findClient (ConnectionToClient client){
-			if (!SubscribersList.isEmpty()) {
-				for (SubscribedClient subscribedClient : SubscribersList) {
-					if (subscribedClient.getClient().equals(client)) {
-						SubscribersList.remove(subscribedClient);
-						return subscribedClient;
-					}
-				}
-			}
-			return null;
-		}
 
 
-		public void sendToAllClients (Object message){
-			try {
-				for (SubscribedClient subscribedClient : SubscribersList) {
-					subscribedClient.getClient().sendToClient(message);
-				}
-			} catch (IOException e1) {
-				e1.printStackTrace();
-			}
-		}
-
-		private void sendItem (ConnectionToClient client,int id){
+	//Item handeling **********
+	private void sendItem (ConnectionToClient client,int id){
 			Product product = DatabaseManager.getItem(id);
 			InitDescriptionEvent event = new InitDescriptionEvent(product);
 			try {
@@ -482,9 +489,32 @@ public class SimpleServer extends AbstractServer {
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-		}
-
-
-
-
 	}
+
+
+    //Client server connction handeling***
+	public SubscribedClient findClient (ConnectionToClient client){
+		if (!SubscribersList.isEmpty()) {
+			for (SubscribedClient subscribedClient : SubscribersList) {
+				if (subscribedClient.getClient().equals(client)) {
+					SubscribersList.remove(subscribedClient);
+					return subscribedClient;
+				}
+			}
+		}
+		return null;
+	}
+
+
+	public void sendToAllClients (Object message){
+		try {
+			for (SubscribedClient subscribedClient : SubscribersList) {
+				subscribedClient.getClient().sendToClient(message);
+			}
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		}
+	}
+
+
+}
