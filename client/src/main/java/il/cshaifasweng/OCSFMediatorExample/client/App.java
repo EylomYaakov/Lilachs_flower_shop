@@ -53,6 +53,7 @@ public class App extends Application {
     @Override
     public void stop() throws Exception {
         EventBus.getDefault().unregister(this);
+        SimpleClient.getClient().sendToServer("LOGOUT:" + SimpleClient.getUser().getUsername());
         SimpleClient.getClient().sendToServer("remove client");
         SimpleClient.getClient().closeConnection();
         super.stop();

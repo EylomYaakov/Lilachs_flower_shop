@@ -430,6 +430,11 @@ public class SimpleServer extends AbstractServer {
 			/// if msg is of item ORDER - insert the order to databse, no need to update client
 			DatabaseManager.insertOrder((Order)msg);
 			System.out.println(" Order processed and scheduled.");
+			Order order = (Order)msg;
+			for(BaseProduct baseProduct: order.getProducts().keySet()){
+				System.out.println(baseProduct.type);
+				System.out.println(order.getProducts().get(baseProduct));
+			}
 		}
 
 

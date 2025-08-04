@@ -185,6 +185,7 @@ public class CatalogController {
                 SimpleClient.getClient().sendToServer("LOGOUT:" + SimpleClient.getUser().getUsername());
                 SimpleClient.setRole("");
                 SimpleClient.setUser(null);
+                initialize();
             }
         }
         catch (IOException e) {
@@ -210,7 +211,9 @@ public class CatalogController {
         texts = new TextArea[]{txt1, txt2, txt3, txt4, txt5, txt6};
         images = new ImageView[]{img1, img2, img3, img4, img5, img6};
         ids = new int[buttons.length];
-        EventBus.getDefault().register(this);
+        if(!EventBus.getDefault().isRegistered(this)) {
+            EventBus.getDefault().register(this);
+        }
         timeAmountSpinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 100));
         Platform.runLater(()->timeList.getItems().addAll("Minutes", "Hours", "Days"));
         Platform.runLater(()-> timeList.getSelectionModel().select("Hours"));
