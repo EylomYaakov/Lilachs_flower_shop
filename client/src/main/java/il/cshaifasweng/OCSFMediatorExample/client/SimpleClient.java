@@ -160,8 +160,20 @@ public class SimpleClient extends AbstractClient {
             SubscriptionDatesListEvent event = (SubscriptionDatesListEvent) msg;
             EventBus.getDefault().post(event);
         }
+        else if(msg instanceof AddProductEvent){
+            AddProductEvent event = (AddProductEvent) msg;
+            EventBus.getDefault().post(event);
+        }
+        else if(msg instanceof RemoveProductEvent){
+            RemoveProductEvent event = (RemoveProductEvent) msg;
+            EventBus.getDefault().post(event);
+        }
         else if(msg instanceof Integer){
             accountId = (Integer) msg;
+        }
+        else if(msg instanceof String){
+            String s = (String) msg;
+            System.out.println(s);
         }
     }
 }

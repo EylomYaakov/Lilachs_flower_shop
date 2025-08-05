@@ -282,7 +282,6 @@ public class CartController {
         Order order = new Order(cart, grettingCard.getText(), address.getText(), phoneNumber.getText(), name.getText(), dateWithTime, LocalDate.now(), price, SimpleClient.getId());
         if(order.getShop().equals("all chain")){
             order.setShop(SimpleClient.getLastShop());
-            order.setShop(SimpleClient.getLastShop());
         }
         try{
             SimpleClient.getClient().sendToServer(order);

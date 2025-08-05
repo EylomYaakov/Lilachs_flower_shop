@@ -14,6 +14,7 @@ import java.util.*;
 import il.cshaifasweng.OCSFMediatorExample.entities.BaseProduct;
 import il.cshaifasweng.OCSFMediatorExample.entities.Complaint;
 import il.cshaifasweng.OCSFMediatorExample.entities.Order;
+import il.cshaifasweng.OCSFMediatorExample.entities.Product;
 import javafx.application.Platform;
 import javafx.scene.chart.BarChart;
 import javafx.scene.chart.XYChart;
@@ -239,4 +240,21 @@ public class Utils {
         }
     }
 
+
+    public static Product getProductByID(List<Product> products, int id) {
+        for(Product product : products) {
+            if(product.getId() == id) {
+                return product;
+            }
+        }
+        return null;
+    }
+
+    public static List<Boolean> initList(int size, boolean value){
+        List<Boolean> list = new ArrayList<>();
+        for(int i = 0; i < size; i++){
+            list.add(value);
+        }
+        return list;
+    }
 }

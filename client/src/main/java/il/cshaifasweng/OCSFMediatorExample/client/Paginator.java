@@ -20,7 +20,6 @@ public class Paginator<T>{
         this.pageSize = pageSize;
         productsToShow = new boolean[items.size()];
         Arrays.fill(productsToShow, true);
-
     }
 
 
@@ -50,16 +49,24 @@ public class Paginator<T>{
         return null;
     }
 
+
+    public void printItemsSize(){
+        System.out.println("items size: " + items.size());
+    }
+
     public void addItem(T item) {
         items.add(item);
+        updateShowProducts();
+    }
+
+    public void updateShowProducts(){
         productsToShow = new boolean[items.size()];
         Arrays.fill(productsToShow, true);
     }
 
     public void removeItem(T item) {
         items.remove(item);
-        productsToShow = new boolean[items.size()];
-        Arrays.fill(productsToShow, true);
+        updateShowProducts();
     }
 
     public int productsLeftToShow(){

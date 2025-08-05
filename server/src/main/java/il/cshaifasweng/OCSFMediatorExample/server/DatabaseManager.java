@@ -514,8 +514,7 @@ public class DatabaseManager {
             stmt.setInt(1, id);
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
-                Path imagePath = Paths.get("images/" + rs.getString("name") + ".jpg");
-                byte[] image = Files.readAllBytes(imagePath);
+                byte[] image = rs.getBytes("image");
                 Product item = new Product(rs.getInt("id"), rs.getString("name"), rs.getString("type"), rs.getString("description"), rs.getDouble("price"), image, rs.getString("shop"));
                 return item;
             }

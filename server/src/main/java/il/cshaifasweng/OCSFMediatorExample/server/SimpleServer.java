@@ -118,6 +118,8 @@ public class SimpleServer extends AbstractServer {
 						//send to client
 						System.out.println("✅ Product removed from catalog.");
 						client.sendToClient("ITEM_REMOVED:" + productId); //
+						RemoveProductEvent event = new RemoveProductEvent(productId);
+						sendToAllClients(event);
 					} else {
 						System.out.println("❌ Failed to remove product with ID: " + productId);
 						client.sendToClient("REMOVE_FAILED:" + productId);
@@ -448,11 +450,8 @@ public class SimpleServer extends AbstractServer {
 
 					// add the new id given by database autoincrement
 					product.setId(newProductId);
-					try {
-						client.sendToClient(product); // send back to client
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
+					AddProductEvent event = new AddProductEvent(product);
+					sendToAllClients(event);
 				} else {
 					System.out.println("❌ Failed to insert product");
 				}
@@ -693,6 +692,8 @@ public class SimpleServer extends AbstractServer {
 			e1.printStackTrace();
 		}
 	}
+
+
 
 
 }
