@@ -9,68 +9,95 @@ public class DatabaseInitializer {
 
     private static final String DB_URL = "jdbc:sqlite:plantshop.db";
 
-    public static void deleteUsersTable() {
-        String sql = "DROP TABLE IF EXISTS Users";
-
-        try (Connection conn = DriverManager.getConnection(DB_URL);
-            Statement stmt = conn.createStatement()) {
-            stmt.executeUpdate(sql);
-            System.out.println("✅ Users table deleted successfully.");
-        } catch (SQLException e) {
-            System.err.println("❌ Failed to delete Users table:");
-            e.printStackTrace();
-        }
-    }
 
     public static void initializeDatabase() {
         try (Connection conn = DriverManager.getConnection(DB_URL);
 
+
+             /// DELETE EXISTING TABLES
             Statement stmt = conn.createStatement()) {
             String sql = "DROP TABLE IF EXISTS complaints";
             stmt.executeUpdate(sql);
+            System.out.println("✅ Complaints table deleted successfully.");
 
             sql = "DROP TABLE IF EXISTS Sales";
 
             stmt.executeUpdate(sql);
-            System.out.println("✅ Users table deleted successfully.");
+            System.out.println("✅ Sales table deleted successfully.");
 
             sql = "DROP TABLE IF EXISTS SaleProducts";
 
             stmt.executeUpdate(sql);
-            System.out.println("✅ Users table deleted successfully.");
+            System.out.println("✅ SaleProducts table deleted successfully.");
             stmt.executeUpdate(sql);
 
             sql = "DROP TABLE IF EXISTS Orders";
 
             stmt.executeUpdate(sql);
-            System.out.println("✅ Users table deleted successfully.");
+            System.out.println("✅ Orders table deleted successfully.");
 
             sql = "DROP TABLE IF EXISTS Subscriptions";
 
             stmt.executeUpdate(sql);
-            System.out.println("✅ Users table deleted successfully.");
-            stmt.executeUpdate(sql);
+            System.out.println("✅ Subscriptions table deleted successfully.");
 
 
             sql = "DROP TABLE IF EXISTS SubscriptionSales";
 
             stmt.executeUpdate(sql);
+            System.out.println("✅ SubscriptionSales table deleted successfully.");
+
 
             sql = "DROP TABLE IF EXISTS OrderItems";
 
             stmt.executeUpdate(sql);
 
+            System.out.println("✅ OrderItems table deleted successfully.");
+
+
             sql = "DROP TABLE IF EXISTS Users";
 
             stmt.executeUpdate(sql);
+            System.out.println("✅ Users table deleted successfully.");
+
 
             sql = "DROP TABLE IF EXISTS catalog";
 
             stmt.executeUpdate(sql);
 
-            System.out.println("✅ Users table deleted successfully.");
+            System.out.println("✅ Catalog table deleted successfully.");
             stmt.executeUpdate(sql);
 
+
+
+
+
+            /// CREATE NEW TABLES
+            // Create the catalog table if it doesn't exist
+            stmt.executeUpdate("""
+                CREATE TABLE IF NOT EXISTS catalog (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    type TEXT NOT NULL,
+                    name TEXT NOT NULL,
+                    description TEXT,
+                    price INTEGER NOT NULL,
+                    shop TEXT NOT NULL,
+                    image BLOB,
+                    sale INTEGER                             
+                );
+            """);
+
+            System.out.println("📦 Catalog table added successfully.");
+            stmt.executeUpdate("""
+            
+                    CREATE TABLE IF NOT EXISTS Sales (
+                                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        sale_amount INTEGER NOT NULL,
+                        end_time TEXT NOT NULL
+                        );
+            
+            """);
+            System.out.println("📦 Sales table added successfully.");
 
             sql = """
         CREATE TABLE IF NOT EXISTS complaints (
@@ -85,50 +112,10 @@ public class DatabaseInitializer {
         );
     """;
             stmt.executeUpdate(sql);
+            System.out.println("📦complaints table added successfully. ");
 
 
-/*
-            stmt.executeUpdate(sql);
-                System.out.println("✅ Users table deleted successfully.");
 
-             sql = "DROP TABLE IF EXISTS Sales";
-
-            stmt.executeUpdate(sql);
-            System.out.println("✅ Users table deleted successfully.");
-
-            sql = "DROP TABLE IF EXISTS SaleProducts";
-
-            stmt.executeUpdate(sql);
-            System.out.println("✅ Users table deleted successfully.");
-stmt.executeUpdate(sql);*/
-
-
-            // Create the catalog table if it doesn't exist
-            stmt.executeUpdate("""
-                CREATE TABLE IF NOT EXISTS catalog (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    type TEXT NOT NULL,
-                    name TEXT NOT NULL,
-                    description TEXT,
-                    price INTEGER NOT NULL,
-                    shop TEXT NOT NULL,
-                    image BLOB,
-                    sale INTEGER                             
-                );
-            """);
-            System.out.println("📦 E1.");
-            stmt.executeUpdate("""
-            
-                    CREATE TABLE IF NOT EXISTS Sales (
-                                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        sale_amount INTEGER NOT NULL,
-                        end_time TEXT NOT NULL
-                        );
-            
-            """);
-
-
-            System.out.println("📦 E1.");
             stmt.executeUpdate("""
     CREATE TABLE IF NOT EXISTS SaleProducts (
         sale_id INTEGER,
@@ -138,10 +125,11 @@ stmt.executeUpdate(sql);*/
         FOREIGN KEY (product_id) REFERENCES catalog(id)
     );
 """);
+            System.out.println("📦SaleProducts table added successfully. ");
 
 
 
-            System.out.println("📦 E4");
+
             // Create the catalog table if it doesn't exist
             stmt.executeUpdate("""
                 CREATE TABLE IF NOT EXISTS Users (
@@ -155,7 +143,8 @@ stmt.executeUpdate(sql);*/
                 );
             """);
 
-            System.out.println("📦 E1.");
+            System.out.println("📦Users table added successfully. ");
+
 
             stmt.executeUpdate("""
                 CREATE TABLE IF NOT EXISTS Subscriptions (
@@ -165,12 +154,14 @@ stmt.executeUpdate(sql);*/
                     FOREIGN KEY(user_id) REFERENCES Users(id)
                 );
             """);
+            System.out.println("📦 Subscriptions table added successfully. ");
 
             stmt.executeUpdate("""
                 CREATE TABLE IF NOT EXISTS SubscriptionSales (
                     sale_date TEXT NOT NULL             -- כל שורה = הרשמת מנוי (100₪)
                 );
             """);
+            System.out.println("📦 SubscriptionSales table added successfully. ");
 
             stmt.executeUpdate("""
     CREATE TABLE IF NOT EXISTS Orders (
@@ -189,6 +180,8 @@ stmt.executeUpdate(sql);*/
         refund REAL
     );
 """);
+            System.out.println("📦Orders table added successfully. ");
+
 
             stmt.executeUpdate("""
     CREATE TABLE IF NOT EXISTS OrderItems (
@@ -200,6 +193,11 @@ stmt.executeUpdate(sql);*/
     );
 """);
 
+            System.out.println("📦 OrderItems table added successfully. ");
+
+
+
+            /// INITALIZE ITEMS
 
             ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM Users");
             if (rs.next() && rs.getInt(1) == 0) {
@@ -212,28 +210,6 @@ stmt.executeUpdate(sql);*/
             } else {
                 System.out.println("📦 Users already initialized.");
             }
-
-
-
-/*
-
-
-            // Check if it's already populated
-            rs = stmt.executeQuery("SELECT COUNT(*) FROM catalog");
-            if (rs.next() && rs.getInt(1) == 0) {
-                stmt.executeUpdate("""
-        INSERT INTO catalog (type, name, description, price, shop, image) VALUES
-        ('Flower', 'Rose', 'A classic red flower known for its fragrance.', 10, 'Tel Aviv', 'images/Rose.jpg'),
-        ('Flower', 'Tulip', 'Bright and colorful spring flower.', 20, 'Haifa', 'images/Tulip.jpg'),
-        ('Flower', 'Lily', 'Elegant white flower, often symbolic.', 10, 'Tel Aviv', 'images/Lily.jpg'),
-        ('Flower', 'Sunflower', 'Tall yellow flower that follows the sun.', 30, 'Haifa', 'images/Sunflower.jpg'),
-        ('Flower', 'Orchid', 'Delicate exotic flower with many varieties.', 45, 'Jerusalem', 'images/C:\\Users\\ariel_86023zc\\Desktop\\school\\u\\labs\\projectTeam7\\server\\images\\Orchid.jpg'),
-        ('Plant', 'Aloe Vera', 'Succulent with healing properties.', 30, 'all chain', 'images/C:\\Users\\ariel_86023zc\\Desktop\\school\\u\\labs\\projectTeam7\\server\\images\\Aloe Vera.jpg');
-    """);
-                System.out.println("🌱 Catalog initialized with demo data.");
-            } else {
-                System.out.println("📦 Catalog already initialized.");
-            }*/
 
             insertCatalogWithImages(conn);
 
