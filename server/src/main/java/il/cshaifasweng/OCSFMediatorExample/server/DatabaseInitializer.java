@@ -64,6 +64,10 @@ public class DatabaseInitializer {
 
             stmt.executeUpdate(sql);
 
+            sql = "DROP TABLE IF EXISTS catalog";
+
+            stmt.executeUpdate(sql);
+
             System.out.println("✅ Users table deleted successfully.");
             stmt.executeUpdate(sql);
 
@@ -108,7 +112,8 @@ stmt.executeUpdate(sql);*/
                     description TEXT,
                     price INTEGER NOT NULL,
                     shop TEXT NOT NULL,
-                    image BLOB                             
+                    image BLOB,
+                    sale INTEGER                             
                 );
             """);
             System.out.println("📦 E1.");
@@ -230,7 +235,7 @@ stmt.executeUpdate(sql);*/
                 System.out.println("📦 Catalog already initialized.");
             }*/
 
-            //insertCatalogWithImages(conn);
+            insertCatalogWithImages(conn);
 
 
 
@@ -243,15 +248,15 @@ stmt.executeUpdate(sql);*/
 
     private static void insertCatalogWithImages(Connection conn) throws SQLException {
         String[][] catalogData = {
-                {"Flower", "Rose", "A classic red flower known for its fragrance.", "10", "Tel Aviv", "images/Rose.jpg"},
-                {"Flower", "Tulip", "Bright and colorful spring flower.", "20", "Haifa", "images/Tulip.jpg"},
-                {"Flower", "Lily", "Elegant white flower, often symbolic.", "10", "Tel Aviv", "images/Lily.jpg"},
-                {"Flower", "Sunflower", "Tall yellow flower that follows the sun.", "30", "Haifa", "images/Sunflower.jpg"},
-                {"Flower", "Orchid", "Delicate exotic flower with many varieties.", "45", "Jerusalem", "images/Orchid.jpg"},
-                {"Plant", "Aloe Vera", "Succulent with healing properties.", "30", "all chain", "images/Aloe Vera.jpg"}
+                {"Flower", "Rose", "A classic red flower known for its fragrance.", "10", "Tel Aviv", "images/Rose.jpg","0"},
+                {"Flower", "Tulip", "Bright and colorful spring flower.", "20", "Haifa", "images/Tulip.jpg","0"},
+                {"Flower", "Lily", "Elegant white flower, often symbolic.", "10", "Tel Aviv", "images/Lily.jpg","0"},
+                {"Flower", "Sunflower", "Tall yellow flower that follows the sun.", "30", "Haifa", "images/Sunflower.jpg","0"},
+                {"Flower", "Orchid", "Delicate exotic flower with many varieties.", "45", "Jerusalem", "images/Orchid.jpg","0"},
+                {"Plant", "Aloe Vera", "Succulent with healing properties.", "30", "all chain", "images/Aloe Vera.jpg","0"}
         };
 
-        String sql = "INSERT INTO catalog (type, name, description, price, shop, image) VALUES (?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO catalog (type, name, description, price, shop, image,sale) VALUES (?, ?, ?, ?, ?, ?,?)";
 
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             for (String[] row : catalogData) {
@@ -261,6 +266,7 @@ stmt.executeUpdate(sql);*/
                 double price = Double.parseDouble(row[3]);
                 String shop = row[4];
                 String imagePath = row[5];
+                int sale=Integer.parseInt(row[6]);
 
                 byte[] imageBytes;
                 try {
@@ -276,7 +282,7 @@ stmt.executeUpdate(sql);*/
                 ps.setDouble(4, price);
                 ps.setString(5, shop);
                 ps.setBytes(6, imageBytes);
-
+                ps.setInt(7, sale);
                 ps.executeUpdate();
                 System.out.println("✅ Inserted " + name + " with image");
             }

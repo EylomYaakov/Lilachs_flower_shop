@@ -137,15 +137,15 @@ public class SimpleServer extends AbstractServer {
 			/// client / uer related ****
 			else if (text.equals("GET_USERS")) {
 				try {
-					List<ConnectedUser> users = DatabaseManager.getAllUsers(); // שלוף את כל המשתמשים מהדאטאבייס
-					UsersListEvent event = new UsersListEvent(users);           // צור את האירוע לשליחה
-					client.sendToClient(event);                                 // שלח ללקוח
+					List<ConnectedUser> users = DatabaseManager.getAllUsers();
+					UsersListEvent event = new UsersListEvent(users);
+					client.sendToClient(event);
 					System.out.println("👥 Sent " + users.size() + " users to client.");
 				} catch (Exception e) {
 					System.err.println("❌ Failed to get users:");
 					e.printStackTrace();
 				}
-			} else if (text.startsWith("remove client")) {// from prototype - needs update
+			} else if (text.startsWith("remove client")) {// from prototype
 				SubscribedClient toRemove = findClient(client);
 				System.out.println(toRemove.getUsername());
 				if (toRemove != null) {

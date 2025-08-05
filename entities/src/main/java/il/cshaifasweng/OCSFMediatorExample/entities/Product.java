@@ -58,4 +58,13 @@ public class Product extends BaseProduct{
 
     public void setPrice(double price) {
     }
+    public void setSale(int sale)
+    {
+        this.sale = sale;
+    }
+
+    public int getSale()
+    {
+        return sale;
+    }
 }

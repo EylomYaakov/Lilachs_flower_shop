@@ -150,7 +150,7 @@ public class DatabaseManager {
     }
 
     public static void printFullCatalog() {
-        String sql = "SELECT id, type, name, description, price, shop FROM catalog";
+        String sql = "SELECT id, type, name, description, price, shop,sale FROM catalog";
 
         try (Statement stmt = dbConnection.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
@@ -163,16 +163,18 @@ public class DatabaseManager {
                 String description = rs.getString("description");
                 double price = rs.getDouble("price");
                 String shop = rs.getString("shop");
-
+                int sale = rs.getInt("sale");
                 System.out.println("🪴 ID: " + id +
                         " | Type: " + type +
                         " | Name: " + name +
                         " | Description: " + description +
                         " | Price: " + price +
-                        " | Shop: " + shop);
+                        " | Shop: " + shop+
+                        " | Sale: " + sale);
             }
 
         } catch (SQLException e) {
+            System.err.println("❌ Failed to print catalog");
             System.err.println("❌ Failed to print catalog");
             e.printStackTrace();
         }
@@ -564,7 +566,7 @@ public class DatabaseManager {
     }
 
     public static boolean updateProduct(Product product) {
-        String sql = "UPDATE catalog SET type = ?, name = ?, description = ?, price = ?, shop = ?, image = ? WHERE id = ?";
+        String sql = "UPDATE catalog SET type = ?, name = ?, description = ?, price = ?, shop = ?, image = ? ,sale=? WHERE id = ?";
 
         try (PreparedStatement ps = dbConnection.prepareStatement(sql)) {
             ps.setString(1, product.getType());
@@ -573,7 +575,9 @@ public class DatabaseManager {
             ps.setDouble(4, product.getPrice());
             ps.setString(5, product.getShop());
             ps.setBytes(6, product.getImage()); // assuming getImage returns byte[]
-            ps.setInt(7, product.getId());
+            ps.setInt(7, product.getSale());
+
+            ps.setInt(8, product.getId());
 
             int affected = ps.executeUpdate();
             return affected > 0;
@@ -1033,7 +1037,8 @@ public class DatabaseManager {
                         p.getImage(),
                         p.getShop()
                 );
-
+                discounted.setSale(sale.getSaleAmount());
+                System.out.println("Sale: "+discounted.getSale());
                 boolean success = updateProduct(discounted);
                 if (success) {
                     System.out.println("✅ Updated product " + p.getName() + " with discount");
