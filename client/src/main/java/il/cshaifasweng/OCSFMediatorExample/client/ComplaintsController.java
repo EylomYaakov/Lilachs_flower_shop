@@ -142,22 +142,6 @@ public class ComplaintsController {
         //only for complaints to be not empty
         complaints = new ArrayList<>();
         LocalDate date = LocalDate.now();
-        Complaint complaint1 = new Complaint("A", "Haifa", 1, 1, date);
-        Complaint complaint2 = new Complaint("B","Haifa", 1, 1, date);
-        Complaint complaint3 = new Complaint("C", "Tel Aviv",1, 1, date);
-        Complaint complaint4 = new Complaint("D", "Tel Aviv",1, 1, date);
-        Complaint complaint5 = new Complaint("E", "Jerusalem",1, 1, date);
-        Complaint complaint6 = new Complaint("F", "Jerusalem",1, 1, date);
-        complaint3.setResponse("OK");
-        complaints.add(complaint1);
-        complaints.add(complaint2);
-        complaints.add(complaint3);
-        complaints.add(complaint4);
-        complaints.add(complaint5);
-        complaints.add(complaint6);
-        Collections.reverse(complaints);
-        ComplaintsListEvent event = new ComplaintsListEvent(complaints);
-        initComplaints(event);
     }
 
     @Subscribe

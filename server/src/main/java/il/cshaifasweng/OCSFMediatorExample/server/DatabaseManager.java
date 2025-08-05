@@ -499,14 +499,7 @@ public class DatabaseManager {
                         image,
                         rs.getString("shop")
                 );
-                items.add(item);
-            }
-            //added only for testing the pages mechanism in the catalog - these items are not in the database and therefore exception is raised trying to get their details
-            String[] names = {"a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "q"};
-            for(int i = 0; i < 100; i++) {
-                Path imagePath = Paths.get("images/tulip.jpg");
-                byte[] image = Files.readAllBytes(imagePath);
-                Product item = new Product(6+i, names[i%11], names[i%11], names[i%11], 6+i, image, names[i%11]);
+                item.setSale(rs.getInt("sale"));
                 items.add(item);
             }
             ProductListEvent event = new ProductListEvent(items);

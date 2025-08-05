@@ -284,6 +284,9 @@ public class CatalogController {
             return;
         }
         this.products = products;
+        for(Product p : products){
+            System.out.println(p.sale);
+        }
         isSalePressed = new boolean[products.size()];
         int pageSize = 6;
         paginator = new Paginator<>(products, pageSize);

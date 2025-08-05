@@ -42,11 +42,6 @@ public class SignUpController {
         List<String> shops = CatalogController.getShops();
         Platform.runLater(() -> typesList.getItems().add("chain account"));
         Platform.runLater(() -> typesList.getItems().add("subscription"));
-        //just for shops to be not empty
-        shops = new ArrayList<>();
-        shops.add("shop1");
-        shops.add("shop2");
-        shops.add("shop3");
         for (String shop : shops) {
             Platform.runLater(() -> typesList.getItems().add("shop account: " + shop));
         }
@@ -64,7 +59,7 @@ public class SignUpController {
 
 
     private String checkDetails(String username, String password, String id, String creditCard, String type) {
-        if(username.isEmpty() || password.isEmpty() || id.isEmpty() || creditCard.isEmpty() || type.equals("account type")){
+        if(username.isEmpty() || password.isEmpty() || id.isEmpty() || creditCard.isEmpty() || type==null){
             return "please fill all fields";
         }
         String notValid = "";
