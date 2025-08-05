@@ -22,7 +22,7 @@ public class SimpleClient extends AbstractClient {
     private int lastItemId;
     private static Map<BaseProduct, Integer> cart = new LinkedHashMap<>();
     private static int accountId;
-    private static String lastShop;
+    private static String lastShop = "";
 
 
     public static void setLastShop(String shop) {

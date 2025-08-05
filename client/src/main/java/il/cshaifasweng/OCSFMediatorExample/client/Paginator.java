@@ -57,6 +57,7 @@ public class Paginator<T>{
     }
 
     public void removeItem(T item) {
+        items.remove(item);
         productsToShow = new boolean[items.size()];
         Arrays.fill(productsToShow, true);
     }

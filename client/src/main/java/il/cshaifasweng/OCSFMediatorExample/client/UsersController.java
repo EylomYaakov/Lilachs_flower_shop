@@ -325,6 +325,7 @@ public class UsersController {
         ConnectedUser user =paginator.getItem(index);
         Platform.runLater(()->usernames[index].setText(user.getUsername()));
         Platform.runLater(()->passwords[index].setText(user.getPassword()));
+        System.out.println(user.getRole());
         Platform.runLater(()->roles[index].getSelectionModel().select(getRoleDescription(user.getRole())));
     }
 
@@ -340,9 +341,9 @@ public class UsersController {
 
     private void initRolesFilter(ComboBox<String> roles){
         List<String> shops = CatalogController.getShops();
-        Platform.runLater(()->roles.getItems().addAll("user chain account", "user subscription account"));
+        Platform.runLater(()->roles.getItems().addAll("customer chain account", "customer subscription account"));
         for(String shop : shops){
-            Platform.runLater(()->roles.getItems().add("user shop account:"+ shop));
+            Platform.runLater(()->roles.getItems().add("customer shop account:"+ shop));
         }
         String managerShop = SimpleClient.getUser().getShop();
         if(managerShop.equals("all chain")){
@@ -354,7 +355,7 @@ public class UsersController {
         else{
             Platform.runLater(()->roles.getItems().add(managerShop + " shop manager"));
         }
-        Platform.runLater(()->roles.setStyle("-fx-font: 12 System;"));
+        Platform.runLater(()->roles.setStyle("-fx-font: 10.5 System;"));
     }
 
     private String getRoleDescription(String role){

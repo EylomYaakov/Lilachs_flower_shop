@@ -150,6 +150,7 @@ public class CatalogController {
             if (buttons[i] == clicked) {
                 if(!chooseItems) {
                     try {
+                        SimpleClient.setLastShop(shopsFilter.getSelectionModel().getSelectedItem());
                         SimpleClient.getClient().setLastItemId(ids[i]);
                         App.switchScreen("item");
                     }
@@ -267,7 +268,10 @@ public class CatalogController {
             else{
                 shop = shops.get(0);
             }
-            String finalShop = shop;
+            if(!SimpleClient.getLastShop().isEmpty()) {
+                shop = SimpleClient.getLastShop();
+            }
+            String finalShop  = shop;
             Platform.runLater(()-> shopsFilter.getSelectionModel().select(finalShop));
             Platform.runLater(()-> filter(new ActionEvent()));
         }
