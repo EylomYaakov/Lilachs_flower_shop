@@ -36,20 +36,7 @@ public class DatabaseManager {
         }
     }
 
-    public static Connection getConnection() {
-        return dbConnection;
-    }
 
-    public static void closeConnection() {
-        try {
-            if (dbConnection != null && !dbConnection.isClosed()) {
-                dbConnection.close();
-                System.out.println("🔒 SQLite connection closed.");
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
 
 
 
@@ -228,7 +215,7 @@ public class DatabaseManager {
                 System.out.println("   Ends at: " + endTime);
                 System.out.println("   Products in sale:");
 
-                // עכשיו נשלוף את המוצרים של המבצע הזה
+                //get the products from the sale
                 productStmt.setInt(1, saleId);
                 try (ResultSet productRs = productStmt.executeQuery()) {
                     boolean hasProducts = false;
@@ -347,11 +334,11 @@ public class DatabaseManager {
                 return rs.getInt("id");
             } else {
                 System.err.println("⚠️ No user found with username: " + username);
-                return -1; // או לזרוק חריגה, לפי הסגנון שלך
+                return -1;
             }
         } catch (SQLException e) {
             e.printStackTrace();
-            return -1; // או לזרוק חריגה
+            return -1;
         }
     }
 
@@ -489,7 +476,7 @@ public class DatabaseManager {
 
             List<Product> items = new ArrayList<>();
             while (rs.next()) {
-                byte[] image = rs.getBytes("image");  // 🔹 קרא את התמונה מה-BLOB
+                byte[] image = rs.getBytes("image");
                 Product item = new Product(
                         rs.getInt("id"),
                         rs.getString("name"),
@@ -535,7 +522,7 @@ public class DatabaseManager {
             ps.setString(3, product.getDescription());
             ps.setDouble(4, product.getPrice());
             ps.setString(5, product.getShop());
-            ps.setBytes(6, product.getImage()); // הוספת התמונה כאן
+            ps.setBytes(6, product.getImage());
 
             ps.executeUpdate();
 
@@ -544,7 +531,7 @@ public class DatabaseManager {
                  ResultSet rs = stmt.executeQuery("SELECT last_insert_rowid();")) {
                 if (rs.next()) {
                     int newId = rs.getInt(1);
-                    product.setId(newId); // רק אם יש setId
+                    product.setId(newId);
                     System.out.println("✅ Product inserted with ID: " + newId);
                     return newId;
                 }
@@ -660,7 +647,7 @@ public class DatabaseManager {
 
             while (rs.next()) {
                 LocalDate endDate = LocalDate.parse(rs.getString("end_date"));
-                LocalDate purchaseDate = endDate.minusYears(1); // חיסור שנה
+                LocalDate purchaseDate = endDate.minusYears(1); // take a year back to purchase date
                 purchaseDates.add(purchaseDate);
             }
 
@@ -932,10 +919,10 @@ public class DatabaseManager {
             ResultSet orderRs = orderStmt.executeQuery();
 
             if (!orderRs.next()) {
-                return null; // לא קיימת הזמנה עם מזהה כזה
+                return null;
             }
 
-            // קריאה לפרטי ההזמנה
+
             String greetingCard = orderRs.getString("greeting_card");
             String address = orderRs.getString("address");
             String phone = orderRs.getString("phone_number");
@@ -948,7 +935,7 @@ public class DatabaseManager {
             boolean complained = orderRs.getBoolean("complained");
             double refund = orderRs.getDouble("refund");
 
-            // קריאה לפרטי הפריטים
+
             Map<BaseProduct, Integer> products = new HashMap<>();
             try (PreparedStatement itemsStmt = dbConnection.prepareStatement(itemsSql)) {
                 itemsStmt.setInt(1, orderId);
@@ -958,7 +945,7 @@ public class DatabaseManager {
                     int productId = itemsRs.getInt("product_id");
                     int quantity = itemsRs.getInt("quantity");
 
-                    Product product = getItem(productId); // שליפת פריט לפי מזהה
+                    Product product = getItem(productId);
                     if (product != null) {
                         products.put(product, quantity);
                     }
@@ -1154,7 +1141,7 @@ public class DatabaseManager {
             rs.close();
             selectStmt.close();
 
-            // מחיקת רשומות מהטבלה כדי לא לעדכן שוב
+            // remove the sale (no need to save ended sales)
             PreparedStatement deleteStmt = dbConnection.prepareStatement(
                     "DELETE FROM saleproducts WHERE sale_id = ?"
             );
@@ -1232,12 +1219,12 @@ public class DatabaseManager {
             int affected = ps.executeUpdate();
 
             if (affected > 0) {
-                // קבל את ה-id האחרון שהוזן
+                // get the last id inserted
                 try (Statement stmt = dbConnection.createStatement();
                      ResultSet rs = stmt.executeQuery("SELECT last_insert_rowid()")) {
                     if (rs.next()) {
                         generatedId = rs.getInt(1);
-                        complaint.setComplaintId(generatedId); // ודא שיש setter
+                        complaint.setComplaintId(generatedId);
                         System.out.println("📩 Complaint inserted with ID: " + generatedId);
                     }
                 }

@@ -1,11 +1,11 @@
 package il.cshaifasweng.OCSFMediatorExample.server;
-import il.cshaifasweng.OCSFMediatorExample.server.DatabaseManager;
+
 import il.cshaifasweng.OCSFMediatorExample.entities.*;
 import il.cshaifasweng.OCSFMediatorExample.server.ocsf.AbstractServer;
 import il.cshaifasweng.OCSFMediatorExample.server.ocsf.ConnectionToClient;
 import il.cshaifasweng.OCSFMediatorExample.server.ocsf.SubscribedClient;
 import java.io.IOException;
-import java.time.Duration;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -14,9 +14,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+
 import java.util.stream.Collectors;
 
 
@@ -51,10 +49,9 @@ public class SimpleServer extends AbstractServer {
 
 
 	@Override
-	protected void handleMessageFromClient(Object msg, ConnectionToClient client) throws IOException {
+	protected void handleMessageFromClient(Object msg, ConnectionToClient client) {
 		/// prints for control - server side ************************
 
-		System.out.println("Database users: ");
 		DatabaseManager.printAllUsers();
 		System.out.println("Connected users: ");
 
@@ -76,7 +73,7 @@ public class SimpleServer extends AbstractServer {
 
 
 			String text = (String) msg;
-			System.out.println(text);
+			System.out.println("Message recieved from cliet: "+text);
 
 
 			if (text.equals("GET_CATALOG")) {
@@ -147,7 +144,6 @@ public class SimpleServer extends AbstractServer {
 				}
 			} else if (text.startsWith("remove client")) {// from prototype
 				SubscribedClient toRemove = findClient(client);
-				System.out.println(toRemove.getUsername());
 				if (toRemove != null) {
 					SubscribersList.remove(toRemove);
 					if (!toRemove.getUsername().equals("~"))
@@ -180,7 +176,7 @@ public class SimpleServer extends AbstractServer {
 						SubscribedClient subscribedClient = findClient(client);
 						subscribedClient.setUsername(username);
 						SubscribersList.add(subscribedClient);
-						ConnectedList.put(user.getId(), user);
+						ConnectedList.put(user != null ? user.getId() : 0, user);
 						System.out.println("LOGIN_SUCCESS");
 						int id = DatabaseManager.getId(user.getUsername());
 
@@ -206,13 +202,16 @@ public class SimpleServer extends AbstractServer {
 				String username = extractUsername(text);
 				ConnectedUser user = DatabaseManager.getUserByUsername(username);
 
-				ConnectedUser removedUser = ConnectedList.remove(user.getId());
-				boolean removed = (removedUser != null);
+                ConnectedUser removedUser = null;
+                if (user != null) {
+                    removedUser = ConnectedList.remove(user.getId());
+                }
+                boolean removed = (removedUser != null);
 
 
 				SubscribedClient subscribedClient = findClient(client);
 				if (subscribedClient != null) {
-					subscribedClient.setUsername(null); // איפוס המשתמש
+					subscribedClient.setUsername(null); // removing the username from the client server connection
 				}
 
 				LogoutEvent event;
@@ -245,16 +244,7 @@ public class SimpleServer extends AbstractServer {
 						boolean success = DatabaseManager.upsertSubscription(userId, today, end);
 						if (success) {
 							System.out.println("✅ Subscription recorded for user id: " + userId);
-							System.out.println("username");
-							System.out.println(" Connected Users:");
-							for (Map.Entry<Integer, ConnectedUser> entry : ConnectedList.entrySet()) {
-								int id = entry.getKey();
-								String username = entry.getValue().getUsername();
 
-								System.out.printf("🟢 ID: %d | Username: %s%n", id, username);
-							}
-
-							System.out.println("username"+ConnectedList.get(userId).getUsername()+"  ");
 							DatabaseManager.updateUserField(ConnectedList.get(userId).getUsername(), "role", "subscription");
 
 						} else {
@@ -322,7 +312,7 @@ public class SimpleServer extends AbstractServer {
 			}
 			else if (text.equals("GET_ALL_ORDERS")) {
 				try {
-					List<Order> orders = DatabaseManager.getAllOrders(); // פונקציה שצריך לממש אם לא קיימת
+					List<Order> orders = DatabaseManager.getAllOrders();
 					AllOrdersEvent event = new AllOrdersEvent(orders);
 
 					System.out.println("📦 Sending " + orders.size() + " orders to client.");
@@ -393,7 +383,6 @@ public class SimpleServer extends AbstractServer {
 			String username = user.getUsername();
 			String password = user.getPassword();
 			String personalId = user.getUserID();
-			System.out.println("personalId: " + personalId);
 			String creditId = user.getCreditCard();
 			String role = user.getRole();
 			String formattedDate=user.getSignUpDate();
@@ -411,8 +400,10 @@ public class SimpleServer extends AbstractServer {
 				if (created) {
 					ConnectedUser newUser = DatabaseManager.getUserByUsername(username);
 					//ad to active list
-					ConnectedList.put(newUser.getId(),newUser);
-					id=  DatabaseManager.getId(newUser.getUsername());
+                    if (newUser != null) {
+                        ConnectedList.put(newUser.getId(),newUser);
+                    }
+                    id=  DatabaseManager.getId(newUser.getUsername());
 					//response 2 - sign up successfull
 					event = new SignUpEvent("SIGNUP_SUCCESS",newUser,id);
 					System.out.println("SIGNUP_SUCCESS");
@@ -496,11 +487,7 @@ public class SimpleServer extends AbstractServer {
 			/// if msg is of item ORDER - insert the order to databse, no need to update client
 			DatabaseManager.insertOrder((Order)msg);
 			System.out.println(" Order processed and scheduled.");
-			Order order = (Order)msg;
-			for(BaseProduct baseProduct: order.getProducts().keySet()){
-				System.out.println(baseProduct.type);
-				System.out.println(order.getProducts().get(baseProduct));
-			}
+
 		}
 
 
@@ -541,7 +528,7 @@ public class SimpleServer extends AbstractServer {
 					return;
 				}
 
-				// בדיקת שינוי שם משתמש
+				// check if username is altered
 				if (changedField.equalsIgnoreCase("username") &&
 						!originalUser.getUsername().equals(updatedUser.getUsername())) {
 
@@ -556,7 +543,6 @@ public class SimpleServer extends AbstractServer {
 
 
 				boolean success = DatabaseManager.updateUserDetails(updatedUser, changedField);
-				System.out.println("changedField: " + changedField);//todo: fix roles mismatch
 				if (success) {
 					client.sendToClient(new ChangeUsernameEvent("SUCCESS"));
 					if (changedField.equalsIgnoreCase("role")) {
@@ -602,7 +588,6 @@ public class SimpleServer extends AbstractServer {
 		SubscribedClient exists = findClient(client);
 		if (exists == null) {
 			SubscribedClient connection = new SubscribedClient(client);
-			System.out.println(connection.getUsername());
 			SubscribersList.add(connection);
 		}
 		databaseManager.sendCatalog(client);
@@ -621,7 +606,7 @@ public class SimpleServer extends AbstractServer {
 
 			if (signUpDate.plusYears(1).isBefore(today)) {
 				System.out.println("❌ Subscription expired for: " + cU.getUsername());
-				//  לcancel sub and make normal user
+				//cancel ubcription and make normal user
 				cU.setRole("chain account");
 				DatabaseManager.updateUserField(cU.getUsername(), "role", "chain account");
 
@@ -647,8 +632,7 @@ public class SimpleServer extends AbstractServer {
 				String password = parts[2];
 
 				//  Replace with real authentication logic
-				boolean isAuthenticated = databaseManager.checkCredentials(username, password);
-				return isAuthenticated;
+                return databaseManager.checkCredentials(username, password);
 			} else {
 				return false;
 			}
