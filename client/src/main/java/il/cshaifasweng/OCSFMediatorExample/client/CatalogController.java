@@ -242,7 +242,7 @@ public class CatalogController {
     private String getDetails(Product product){
         String details =  product.name + "\ntype: " + product.type + "\n" + "price: " + product.price;
         if(product.sale > 0) {
-            details = product.sale + "% sale!\n" + product.name + "\ntype: " + product.type + "\n" + "price: " + product.price * product.sale;
+            details = product.sale + "% sale!\n" + details;
         }
         return details;
     }

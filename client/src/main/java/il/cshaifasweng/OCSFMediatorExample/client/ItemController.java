@@ -73,7 +73,7 @@ public class ItemController {
             id = SimpleClient.getClient().getLastItemId();
             SimpleClient.getClient().sendToServer("GET_ITEM:" + id);
             amountSpinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 1000));
-            if(!SimpleClient.getRole().startsWith("worker")){
+            if(!SimpleClient.getRole().startsWith("worker")) {
                 Platform.runLater(()->name.setEditable(false));
                 Platform.runLater(()->description.setEditable(false));
                 Platform.runLater(() -> price.setEditable(false));
@@ -83,7 +83,7 @@ public class ItemController {
                 Platform.runLater(()->imagePath.setVisible(false));
                 Platform.runLater(()->removeItemButton.setVisible(false));
             }
-            else{
+            if(SimpleClient.getRole().startsWith("worker") || SimpleClient.getRole().isEmpty()) {
                 Platform.runLater(()-> amountSpinner.setVisible(false));
                 Platform.runLater(()->addToCartButton.setVisible(false));
 
