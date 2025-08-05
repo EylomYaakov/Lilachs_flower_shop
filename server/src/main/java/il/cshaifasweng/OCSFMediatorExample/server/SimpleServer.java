@@ -38,7 +38,7 @@ public class SimpleServer extends AbstractServer {
 			e.printStackTrace();
 		}
 		DatabaseManager.connect(); // Connect using DatabaseManager
-		DatabaseInitializer.initializeDatabase(); // initalize tables/or reset
+		//DatabaseInitializer.initializeDatabase(); // initalize tables/or reset
 		DatabaseManager.revertExpiredSales(); // find sales and end if needed
 
 
@@ -267,7 +267,7 @@ public class SimpleServer extends AbstractServer {
 					}
 				}
 			}
-			else if(text.startsWith("GET_SUBSCRIPTION__DATES"))
+			else if(text.startsWith("GET_SUBSCRIPTION_DATES"))
 			{
 				try {
 					List<LocalDate> subscriptionDates = DatabaseManager.getAllSubscriptionPurchaseDates();
@@ -393,6 +393,7 @@ public class SimpleServer extends AbstractServer {
 			String username = user.getUsername();
 			String password = user.getPassword();
 			String personalId = user.getUserID();
+			System.out.println("personalId: " + personalId);
 			String creditId = user.getCreditCard();
 			String role = user.getRole();
 			String formattedDate=user.getSignUpDate();
@@ -620,7 +621,8 @@ public class SimpleServer extends AbstractServer {
 
 			if (signUpDate.plusYears(1).isBefore(today)) {
 				System.out.println("❌ Subscription expired for: " + cU.getUsername());
-				//  לcancel sub and make normal user				cU.setRole("chain account");
+				//  לcancel sub and make normal user
+				cU.setRole("chain account");
 				DatabaseManager.updateUserField(cU.getUsername(), "role", "chain account");
 
 			} else {

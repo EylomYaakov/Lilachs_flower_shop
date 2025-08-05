@@ -29,6 +29,44 @@ public class DatabaseInitializer {
             String sql = "DROP TABLE IF EXISTS complaints";
             stmt.executeUpdate(sql);
 
+            sql = "DROP TABLE IF EXISTS Sales";
+
+            stmt.executeUpdate(sql);
+            System.out.println("✅ Users table deleted successfully.");
+
+            sql = "DROP TABLE IF EXISTS SaleProducts";
+
+            stmt.executeUpdate(sql);
+            System.out.println("✅ Users table deleted successfully.");
+            stmt.executeUpdate(sql);
+
+            sql = "DROP TABLE IF EXISTS Orders";
+
+            stmt.executeUpdate(sql);
+            System.out.println("✅ Users table deleted successfully.");
+
+            sql = "DROP TABLE IF EXISTS Subscriptions";
+
+            stmt.executeUpdate(sql);
+            System.out.println("✅ Users table deleted successfully.");
+            stmt.executeUpdate(sql);
+
+
+            sql = "DROP TABLE IF EXISTS SubscriptionSales";
+
+            stmt.executeUpdate(sql);
+
+            sql = "DROP TABLE IF EXISTS OrderItems";
+
+            stmt.executeUpdate(sql);
+
+            sql = "DROP TABLE IF EXISTS Users";
+
+            stmt.executeUpdate(sql);
+
+            System.out.println("✅ Users table deleted successfully.");
+            stmt.executeUpdate(sql);
+
 
             sql = """
         CREATE TABLE IF NOT EXISTS complaints (

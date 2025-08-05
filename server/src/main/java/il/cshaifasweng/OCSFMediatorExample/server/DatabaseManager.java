@@ -421,7 +421,7 @@ public class DatabaseManager {
                         rs.getString("signUpDate")
                 );
                 users.add(user);
-                System.out.println(user.getRole());
+                System.out.println("id: "+user.getId()+"usernaeme: "+user.getUsername()+" role: "+user.getRole());
             }
 
         } catch (SQLException e) {
@@ -677,6 +677,66 @@ public class DatabaseManager {
 
     /// ORDER HANDLING**************************************
 
+    public static boolean updateOrderRefund(int orderId, boolean accepted, double refundAmount) {
+        //cancel or complaint
+        String sql = "UPDATE orders SET complained = ?, refund = ? WHERE id = ?";
+        System.out.println("update order erfund");
+        try (PreparedStatement stmt = dbConnection.prepareStatement(sql)) {
+            stmt.setBoolean(1, accepted); // true if complaint accepted
+            stmt.setDouble(2, accepted ? refundAmount : 0); // refund only if accepted
+            stmt.setInt(3, orderId);
+
+            int rowsUpdated = stmt.executeUpdate();
+
+            if (rowsUpdated > 0) {
+                System.out.println("📝 Order " + orderId + " updated after refund (complaint or cancelation).");
+                return true;
+            } else {
+                System.out.println("⚠️ No order found with ID " + orderId);
+                return false;
+            }
+
+        } catch (SQLException e) {
+            System.err.println("❌ Failed to update order after complaint:");
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public static double calculateRefundAmount(Order order) {
+        System.out.println("🔍 Starting refund calculation for order ID: " + order.getId());
+
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime deliveryTime = order.getDeliveryTime();
+
+        System.out.println("🕒 Current time: " + now);
+        System.out.println("🚚 Delivery time: " + deliveryTime);
+
+        Duration duration = Duration.between(now, deliveryTime);
+        long minutesToDelivery = duration.toMinutes();
+
+        System.out.println("⏳ Minutes until delivery: " + minutesToDelivery);
+
+        double totalPrice = order.getPrice();
+        System.out.println("💰 Total order price: " + totalPrice);
+
+        if (minutesToDelivery >= 180) {
+            System.out.println("✅ Cancellation made more than 3 hours before delivery.");
+            System.out.println("➡️ Full refund: " + totalPrice);
+            return totalPrice;
+        } else if (minutesToDelivery < 60) {
+            System.out.println("❌ Cancellation made less than 1 hour before delivery.");
+            System.out.println("➡️ No refund.");
+            return 0;
+        } else {
+            double halfRefund = totalPrice * 0.5;
+            System.out.println("⚠️ Cancellation made between 1 and 3 hours before delivery.");
+            System.out.println("➡️ Partial refund (50%): " + halfRefund);
+            return halfRefund;
+        }
+    }
+
+
     public static List<Order> getOrdersByCustomerId(int customerId) {
         List<Order> orders = new ArrayList<>();
 
@@ -747,17 +807,17 @@ public class DatabaseManager {
                 String greetingCard = rs.getString("greeting_card");
                 String address = rs.getString("address");
                 String phone = rs.getString("phone_number");
-                String name = rs.getString("customer_name");
+                String name = rs.getString("recipient_name");
                 LocalDateTime deliveryTime = LocalDateTime.parse(rs.getString("delivery_time"));
                 LocalDate orderDate = LocalDate.parse(rs.getString("order_date"));
-                double price = rs.getDouble("price");
+                double price = rs.getDouble("total_price");
                 int customerId = rs.getInt("customer_id");
                 boolean cancelled = rs.getBoolean("cancelled");
                 boolean complained = rs.getBoolean("complained");
                 double refund = rs.getDouble("refund");
                 String shop = rs.getString("shop");
 
-                // נניח שאין צורך לשלוף מוצרים כרגע (אפשר לעדכן אחר כך)
+
                 Order order = new Order(Map.of(), greetingCard, address, phone, name, deliveryTime, orderDate, price, customerId);
                 order.setId(id);
                 order.setCancelled(cancelled);
@@ -785,13 +845,17 @@ public class DatabaseManager {
         try (PreparedStatement ps = dbConnection.prepareStatement(sql)) {
             ps.setInt(1, orderId);
             int affectedRows = ps.executeUpdate();
-
+            double refund=calculateRefundAmount(getOrderById(orderId));
+            System.out.println("refund: "+refund);
+            updateOrderRefund(orderId,true,refund);
             return affectedRows > 0;
         } catch (SQLException e) {
             System.err.println("❌ Failed to cancel order ID: " + orderId);
             e.printStackTrace();
             return false;
         }
+
+
     }
 
 
@@ -878,10 +942,10 @@ public class DatabaseManager {
             String greetingCard = orderRs.getString("greeting_card");
             String address = orderRs.getString("address");
             String phone = orderRs.getString("phone_number");
-            String name = orderRs.getString("customer_name");
+            String name = orderRs.getString("recipient_name");
             LocalDateTime deliveryTime = LocalDateTime.parse(orderRs.getString("delivery_time"));
             LocalDate orderDate = LocalDate.parse(orderRs.getString("order_date"));
-            double price = orderRs.getDouble("price");
+            double price = orderRs.getDouble("total_price");
             int customerId = orderRs.getInt("customer_id");
             boolean cancelled = orderRs.getBoolean("cancelled");
             boolean complained = orderRs.getBoolean("complained");
@@ -1249,6 +1313,8 @@ public class DatabaseManager {
             int rowsUpdated = stmt.executeUpdate();
 
             if (rowsUpdated > 0) {
+                double refund=getOrderById(complaint.getOrderId()).getPrice();
+                updateOrderRefund(complaint.getOrderId(),complaint.getAccepted(),refund);
                 System.out.println("✅ Complaint ID " + complaint.getComplaintId() + " updated successfully.");
                 return true;
             } else {

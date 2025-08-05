@@ -99,7 +99,7 @@ public class SignUpController {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
             String formattedDate = today.format(formatter);
-            ConnectedUser newUser = new ConnectedUser(-1,username.getText(), password.getText(), idField.getId(), creditCard.getText(), accountType,formattedDate);
+            ConnectedUser newUser = new ConnectedUser(-1,username.getText(), password.getText(), idField.getText(), creditCard.getText(), accountType,formattedDate);
             SimpleClient.setUser(newUser);
             Platform.runLater(()-> statusLabel.setText("valid"));
             try {
