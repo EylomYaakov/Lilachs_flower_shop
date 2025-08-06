@@ -181,6 +181,10 @@ public class SimpleClient extends AbstractClient {
             Sale sale = (Sale) msg;
             EventBus.getDefault().post(sale);
         }
+        else if(msg instanceof Product){
+            Product product = (Product) msg;
+            EventBus.getDefault().post(product);
+        }
         else if(msg instanceof Integer){
             accountId = (Integer) msg;
         }

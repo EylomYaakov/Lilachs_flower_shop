@@ -453,11 +453,7 @@ public class SimpleServer extends AbstractServer {
 				boolean success = DatabaseManager.updateProduct(product);
 				if (success) {
 					System.out.println(" Product updated successfully.");
-					try {
-						client.sendToClient(product);
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
+					sendToAllClients(product);
 				} else {
 					System.out.println("❌ Failed to update product with ID " + product.getId());
 				}

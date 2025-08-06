@@ -315,6 +315,8 @@ public class CatalogController {
             types.add(p.type);
         }
         Platform.runLater(()->typesFilter.getItems().addAll(types));
+        Platform.runLater(()->shopsFilter.setVisible(true));
+        Platform.runLater(()->filterButton.setLayoutX(310));
         initShops();
     }
 
@@ -330,6 +332,18 @@ public class CatalogController {
         }
     }
 
+
+    @Subscribe
+    public void updateProduct(Product product){
+        System.out.println("HERE");
+        for(int i=0; i<products.size(); i++){
+            if(products.get(i).id == product.id){
+                products.set(i, product);
+                refreshPage();
+                return;
+            }
+        }
+    }
 
     private void refreshPage(){
         paginator.setCurrentIndex(paginator.getCurrentIndex() - paginator.getCurrentPageSize());
