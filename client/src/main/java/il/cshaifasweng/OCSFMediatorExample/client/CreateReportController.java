@@ -53,6 +53,7 @@ public class CreateReportController {
             controller.setStartDate(start);
             controller.setShop(shop);
             controller.setReportType(type);
+            controller.setCompare(false);
             Utils.sendReportMessage(type);
             Scene scene = new Scene(root);
             Stage stage = (Stage) startDate.getScene().getWindow();  // Or any valid stage

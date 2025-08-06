@@ -171,11 +171,11 @@ public class CatalogController {
                 else{
                     if(clicked.getStyle().startsWith("-fx-border-color: red")){
                         clicked.setStyle("");
-                        saleProducts.remove(paginator.getItem(i));
+                        saleProducts.remove(products.get(currentIndex-currentPageSize+i));
                         isSalePressed.set(currentIndex-currentPageSize+i, false);
                     }
                     else {
-                        saleProducts.add(paginator.getItem(i));
+                        saleProducts.add(products.get(currentIndex-currentPageSize+i));
                         clicked.setStyle("-fx-border-color: red; -fx-border-width: 2px; -fx-border-radius: 5px;");
                         isSalePressed.set(currentIndex-currentPageSize+i,true);
                     }
@@ -223,6 +223,7 @@ public class CatalogController {
         texts = new TextArea[]{txt1, txt2, txt3, txt4, txt5, txt6};
         images = new ImageView[]{img1, img2, img3, img4, img5, img6};
         ids = new int[buttons.length];
+        paginator = null;
         if(!EventBus.getDefault().isRegistered(this)) {
             EventBus.getDefault().register(this);
         }
@@ -300,7 +301,6 @@ public class CatalogController {
 
     @Subscribe
     public void initCatalog(ProductListEvent event){
-        System.out.println("GOT CATALOG");
         List<Product> products = event.getProducts();
         if(products.get(0) == null){
             return;
@@ -308,7 +308,14 @@ public class CatalogController {
         this.products = products;
         isSalePressed = Utils.initList(products.size(), false);
         int pageSize = 6;
-        paginator = new Paginator<>(products, pageSize);
+        if(paginator != null) {
+            int index = paginator.getCurrentIndex() - paginator.getCurrentPageSize();
+            paginator = new Paginator<>(this.products, pageSize);
+            paginator.setCurrentIndex(index);
+        }
+        else {
+            paginator = new Paginator<>(this.products, pageSize);
+        }
         renderPage();
         Platform.runLater(()->typesFilter.getItems().add("all items"));
         Set<String> types = new HashSet<>();

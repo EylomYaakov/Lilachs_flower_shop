@@ -384,6 +384,7 @@ public class DatabaseManager {
 
         // look for all subscribed clients to send updated catalog
         ArrayList<SubscribedClient> users = SimpleServer.getAllConnectedUsers();
+        System.out.println("users " + users.size());
         for (SubscribedClient user : users) {
             ConnectionToClient client = user.getClient();
             System.out.println("TRYING TO SENT");

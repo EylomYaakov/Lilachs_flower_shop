@@ -150,7 +150,7 @@ public class SimpleServer extends AbstractServer {
 					e.printStackTrace();
 				}
 			} else if (text.startsWith("remove client")) {// from prototype
-				SubscribedClient toRemove = findClient(client);
+				SubscribedClient toRemove = findClient(client, true);
 				if (toRemove != null) {
 					SubscribersList.remove(toRemove);
 					if (!toRemove.getUsername().equals("~"))
@@ -165,6 +165,7 @@ public class SimpleServer extends AbstractServer {
 				}
 
 			} else if (text.startsWith("LOGIN:")) {
+				System.out.println("users size: " + SubscribersList.size());
 				// Format: LOGIN:<username>:<password>
 				LoginEvent event;
 				//func to ceck credentials and dup
@@ -180,12 +181,12 @@ public class SimpleServer extends AbstractServer {
 					//if user isn't already conected (other screen)
 					if (!alreadyConnected) {
 						ConnectedUser user = DatabaseManager.getUserByUsername(username);
-						SubscribedClient subscribedClient = findClient(client);
+						SubscribedClient subscribedClient = findClient(client, false);
 						subscribedClient.setUsername(username);
 						ConnectedList.put(user != null ? user.getId() : 0, user);
 						System.out.println("LOGIN_SUCCESS");
 						int id = DatabaseManager.getId(user.getUsername());
-
+						System.out.println("users size after: " + SubscribersList.size());
 						event = new LoginEvent("LOGIN_SUCCESS", user, id);
 					} else {
 						event = new LoginEvent("Already logged in");
@@ -214,7 +215,7 @@ public class SimpleServer extends AbstractServer {
                 boolean removed = (removedUser != null);
 
 
-				SubscribedClient subscribedClient = findClient(client);
+				SubscribedClient subscribedClient = findClient(client, false);
 				if (subscribedClient != null) {
 					subscribedClient.setUsername(null); // removing the username from the client server connection
 				}
@@ -651,11 +652,13 @@ public class SimpleServer extends AbstractServer {
 
 
     //Client server connction handeling***
-	public SubscribedClient findClient (ConnectionToClient client){
+	public SubscribedClient findClient (ConnectionToClient client, boolean remove){
 		if (!SubscribersList.isEmpty()) {
 			for (SubscribedClient subscribedClient : SubscribersList) {
 				if (subscribedClient.getClient().equals(client)) {
-					SubscribersList.remove(subscribedClient);
+					if(remove) {
+						SubscribersList.remove(subscribedClient);
+					}
 					return subscribedClient;
 				}
 			}

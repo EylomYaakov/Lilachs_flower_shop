@@ -79,7 +79,7 @@ public class Order implements Serializable {
         return refund;
     }
 
-    public void setRefund(double refund) {
+    public void setRefund(double f) {
         this.refund = refund;
     }
 

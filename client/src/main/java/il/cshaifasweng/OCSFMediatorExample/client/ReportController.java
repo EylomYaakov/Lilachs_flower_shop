@@ -69,6 +69,9 @@ public class ReportController {
         EventBus.getDefault().register(this);
     }
 
+    public void setCompare(boolean compare) {
+        this.compare = compare;
+    }
 
     @Subscribe
     public void getSubscriptionDates(SubscriptionDatesListEvent event){
@@ -96,6 +99,7 @@ public class ReportController {
                 CompareReportsController controller = loader.getController();
                 controller.setHistogram1(reportHistogram);
                 callReportOrderList(filteredOrders, controller.getHistogram2(), reportType, startDate, endDate, shop, filteredDates);
+                onClose();
                 Platform.runLater(() -> {
                     Scene scene = new Scene(root);
                     Stage stage = (Stage) reportHistogram.getScene().getWindow();
@@ -123,6 +127,7 @@ public class ReportController {
                 CompareReportsController controller = loader.getController();
                 controller.setHistogram1(reportHistogram);
                 Utils.complaintsReport(filteredComplaints, controller.getHistogram2(), startDate, endDate, shop);
+                onClose();
                 Platform.runLater(() -> {
                     Scene scene = new Scene(root);
                     Stage stage = (Stage) reportHistogram.getScene().getWindow();
@@ -236,6 +241,12 @@ public class ReportController {
             }
         }
         return filteredDates;
+    }
+
+    public void onClose() {
+        if (EventBus.getDefault().isRegistered(this)) {
+            EventBus.getDefault().unregister(this);
+        }
     }
 
 }

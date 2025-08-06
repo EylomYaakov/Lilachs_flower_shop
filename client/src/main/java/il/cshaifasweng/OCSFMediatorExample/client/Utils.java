@@ -144,7 +144,8 @@ public class Utils {
             data.put(begin, 0.0);
         }
         for(Order order : orders) {
-            data.put(order.getOrderDate(), data.get(order.getOrderDate()) + order.getPrice());
+            System.out.println("refund: " + order.getRefund());
+            data.put(order.getOrderDate(), data.get(order.getOrderDate()) + order.getPrice() - order.getRefund());
         }
         for(LocalDate date : subscriptionDates){
             data.put(date, data.get(date) + 100);

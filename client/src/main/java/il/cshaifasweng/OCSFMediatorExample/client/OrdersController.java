@@ -228,7 +228,7 @@ public class OrdersController {
     }
 
     private void cancelOrder(int index){
-        Order order = paginator.getItem(index);
+        Order order = orders.get(paginator.getCurrentIndex() - paginator.getCurrentPageSize() + index);
         order.setCancelled(true);
         int id = order.getId();
         try{
