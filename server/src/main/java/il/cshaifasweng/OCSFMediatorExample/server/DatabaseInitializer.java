@@ -193,7 +193,16 @@ public class DatabaseInitializer {
     );
 """);
 
+            stmt.executeUpdate("DROP TABLE IF EXISTS OrderBaseItems");
             System.out.println("📦 OrderItems table added successfully. ");
+            stmt.executeUpdate("""
+    CREATE TABLE IF NOT EXISTS OrderBaseItems (
+        order_id INTEGER,
+        type String,
+        quantity INTEGER,
+        FOREIGN KEY(order_id) REFERENCES Orders(id)
+    );
+""");
 
 
 

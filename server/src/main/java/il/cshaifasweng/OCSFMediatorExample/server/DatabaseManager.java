@@ -27,6 +27,8 @@ public class DatabaseManager {
 
     public static void connect() {
         try {
+//            DatabaseInitializer init = new DatabaseInitializer();
+//            init.initializeDatabase();
             Class.forName("org.sqlite.JDBC");
             dbConnection = DriverManager.getConnection("jdbc:sqlite:plantshop.db");
             System.out.println("✅ Connected to SQLite");
@@ -782,6 +784,7 @@ public class DatabaseManager {
         List<Order> orders = new ArrayList<>();
         String sql = "SELECT * FROM orders";
         String itemsSql = "SELECT product_id, quantity FROM OrderItems WHERE order_id = ?";
+        String baseItemsSql = "SELECT type, quantity FROM OrderBaseItems WHERE order_id = ?";
 
         try (PreparedStatement ps = dbConnection.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
@@ -814,6 +817,17 @@ public class DatabaseManager {
                         if (product != null) {
                             products.put(product, quantity);
                         }
+                    }
+                }
+
+                try (PreparedStatement baseItemsStmt = dbConnection.prepareStatement(baseItemsSql)) {
+                    baseItemsStmt.setInt(1, id);
+                    ResultSet baseItemsRs = baseItemsStmt.executeQuery();
+                    while (baseItemsRs.next()) {
+                        String type = baseItemsRs.getString("type");
+                        int quantity = baseItemsRs.getInt("quantity");
+                        CustomProduct product = new CustomProduct(type, "", "");
+                        products.put(product, quantity);
                     }
                 }
 
@@ -872,8 +886,14 @@ public class DatabaseManager {
         VALUES (?, ?, ?);
     """;
 
+        String insertBaseItemsql = """
+                INSERT INTO OrderBaseItems(order_id, type, quantity)
+                VALUES (?, ?, ?);
+                """;
+
         try (PreparedStatement orderStmt = dbConnection.prepareStatement(insertOrderSql);
-             PreparedStatement itemStmt = dbConnection.prepareStatement(insertItemSql)) {
+             PreparedStatement itemStmt = dbConnection.prepareStatement(insertItemSql);
+             PreparedStatement baseItemStmt = dbConnection.prepareStatement(insertBaseItemsql)) {
 
             // add the orderi itself
             orderStmt.setInt(1, order.getCustomerId());
@@ -903,16 +923,25 @@ public class DatabaseManager {
 
             // add items to order
             for (Map.Entry<BaseProduct, Integer> entry : order.getProducts().entrySet()) {
-                if (!(entry.getKey() instanceof Product)) continue;
+                if (!(entry.getKey() instanceof Product)){
+                    BaseProduct baseProduct = entry .getKey();
+                    int quantity = entry.getValue();
+                    String type = baseProduct.type;
+                    baseItemStmt.setInt(1, orderId);
+                    baseItemStmt.setString(2, type);
+                    baseItemStmt.setInt(3, quantity);
+                    baseItemStmt.executeUpdate();
+                }
+                else {
+                    Product product = (Product) entry.getKey();
+                    int productId = product.getId();
+                    int quantity = entry.getValue();
 
-                Product product = (Product) entry.getKey();
-                int productId = product.getId();
-                int quantity = entry.getValue();
-
-                itemStmt.setInt(1, orderId);
-                itemStmt.setInt(2, productId);
-                itemStmt.setInt(3, quantity);
-                itemStmt.executeUpdate();
+                    itemStmt.setInt(1, orderId);
+                    itemStmt.setInt(2, productId);
+                    itemStmt.setInt(3, quantity);
+                    itemStmt.executeUpdate();
+                }
             }
 
             System.out.println("🧾 Order inserted with ID: " + orderId);
