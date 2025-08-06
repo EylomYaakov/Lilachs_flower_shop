@@ -260,12 +260,14 @@ public class CartController {
         LocalDate date = datePicker.getValue();
         int hour = hoursSpinner.getValue();
         int minute = minutesSpinner.getValue();
-        LocalDateTime dateWithTime = LocalDateTime.of(date, LocalTime.of(hour, minute));
         if(date == null){
             Platform.runLater(()->statusLabel.setText("Please select date"));
             Platform.runLater(()->statusLabel.setStyle("-fx-text-fill: red;"));
             return;
         }
+
+        LocalDateTime dateWithTime = LocalDateTime.of(date, LocalTime.of(hour, minute));
+
         if(deliveryCheckBox.isSelected()){
             if(address.getText().isEmpty() || name.getText().isEmpty() || phoneNumber.getText().isEmpty()){
                 Platform.runLater(()->statusLabel.setText("Please fill all the fields"));
