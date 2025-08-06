@@ -93,21 +93,6 @@ public class OrdersController {
         catch(Exception e){
             e.printStackTrace();
         }
-        //only for orders to be not empty
-        orders = new ArrayList<>();
-        Map<BaseProduct, Integer> map = new HashMap<>();
-        Order order1 = new Order(map, "", "", "", "",  LocalDateTime.now().plusHours(2), LocalDate.now(),10, -1);
-        Order order2 = new Order(map, "", "", "", "",  LocalDateTime.now().plusHours(4),LocalDate.now(), 10,-1);
-        Order order3 = new Order(map, "", "", "", "", LocalDateTime.now().plusMinutes(30),LocalDate.now(),10,-1);
-        Order order4 = new Order(map, "", "", "", "", LocalDateTime.now().minusHours(2),LocalDate.now(),10,-1);
-        Order order5 = new Order(map, "", "", "", "",  LocalDateTime.now().minusHours(4),LocalDate.now(),10,-1);
-        orders.add(order1);
-        orders.add(order2);
-        orders.add(order3);
-        orders.add(order4);
-        orders.add(order5);
-        OrdersListEvent ordersListEvent = new OrdersListEvent(orders);
-        initOrders(ordersListEvent);
     }
 
     @Subscribe

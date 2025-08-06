@@ -257,8 +257,10 @@ public class CatalogController {
                 shopsSet.add(p.shop);
             }
         }
+        boolean chainWorker = false;
         if(SimpleClient.getRole().startsWith("worker") && !SimpleClient.getRole().contains("shop")) {
             Platform.runLater(()->shopsFilter.getItems().add("all chain"));
+            chainWorker = true;
         }
         Platform.runLater(()->shopsFilter.getItems().addAll(shopsSet));
         shops = new ArrayList<>(shopsSet);
@@ -270,6 +272,9 @@ public class CatalogController {
             }
             else{
                 shop = shops.get(0);
+            }
+            if(chainWorker) {
+                shop = "all chain";
             }
             if(!SimpleClient.getLastShop().isEmpty()) {
                 shop = SimpleClient.getLastShop();

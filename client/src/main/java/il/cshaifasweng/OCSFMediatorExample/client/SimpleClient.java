@@ -49,8 +49,17 @@ public class SimpleClient extends AbstractClient {
         cart.clear();
     }
 
-    public static void addToCart(Product product, int amount){
-        cart.merge(product, amount, Integer::sum);
+    public static void addToCart(Product newProduct, int amount){
+        for(BaseProduct baseProduct: cart.keySet()){
+            if(baseProduct instanceof Product){
+                Product product = (Product) baseProduct;
+                if(product.id == newProduct.id){
+                    cart.merge(product, amount, Integer::sum);
+                    return;
+                }
+            }
+        }
+        cart.merge(newProduct, amount, Integer::sum);
     }
 
     public void setLastItemId(int lastItemId) {
@@ -93,7 +102,7 @@ public class SimpleClient extends AbstractClient {
 
     public static SimpleClient getClient() throws IOException {
         if (client == null) {
-            client = new SimpleClient("10.0.0.11", 3000);
+            client = new SimpleClient("127.0.0.1", 3000);
         }
         return client;
     }
