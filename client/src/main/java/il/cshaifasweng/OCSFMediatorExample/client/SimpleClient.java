@@ -25,6 +25,12 @@ public class SimpleClient extends AbstractClient {
     private static String lastShop = "";
 
 
+    public static void initialize(String host, int port) throws IOException {
+        if (client == null) {
+            client = new SimpleClient(host, port);
+        }
+    }
+
     public static void setLastShop(String shop) {
         lastShop = shop;
     }
@@ -101,9 +107,6 @@ public class SimpleClient extends AbstractClient {
     }
 
     public static SimpleClient getClient() throws IOException {
-        if (client == null) {
-            client = new SimpleClient("127.0.0.1", 3000);
-        }
         return client;
     }
 

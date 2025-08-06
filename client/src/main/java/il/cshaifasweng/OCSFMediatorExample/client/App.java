@@ -31,17 +31,9 @@ public class App extends Application {
     @Override
     public void start(Stage stage) throws IOException {
         appStage = stage;
-        client = SimpleClient.getClient();
-        client.openConnection();
-        scene = new Scene(loadFXML("catalog"));
+        scene = new Scene(loadFXML("connect"), 640, 480);
         stage.setScene(scene);
         stage.show();
-        try{
-            SimpleClient.getClient().sendToServer("CONNECT");
-        }
-        catch(IOException e){
-            e.printStackTrace();
-        }
         System.out.println(" Connected to server");
     }
 
