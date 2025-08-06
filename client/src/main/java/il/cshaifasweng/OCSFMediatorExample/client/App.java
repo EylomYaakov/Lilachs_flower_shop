@@ -36,7 +36,12 @@ public class App extends Application {
         scene = new Scene(loadFXML("catalog"));
         stage.setScene(scene);
         stage.show();
-
+        try{
+            SimpleClient.getClient().sendToServer("CONNECT");
+        }
+        catch(IOException e){
+            e.printStackTrace();
+        }
         System.out.println(" Connected to server");
     }
 

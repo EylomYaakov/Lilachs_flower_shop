@@ -75,10 +75,14 @@ public class SimpleServer extends AbstractServer {
 			String text = (String) msg;
 			System.out.println("Message recieved from cliet: "+text);
 
-
+			if(text.equals("CONNECT")){
+				SubscribedClient connection = new SubscribedClient(client);
+				SubscribersList.add(connection);
+			}
 			if (text.equals("GET_CATALOG")) {
+				System.out.println("SIZE: " + SubscribersList.size());
 				sendCatalogToClient(client);
-
+				System.out.println("SIZE: " + SubscribersList.size());
 			}
 			/// item related ***
 			else if (text.startsWith("GET_ITEM")) {
@@ -379,6 +383,7 @@ public class SimpleServer extends AbstractServer {
 		else if(msg instanceof ConnectedUser) {
 			/// if msg id of ConnectedUser object - signup event
 			//gather details from client
+			System.out.println("SIZE: " + SubscribersList.size());
 			ConnectedUser user = (ConnectedUser)msg;
 			SignUpEvent event;
 			String username = user.getUsername();
@@ -408,6 +413,7 @@ public class SimpleServer extends AbstractServer {
 					//response 2 - sign up successfull
 					event = new SignUpEvent("SIGNUP_SUCCESS",newUser,id);
 					System.out.println("SIGNUP_SUCCESS");
+					System.out.println("SIZE: " + SubscribersList.size());
 					if(role.equals("subscription"))//if signed up as subscription add to subscription table
 						DatabaseManager.upsertSubscription(id, LocalDate.now(), LocalDate.now().plusYears(1));
 				} else {
@@ -580,12 +586,6 @@ public class SimpleServer extends AbstractServer {
 	//Catalog funcs ************************************
 	private void sendCatalogToClient(ConnectionToClient client)
 	{
-		SubscribedClient exists = findClient(client);
-		if (exists == null) {
-
-			SubscribedClient connection = new SubscribedClient(client);
-			SubscribersList.add(connection);
-		}
 		databaseManager.sendCatalog(client);
 	}
 

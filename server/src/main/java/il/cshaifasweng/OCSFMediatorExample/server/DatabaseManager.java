@@ -386,7 +386,9 @@ public class DatabaseManager {
         ArrayList<SubscribedClient> users = SimpleServer.getAllConnectedUsers();
         for (SubscribedClient user : users) {
             ConnectionToClient client = user.getClient();
+            System.out.println("TRYING TO SENT");
             if (client != null ) {
+                System.out.println("TRYING TO SENT - IN THE IF!!");
                 System.out.println("📤 Sending updated catalog to client ID: " + client.getId());
                 sendCatalog(client);
             }
