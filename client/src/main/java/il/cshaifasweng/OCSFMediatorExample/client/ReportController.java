@@ -11,7 +11,6 @@ import javafx.scene.chart.BarChart;
 
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Button;
-import javafx.scene.chart.XYChart;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.stage.Stage;
@@ -20,7 +19,6 @@ import org.greenrobot.eventbus.Subscribe;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 
 import java.time.LocalDate;
 import java.util.*;
@@ -83,7 +81,7 @@ public class ReportController {
     @Subscribe
     public void getOrders(AllOrdersEvent event) {
         List<Order> orders = event.getOrders();
-        List<Order> filterdOrders = filterOrders(orders, startDate, endDate, shop);
+        List<Order> filteredOrders = filterOrders(orders, startDate, endDate, shop);
         List<LocalDate> filteredDates = filterDates(subscriptionDates, startDate, endDate);
         if(compare) {
             try {
@@ -91,18 +89,20 @@ public class ReportController {
                 Parent root = loader.load();
                 CompareReportsController controller = loader.getController();
                 controller.setHistogram1(reportHistogram);
-                callReportOrderList(filterdOrders, controller.getHistogram2(), reportType, startDate, endDate, shop, filteredDates);
-                Scene scene = new Scene(root);
-                Stage stage = (Stage) reportHistogram.getScene().getWindow();
-                stage.setScene(scene);
-                stage.show();
+                callReportOrderList(filteredOrders, controller.getHistogram2(), reportType, startDate, endDate, shop, filteredDates);
+                Platform.runLater(() -> {
+                    Scene scene = new Scene(root);
+                    Stage stage = (Stage) reportHistogram.getScene().getWindow();
+                    stage.setScene(scene);
+                    stage.show();
+                });
                 return;
             }
             catch(IOException ex){
                 ex.printStackTrace();
             }
         }
-        callReportOrderList(filterdOrders, reportHistogram, reportType, startDate, endDate, shop, filteredDates);
+        callReportOrderList(filteredOrders, reportHistogram, reportType, startDate, endDate, shop, filteredDates);
     }
 
 
@@ -117,10 +117,12 @@ public class ReportController {
                 CompareReportsController controller = loader.getController();
                 controller.setHistogram1(reportHistogram);
                 Utils.complaintsReport(filteredComplaints, controller.getHistogram2(), startDate, endDate, shop);
-                Scene scene = new Scene(root);
-                Stage stage = (Stage) reportHistogram.getScene().getWindow();
-                stage.setScene(scene);
-                stage.show();
+                Platform.runLater(() -> {
+                    Scene scene = new Scene(root);
+                    Stage stage = (Stage) reportHistogram.getScene().getWindow();
+                    stage.setScene(scene);
+                    stage.show();
+                });
                 return;
             }
             catch(IOException e){
@@ -156,8 +158,9 @@ public class ReportController {
         if(startDate == null || endDate == null || reportType == null || shop == null){
             return;
         }
-
         compare = true;
+        Utils.sendReportMessage(reportType);
+
     }
 
     @FXML

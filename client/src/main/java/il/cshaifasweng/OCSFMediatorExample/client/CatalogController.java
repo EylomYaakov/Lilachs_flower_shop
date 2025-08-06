@@ -136,6 +136,15 @@ public class CatalogController {
     private static List<String> shops;
     private Paginator<Product> paginator;
 
+    private static CatalogController instance;
+
+    public static CatalogController getInstance() {
+        if (instance == null) {
+            instance = new CatalogController();
+        }
+        return instance;
+    }
+
 
     public static List<String> getShops(){
         return shops;
@@ -152,6 +161,7 @@ public class CatalogController {
                     try {
                         SimpleClient.setLastShop(shopsFilter.getSelectionModel().getSelectedItem());
                         SimpleClient.getClient().setLastItemId(ids[i]);
+                        onClose();
                         App.switchScreen("item");
                     }
                     catch (IOException e) {
@@ -179,6 +189,7 @@ public class CatalogController {
     void loginPressed(ActionEvent event) {
         try {
             if(loginButton.getText().equals("log in")){
+                onClose();
                 App.switchScreen("login");
             }
             else{
@@ -221,6 +232,7 @@ public class CatalogController {
         setSaleVisibility(false);
         try{
             SimpleClient.getClient().sendToServer("GET_CATALOG");
+            System.out.println(SimpleClient.getRole());
             if (!SimpleClient.getRole().isEmpty()) {
                 Platform.runLater(()->loginButton.setText("log out"));
             }
@@ -265,7 +277,8 @@ public class CatalogController {
         Platform.runLater(()->shopsFilter.getItems().addAll(shopsSet));
         shops = new ArrayList<>(shopsSet);
         if(SimpleClient.getUser() != null) {
-            String shop = SimpleClient.getUser().getShop();
+            String shop = SimpleClient.getUser().getShop().trim();
+            System.out.println("shop: " + shop);
             if(!shop.equals("all chain")){
                 Platform.runLater(()->shopsFilter.setVisible(false));
                 Platform.runLater(()->filterButton.setLayoutX(176));
@@ -341,10 +354,34 @@ public class CatalogController {
         int id = event.getProductId();
         Product product = Utils.getProductByID(products, id);
         int index = products.indexOf(product);
+        System.out.println(index);
         products.remove(product);
         paginator.updateShowProducts();
         isSalePressed.remove(index);
+        System.out.println(index);
         refreshPage();
+    }
+
+    @Subscribe
+    public void sale(Sale event){
+        List<Product> saleItems = event.getProducts();
+        int saleAmount = event.getSaleAmount();
+        for(Product p : products){
+            if(isOnSale(p.id, saleItems)){
+                p.sale = saleAmount;
+                p.price *= (1-saleAmount/100.0);
+            }
+        }
+        refreshPage();
+    }
+
+    private boolean isOnSale(int id, List<Product> items){
+        for(Product saleItem : items){
+            if(saleItem.id==id){
+                return true;
+            }
+        }
+        return false;
     }
 
     @FXML
@@ -363,6 +400,7 @@ public class CatalogController {
     @FXML
     void toMenu(ActionEvent event) {
         SimpleClient.setLastShop(shopsFilter.getSelectionModel().getSelectedItem());
+        onClose();
         App.switchScreen("menu");
     }
 
@@ -521,4 +559,12 @@ public class CatalogController {
        }
        return "all chain";
     }
+
+
+    public void onClose() {
+        if (EventBus.getDefault().isRegistered(this)) {
+            EventBus.getDefault().unregister(this);
+        }
+    }
+
 }

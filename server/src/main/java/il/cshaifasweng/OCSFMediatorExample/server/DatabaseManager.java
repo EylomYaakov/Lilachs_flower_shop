@@ -781,6 +781,7 @@ public class DatabaseManager {
     public static List<Order> getAllOrders() {
         List<Order> orders = new ArrayList<>();
         String sql = "SELECT * FROM orders";
+        String itemsSql = "SELECT product_id, quantity FROM OrderItems WHERE order_id = ?";
 
         try (PreparedStatement ps = dbConnection.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
@@ -800,8 +801,24 @@ public class DatabaseManager {
                 double refund = rs.getDouble("refund");
                 String shop = rs.getString("shop");
 
+                Map<BaseProduct, Integer> products = new HashMap<>();
+                try (PreparedStatement itemsStmt = dbConnection.prepareStatement(itemsSql)) {
+                    itemsStmt.setInt(1, id);
+                    ResultSet itemsRs = itemsStmt.executeQuery();
 
-                Order order = new Order(Map.of(), greetingCard, address, phone, name, deliveryTime, orderDate, price, customerId);
+                    while (itemsRs.next()) {
+                        int productId = itemsRs.getInt("product_id");
+                        int quantity = itemsRs.getInt("quantity");
+
+                        Product product = getItem(productId);
+                        if (product != null) {
+                            products.put(product, quantity);
+                        }
+                    }
+                }
+
+
+                Order order = new Order(products, greetingCard, address, phone, name, deliveryTime, orderDate, price, customerId);
                 order.setId(id);
                 order.setCancelled(cancelled);
                 order.setRefund(refund);

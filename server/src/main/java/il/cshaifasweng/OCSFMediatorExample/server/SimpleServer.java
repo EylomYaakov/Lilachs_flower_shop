@@ -177,7 +177,6 @@ public class SimpleServer extends AbstractServer {
 						ConnectedUser user = DatabaseManager.getUserByUsername(username);
 						SubscribedClient subscribedClient = findClient(client);
 						subscribedClient.setUsername(username);
-						SubscribersList.add(subscribedClient);
 						ConnectedList.put(user != null ? user.getId() : 0, user);
 						System.out.println("LOGIN_SUCCESS");
 						int id = DatabaseManager.getId(user.getUsername());
@@ -477,8 +476,7 @@ public class SimpleServer extends AbstractServer {
 			}
 			DatabaseManager.insertSale(sale);
 			System.out.println(" Sale processed and scheduled.");
-			sendCatalogToClient(client);
-
+			sendToAllClients(sale);
 		}
 
 		else if(msg instanceof Order)
@@ -586,6 +584,7 @@ public class SimpleServer extends AbstractServer {
 	{
 		SubscribedClient exists = findClient(client);
 		if (exists == null) {
+
 			SubscribedClient connection = new SubscribedClient(client);
 			SubscribersList.add(connection);
 		}

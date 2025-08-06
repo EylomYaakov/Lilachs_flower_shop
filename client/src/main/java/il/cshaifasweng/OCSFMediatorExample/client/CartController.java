@@ -285,6 +285,9 @@ public class CartController {
         if(order.getShop().equals("all chain")){
             order.setShop(SimpleClient.getLastShop());
         }
+        if(!SimpleClient.getUser().getShop().equals("all chain")){
+            order.setShop(SimpleClient.getUser().getShop());
+        }
         try{
             SimpleClient.getClient().sendToServer(order);
             statusLabel.setText("Order Placed!");

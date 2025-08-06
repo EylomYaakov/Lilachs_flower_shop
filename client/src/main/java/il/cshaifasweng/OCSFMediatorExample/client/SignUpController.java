@@ -87,9 +87,6 @@ public class SignUpController {
             Platform.runLater(()-> statusLabel.setStyle("-fx-text-fill: red;"));
         }
         else {
-            if(accountType.startsWith("shop")){
-                accountType = accountType.substring(14);
-            }
             LocalDate today = LocalDate.now();
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 

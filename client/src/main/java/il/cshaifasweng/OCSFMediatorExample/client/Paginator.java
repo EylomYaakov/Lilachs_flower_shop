@@ -12,21 +12,20 @@ public class Paginator<T>{
     private final List<T> items;
     private final int pageSize;
     private int currentIndex = 0;
-    private boolean[] productsToShow;
+    private List<Boolean> productsToShow;
     private int currentPageSize;
 
     public Paginator(List<T> items, int pageSize) {
         this.items = items;
         this.pageSize = pageSize;
-        productsToShow = new boolean[items.size()];
-        Arrays.fill(productsToShow, true);
+        productsToShow = Utils.initList(items.size(), true);
     }
 
 
     private int pageStartIndex(){
         int itemCount = 0;
         for(int i=currentIndex-1; i>=0; i--){
-            if(productsToShow[i]){
+            if(productsToShow.get(i)){
                 itemCount++;
             }
             if(itemCount == pageSize){
@@ -39,7 +38,7 @@ public class Paginator<T>{
     public T getItem(int i){
         int count = 0;
         for(int j =pageStartIndex(); j<items.size(); j++){
-            if(productsToShow[j]){
+            if(productsToShow.get(j)){
                 count++;
             }
             if(count == i+1){
@@ -60,8 +59,7 @@ public class Paginator<T>{
     }
 
     public void updateShowProducts(){
-        productsToShow = new boolean[items.size()];
-        Arrays.fill(productsToShow, true);
+        productsToShow = Utils.initList(items.size(), true);
     }
 
     public void removeItem(T item) {
@@ -71,8 +69,8 @@ public class Paginator<T>{
 
     public int productsLeftToShow(){
         int count = 0;
-        for(int i=currentIndex; i<productsToShow.length; i++){
-            if(productsToShow[i]){
+        for(int i=currentIndex; i<productsToShow.size(); i++){
+            if(productsToShow.get(i)){
                 count++;
             }
         }
@@ -83,7 +81,7 @@ public class Paginator<T>{
         List<T> page = new ArrayList<T>();
         int i = 0;
         while(i < size){
-            if(productsToShow[currentIndex]){
+            if(productsToShow.get(currentIndex)){
                 page.add(items.get(currentIndex));
                 i++;
             }
@@ -101,7 +99,7 @@ public class Paginator<T>{
     public boolean hasPreviousPage(){
         int count = 0;
         for(int i=currentIndex-1; i>=0; i--){
-            if(productsToShow[i]){
+            if(productsToShow.get(i)){
                 count++;
             }
             if(count == currentPageSize+1){
@@ -113,18 +111,18 @@ public class Paginator<T>{
 
 
     public void changeShowProducts(int index, boolean value){
-        productsToShow[index] = value;
+        productsToShow.set(index,value);
     }
 
     public boolean getShowProducts(int index){
-        return productsToShow[index];
+        return productsToShow.get(index);
     }
 
 
     public void prevPage(){
         int itemCount = 0;
         for(int i=currentIndex-1; i>=0; i--){
-            if(productsToShow[i]){
+            if(productsToShow.get(i)){
                 itemCount++;
             }
             if(itemCount == pageSize + currentPageSize){
@@ -153,7 +151,7 @@ public class Paginator<T>{
     public void clearItems(){
         items.clear();
         currentIndex = 0;
-        productsToShow = new boolean[0];
+        productsToShow = new ArrayList<>();
     }
 
 }

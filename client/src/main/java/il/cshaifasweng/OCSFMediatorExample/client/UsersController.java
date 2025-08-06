@@ -294,7 +294,7 @@ public class UsersController {
         for(int i=0; i<usernames.length; i++){
             if(i<pageItems.size()){
                 setUserVisibility(i,true);
-                renderUser(i);
+                renderUser(i, pageItems.get(i));
             }
             else{
                 setUserVisibility(i,false);
@@ -321,8 +321,7 @@ public class UsersController {
         Platform.runLater(()-> passwordStatusLabels[i].setText(""));
     }
 
-    private void renderUser(int index){
-        ConnectedUser user =paginator.getItem(index);
+    private void renderUser(int index, ConnectedUser user){
         Platform.runLater(()->usernames[index].setText(user.getUsername()));
         Platform.runLater(()->passwords[index].setText(user.getPassword()));
         System.out.println(user.getRole());
@@ -343,7 +342,7 @@ public class UsersController {
         List<String> shops = CatalogController.getShops();
         Platform.runLater(()->roles.getItems().addAll("customer chain account", "customer subscription account"));
         for(String shop : shops){
-            Platform.runLater(()->roles.getItems().add("customer shop account:"+ shop));
+            Platform.runLater(()->roles.getItems().add("customer shop account: "+ shop));
         }
         String managerShop = SimpleClient.getUser().getShop();
         if(managerShop.equals("all chain")){

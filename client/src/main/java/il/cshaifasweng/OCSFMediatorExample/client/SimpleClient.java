@@ -177,6 +177,10 @@ public class SimpleClient extends AbstractClient {
             RemoveProductEvent event = (RemoveProductEvent) msg;
             EventBus.getDefault().post(event);
         }
+        else if(msg instanceof Sale){
+            Sale sale = (Sale) msg;
+            EventBus.getDefault().post(sale);
+        }
         else if(msg instanceof Integer){
             accountId = (Integer) msg;
         }
