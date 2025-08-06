@@ -102,13 +102,13 @@ public class Order implements Serializable {
 
     public String getShop() {
         if(!shop.isEmpty()){
-            return shop;
+            return shop.trim();
         }
         for(BaseProduct baseProduct: products.keySet()){
             if(baseProduct instanceof Product){
                 Product product = (Product) baseProduct;
                 if(!product.shop.equals("all chain")){
-                    return product.shop;
+                    return product.shop.trim();
                 }
             }
         }

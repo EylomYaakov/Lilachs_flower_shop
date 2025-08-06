@@ -37,7 +37,10 @@
       <Button fx:id="changeRoleButton2" layoutX="315.0" layoutY="312.0" mnemonicParsing="false" onAction="#changeRole" prefHeight="18.0" prefWidth="125.0" text="change role" />
       <Label fx:id="usernameStatus1" layoutX="458.0" layoutY="79.0" prefHeight="28.0" prefWidth="97.0" />
       <Label fx:id="passwordStatus1" layoutX="446.0" layoutY="120.0" prefHeight="28.0" prefWidth="165.0" />
-      <Label fx:id="usernameStatus2" layoutX="454.0" layoutY="232.0" prefHeight="28.0" prefWidth="97.0" />
+      <Label fx:id="usernameStatus2" layoutX="454.0" layoutY="232.0" prefHeight="28.0" prefWidth="97.0">
+         <font>
+            <Font size="11.0" />
+         </font></Label>
       <Label fx:id="passwordStatus2" layoutX="455.0" layoutY="273.0" prefHeight="26.0" prefWidth="165.0" />
       <Label fx:id="roleStatus1" layoutX="455.0" layoutY="159.0" prefHeight="28.0" prefWidth="97.0" />
       <Label fx:id="roleStatus2" layoutX="454.0" layoutY="313.0" prefHeight="28.0" prefWidth="97.0" />

@@ -81,6 +81,12 @@ public class ReportController {
     @Subscribe
     public void getOrders(AllOrdersEvent event) {
         List<Order> orders = event.getOrders();
+        if(orders.isEmpty()){
+            System.out.println("No orders found");
+        }
+        for(Order order : orders){
+            System.out.println("order shop:" + order.getShop());
+        }
         List<Order> filteredOrders = filterOrders(orders, startDate, endDate, shop);
         List<LocalDate> filteredDates = filterDates(subscriptionDates, startDate, endDate);
         if(compare) {
