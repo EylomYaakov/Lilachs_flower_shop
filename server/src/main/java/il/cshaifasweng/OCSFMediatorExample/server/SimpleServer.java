@@ -115,8 +115,9 @@ public class SimpleServer extends AbstractServer {
 						//send to client
 						System.out.println("✅ Product removed from catalog.");
 						client.sendToClient("ITEM_REMOVED:" + productId); //
-						RemoveProductEvent event = new RemoveProductEvent(productId);
-						sendToAllClients(event);
+						//Event event = new RemoveProductEvent(productId);
+						//sendToAllClients(event);
+						DatabaseManager.sendCatalogToAllUsers();
 					} else {
 						System.out.println("❌ Failed to remove product with ID: " + productId);
 						client.sendToClient("REMOVE_FAILED:" + productId);
@@ -180,7 +181,6 @@ public class SimpleServer extends AbstractServer {
 						ConnectedList.put(user != null ? user.getId() : 0, user);
 						System.out.println("LOGIN_SUCCESS");
 						int id = DatabaseManager.getId(user.getUsername());
-
 
 						event = new LoginEvent("LOGIN_SUCCESS", user, id);
 					} else {
@@ -440,8 +440,9 @@ public class SimpleServer extends AbstractServer {
 
 					// add the new id given by database autoincrement
 					product.setId(newProductId);
-					AddProductEvent event = new AddProductEvent(product);
-					sendToAllClients(event);
+					//AddProductEvent event = new AddProductEvent(product);
+					//sendToAllClients(event);
+					DatabaseManager.sendCatalogToAllUsers();
 				} else {
 					System.out.println("❌ Failed to insert product");
 				}
@@ -472,7 +473,8 @@ public class SimpleServer extends AbstractServer {
 			}
 			DatabaseManager.insertSale(sale);
 			System.out.println(" Sale processed and scheduled.");
-			sendToAllClients(sale);
+			//sendToAllClients(sale);
+			DatabaseManager.sendCatalogToAllUsers();
 		}
 
 		else if(msg instanceof Order)

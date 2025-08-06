@@ -300,6 +300,7 @@ public class CatalogController {
 
     @Subscribe
     public void initCatalog(ProductListEvent event){
+        System.out.println("GOT CATALOG");
         List<Product> products = event.getProducts();
         if(products.get(0) == null){
             return;
@@ -352,13 +353,14 @@ public class CatalogController {
 
     @Subscribe
     public void addProduct(AddProductEvent event){
+        System.out.println("HERE");
         Product product = event.getProduct();
         List<String> types = typesFilter.getItems();
         if(!types.contains(product.type)){
             Platform.runLater(()->typesFilter.getItems().add(product.type));
         }
         products.add(product);
-        paginator.updateShowProducts();
+        paginator.updateShowProducts(true, 0, true);
         isSalePressed.add(false);
         refreshPage();
     }
@@ -368,11 +370,9 @@ public class CatalogController {
         int id = event.getProductId();
         Product product = Utils.getProductByID(products, id);
         int index = products.indexOf(product);
-        System.out.println(index);
         products.remove(product);
-        paginator.updateShowProducts();
+        paginator.updateShowProducts(false, index, false);
         isSalePressed.remove(index);
-        System.out.println(index);
         refreshPage();
     }
 

@@ -55,16 +55,22 @@ public class Paginator<T>{
 
     public void addItem(T item) {
         items.add(item);
-        updateShowProducts();
+        updateShowProducts(true, 0, true);
     }
 
-    public void updateShowProducts(){
-        productsToShow = Utils.initList(items.size(), true);
+    public void updateShowProducts(boolean add, int index, boolean value){
+        if(add){
+            productsToShow.add(value);
+        }
+        else{
+            productsToShow.remove(index);
+        }
     }
 
     public void removeItem(T item) {
+        int index = items.indexOf(item);
         items.remove(item);
-        updateShowProducts();
+        updateShowProducts(false, index, false);
     }
 
     public int productsLeftToShow(){

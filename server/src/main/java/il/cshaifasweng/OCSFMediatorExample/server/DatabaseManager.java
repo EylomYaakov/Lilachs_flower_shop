@@ -378,8 +378,9 @@ public class DatabaseManager {
 
     }
 
-    private static void sendCatalogToAllUsers()
+    public static void sendCatalogToAllUsers()
     {
+        System.out.println("Trying to send catalog to all users");
 
         // look for all subscribed clients to send updated catalog
         ArrayList<SubscribedClient> users = SimpleServer.getAllConnectedUsers();
