@@ -217,7 +217,8 @@ public class UsersController {
                 if(roles[i].getSelectionModel().getSelectedItem().equals(getRole(user.getRole()))) {
                     return;
                 }
-                user.setRole(getRoleDescription(roles[i].getSelectionModel().getSelectedItem()));
+                System.out.println(roles[i].getSelectionModel().getSelectedItem());
+                user.setRole(getRole(roles[i].getSelectionModel().getSelectedItem()));
                 Platform.runLater(()->roleStatusLabels[finalI].setText("role changed!"));
                 try{
                     SimpleClient.getClient().sendToServer(new ChangeUserDetailsEvent(user, "role"));
@@ -358,6 +359,7 @@ public class UsersController {
     }
 
     private String getRoleDescription(String role){
+        System.out.println("role: "+role);
         if(role.startsWith("shop account")){
             return "customer " + role;
         }
@@ -380,8 +382,9 @@ public class UsersController {
     }
 
     private String getRole(String roleDescription){
+        System.out.println("roleDescription: "+roleDescription);
         if(roleDescription.startsWith("customer shop account")){
-            return roleDescription.substring(5);
+            return roleDescription.substring(9);
         }
         if(roleDescription.equals("customer chain account")){
             return "chain account";
