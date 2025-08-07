@@ -27,10 +27,10 @@ public class DatabaseManager {
 
     public static void connect() {
         try {
-            DatabaseInitializer init = new DatabaseInitializer();
-            init.initializeDatabase();
+            //DatabaseInitializer init = new DatabaseInitializer();
+            //init.initializeDatabase();
             Class.forName("org.sqlite.JDBC");
-            DatabaseInitializer.initializeDatabase();
+            //DatabaseInitializer.initializeDatabase();
             dbConnection = DriverManager.getConnection("jdbc:sqlite:plantshop.db");
             System.out.println("✅ Connected to SQLite");
         } catch (Exception e) {
