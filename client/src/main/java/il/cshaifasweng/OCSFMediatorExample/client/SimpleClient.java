@@ -31,6 +31,7 @@ public class SimpleClient extends AbstractClient {
         }
     }
 
+
     public static void setLastShop(String shop) {
         lastShop = shop;
     }

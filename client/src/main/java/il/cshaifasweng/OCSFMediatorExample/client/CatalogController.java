@@ -125,6 +125,8 @@ public class CatalogController {
     private ComboBox<String> timeList;
 
 
+
+
     private Button[] buttons;
     private TextArea[] texts;
     private int[] ids;
@@ -137,6 +139,7 @@ public class CatalogController {
     private Paginator<Product> paginator;
 
     private static CatalogController instance;
+
 
     public static CatalogController getInstance() {
         if (instance == null) {
@@ -367,7 +370,8 @@ public class CatalogController {
             Platform.runLater(()->typesFilter.getItems().add(product.type));
         }
         products.add(product);
-        paginator.updateShowProducts(true, 0, true);
+        boolean show = false;
+        paginator.updateShowProducts(true, 0, show);
         isSalePressed.add(false);
         refreshPage();
     }

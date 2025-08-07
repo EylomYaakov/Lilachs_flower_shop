@@ -37,7 +37,8 @@ public class ConnectController {
                 SimpleClient.initialize(ip, port);
                 SimpleClient.getClient().openConnection();
                 SimpleClient.getClient().sendToServer("CONNECT");
-                this.switchToCatalog();}
+                this.switchToCatalog();
+            }
             catch (IOException e) {
                 throw new RuntimeException(e);
             }

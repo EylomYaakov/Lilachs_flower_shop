@@ -119,7 +119,7 @@ public class SimpleServer extends AbstractServer {
 						//send to client
 						System.out.println("✅ Product removed from catalog.");
 						client.sendToClient("ITEM_REMOVED:" + productId); //
-						//Event event = new RemoveProductEvent(productId);
+						//RemoveProductEvent event = new RemoveProductEvent(productId);
 						//sendToAllClients(event);
 						DatabaseManager.sendCatalogToAllUsers();
 					} else {
@@ -461,6 +461,7 @@ public class SimpleServer extends AbstractServer {
 				boolean success = DatabaseManager.updateProduct(product);
 				if (success) {
 					System.out.println(" Product updated successfully.");
+					//sendToAllClients(product);
 					DatabaseManager.sendCatalogToAllUsers();
 				} else {
 					System.out.println("❌ Failed to update product with ID " + product.getId());
