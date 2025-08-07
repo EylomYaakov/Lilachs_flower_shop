@@ -58,7 +58,7 @@ public class ConnectController {
     }
     @FXML
     private void switchToCatalog() throws IOException {
-        App.switchScreen("Catalog");
+        App.switchScreen("catalog");
     }
 
 }

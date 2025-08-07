@@ -213,7 +213,8 @@ public class DatabaseInitializer {
                 stmt.executeUpdate("""
                     INSERT INTO Users (Username, password, personalId, creditId, role,signUpDate) VALUES
                     ('Ariel', '@A1', '12345678','10','worker:manager','~'),
-                    ('Ofek', '@A1', '12345678', '10', 'worker:manager:shop:Haifa', '~'),
+                    ('Eylom', '@A1', '12345678','10','worker:manager:shop:Haifa','~'),
+                    ('Tim', '@A1', '12345678','10','worker:customer service','~'),
                     ('Amit', '@A1', '12345678','10', 'worker','~');
                     """);
                 System.out.println("🌱 Users initialized with demo data.");

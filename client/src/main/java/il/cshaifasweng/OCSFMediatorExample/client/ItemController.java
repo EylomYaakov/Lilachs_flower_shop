@@ -99,7 +99,7 @@ public class ItemController {
 
     @FXML
     void backToCatalog(ActionEvent event) {
-        App.switchScreen("Catalog");
+        App.switchScreen("catalog");
     }
 
 
