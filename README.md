@@ -1,14 +1,19 @@
-[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/F3j_ac3s)
-# OCSF Mediator Example
-
-## Structure
-Pay attention to the three modules:
-1. **client** - a simple client built using JavaFX and OCSF. We use EventBus (which implements the mediator pattern) in order to pass events between classes (in this case: between SimpleClient and PrimaryController.
-2. **server** - a simple server built using OCSF.
-3. **entities** - a shared module where all the entities of the project live.
-
-## Running
-1. Run Maven install **in the parent project**.
-2. Run the server using the exec:java goal in the server module.
-3. Run the client using the javafx:run goal in the client module.
-4. Press the button and see what happens!
+# Lilach's Flower Shop Application
+An application designed to manage and shop in a flower shop, helping staff efficiently handle shop operations and orders, while providing customers a user-friendly shopping experience.
+## Purpose
+Developed as a project for a software engineering course.
+## Features
+- The application includes login and signup functionality. After logging in, there are two main user types:
+  - Customer:
+     - Place orders
+     - Complain about orders
+     - View all personal orders
+  - Staff Member: 
+     - Add items to the catalog
+     - View all complaints
+     - View all users
+     - Generate three types of reports: income report, complaint report, and order report
+     - Compare two reports
+- Both user types can browse the catalog and filter items by shop or by item type.
+## Technologies Used
+ Built in Java using the OCSF framework for server-client communication, JavaFX for the GUI and SQL for database management.
